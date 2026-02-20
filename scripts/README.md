@@ -15,9 +15,10 @@ Este script:
 
 - Crea milestones (`Phase 0` a `Phase 5` y `Future / Backlog`) si no existen.
 - Crea labels de tipo, fase, área y prioridad si no existen.
-- Crea issues para todos los archivos `issue-epic-*.md` y `issue-story-*.md`.
-- Usa los `.md` como **body** y asigna labels/milestone automáticamente.
-- Evita duplicados por título (si ya existe, lo omite).
+- Usa un catálogo canónico determinístico (51 issues: 13 épicas + 38 historias).
+- Usa los `.md` del backlog como **body** y asigna labels/milestone exactos.
+- En modo normal, solo crea los faltantes (si el título ya está abierto, lo omite).
+- En modo reset, cierra todos los `epic/story` abiertos y reconstruye el catálogo completo.
 
 ## Uso rápido
 
@@ -27,7 +28,7 @@ Desde la raíz del repo:
 powershell -ExecutionPolicy Bypass -File .\scripts\create_github_backlog.ps1 \
   -Repo "CSA-DanielVillamizar/Tesoreriaygerenciade-negocios" \
   -BacklogPath "C:\Users\DanielVillamizar\Sistema Contable L.A.M.A. Medellin\backlog" \
-  -BacklogDocPath ".\docs\BACKLOG.md"
+  -ResetCatalog
 ```
 
 ## Modo simulación (sin crear nada)
@@ -36,11 +37,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\create_github_backlog.ps1 \
 powershell -ExecutionPolicy Bypass -File .\scripts\create_github_backlog.ps1 \
   -Repo "CSA-DanielVillamizar/Tesoreriaygerenciade-negocios" \
   -BacklogPath "C:\Users\DanielVillamizar\Sistema Contable L.A.M.A. Medellin\backlog" \
-  -BacklogDocPath ".\docs\BACKLOG.md" \
   -WhatIf
 ```
 
 ## Notas
 
 - Si omites `-Repo`, el script intenta detectarlo desde `git remote origin`.
-- Si omites `-BacklogDocPath`, usa `docs/BACKLOG.md` del repo actual.
+- `-ResetCatalog` es el modo recomendado para reconciliar y dejar el backlog exacto.

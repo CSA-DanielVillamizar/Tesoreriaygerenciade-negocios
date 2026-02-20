@@ -1,18 +1,14 @@
 param(
     [string]$Repo = "",
     [string]$BacklogPath = "C:\Users\DanielVillamizar\Sistema Contable L.A.M.A. Medellin\backlog",
-    [string]$BacklogDocPath = "",
+    [switch]$ResetCatalog,
     [switch]$WhatIf
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 function Write-Info([string]$Message) {
     Write-Host "[INFO] $Message" -ForegroundColor Cyan
-}
-
-function Write-Warn([string]$Message) {
-    Write-Host "[WARN] $Message" -ForegroundColor Yellow
 }
 
 function Resolve-RepoFromGit {
@@ -59,7 +55,6 @@ function Ensure-Milestones([string]$RepoName, [hashtable]$MilestoneMap) {
 
     foreach ($title in $MilestoneMap.Values) {
         if ($existingTitles.ContainsKey($title)) {
-            Write-Info "Milestone ya existe: $title"
             continue
         }
 
@@ -74,7 +69,7 @@ function Ensure-Milestones([string]$RepoName, [hashtable]$MilestoneMap) {
 }
 
 function Get-LabelDefinitions {
-    $labels = @(
+    return @(
         @{ name = "epic"; color = "5319e7"; description = "Epic issue" },
         @{ name = "story"; color = "1d76db"; description = "Story issue" },
         @{ name = "task"; color = "0e8a16"; description = "Task issue" },
@@ -96,14 +91,11 @@ function Get-LabelDefinitions {
         @{ name = "area:projects"; color = "bfdadc"; description = "Projects" },
         @{ name = "area:business"; color = "bfdadc"; description = "Business" },
         @{ name = "area:reports"; color = "bfdadc"; description = "Reports" },
-        @{ name = "area:docs"; color = "bfdadc"; description = "Documentation" },
 
         @{ name = "priority:high"; color = "b60205"; description = "High priority" },
         @{ name = "priority:medium"; color = "fbca04"; description = "Medium priority" },
         @{ name = "priority:low"; color = "0e8a16"; description = "Low priority" }
     )
-
-    return $labels
 }
 
 function Ensure-Labels([string]$RepoName) {
@@ -113,7 +105,6 @@ function Ensure-Labels([string]$RepoName) {
 
     foreach ($def in (Get-LabelDefinitions)) {
         if ($existingNames.ContainsKey($def.name)) {
-            Write-Info "Label ya existe: $($def.name)"
             continue
         }
 
@@ -127,266 +118,85 @@ function Ensure-Labels([string]$RepoName) {
     }
 }
 
-function Get-IssueFiles([string]$Path) {
-    $epics = Get-ChildItem -Path $Path -Filter "issue-epic-*.md" -File | Sort-Object Name
-    $stories = Get-ChildItem -Path $Path -Filter "issue-story-*.md" -File | Sort-Object Name
-    return @($epics + $stories)
+function Get-OpenIssues([string]$Repository) {
+    $all = @()
+    $page = 1
+    while ($true) {
+        $batch = gh api "repos/$Repository/issues?state=open&per_page=100&page=$page" | ConvertFrom-Json
+        $items = @($batch | Where-Object { -not $_.pull_request })
+        if ($items.Count -eq 0) { break }
+        $all += $items
+        if ($items.Count -lt 100) { break }
+        $page++
+    }
+    return $all
 }
 
-function Get-BacklogTitles([string]$DocPath) {
-    $result = @{
-        Epic  = @()
-        Story = @()
-    }
+function Get-CanonicalTargets {
+    return @(
+        @{title = 'EPIC: Phase 0 - IAM Entra External ID + Roles internos + MFA'; labels = @('epic', 'phase:0', 'area:iam', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-epic-01.md' },
+        @{title = 'EPIC: Phase 0 - Infra mínima Azure + Observabilidad + Key Vault + Blob'; labels = @('epic', 'phase:0', 'area:infra', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-epic-02.md' },
+        @{title = 'EPIC: Phase 0 - Modelo base: Centros de costo + Medios de pago + Terceros + Mapeo contable'; labels = @('epic', 'phase:0', 'area:accounting', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-epic-03.md' },
+        @{title = 'EPIC: Phase 1 - Contabilidad general (PUC, comprobantes, libros, cierres)'; labels = @('epic', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-epic-04.md' },
+        @{title = 'EPIC: Phase 1 - Tesorería bancarizada + recibos + anulaciones'; labels = @('epic', 'phase:1', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-epic-05.md' },
+        @{title = 'EPIC: Phase 1 - Cuotas miembros + CxC + mora + recaudo'; labels = @('epic', 'phase:1', 'area:members', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-epic-06.md' },
+        @{title = 'EPIC: Phase 1 - CxP proveedores (facturas, vencimientos, pagos)'; labels = @('epic', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-epic-07.md' },
+        @{title = 'EPIC: Phase 1 - Multimoneda informativa USD + Diferencia en cambio'; labels = @('epic', 'phase:1', 'area:accounting', 'area:treasury', 'priority:medium'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-epic-08.md' },
+        @{title = 'EPIC: Phase 2 - Donaciones + campañas + certificados obligatorios'; labels = @('epic', 'phase:2', 'area:donations', 'priority:high'); milestone = 'Phase 2 - Donaciones'; file = 'issue-epic-09.md' },
+        @{title = 'EPIC: Phase 3 - Proyectos sociales + beneficiarios + consentimiento + rendición'; labels = @('epic', 'phase:3', 'area:projects', 'priority:high'); milestone = 'Phase 3 - Proyectos'; file = 'issue-epic-10.md' },
+        @{title = 'EPIC: Phase 4 - Negocios (inventario simple, compras/ventas, comprobante interno)'; labels = @('epic', 'phase:4', 'area:business', 'priority:medium'); milestone = 'Phase 4 - Negocios'; file = 'issue-epic-11.md' },
+        @{title = 'EPIC: Phase 5 - Reportes tributarios base (exógena, beneficiarios finales)'; labels = @('epic', 'phase:5', 'area:reports', 'priority:medium'); milestone = 'Phase 5 - Tributario avanzado'; file = 'issue-epic-12.md' },
+        @{title = 'EPIC: Phase X - Preparación para facturación electrónica (estructura/adapter) — NO implementar'; labels = @('epic', 'area:business', 'priority:low'); milestone = 'Future / Backlog'; file = 'issue-epic-13.md' },
 
-    if (-not $DocPath -or -not (Test-Path $DocPath)) {
-        return $result
-    }
+        @{title = 'STORY: Integrar login OIDC con Entra External ID (Next.js + API)'; labels = @('story', 'phase:0', 'area:iam', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-iam-01.md' },
+        @{title = 'STORY: Registrar transacciones con moneda origen USD (informativa) y COP contable'; labels = @('story', 'phase:1', 'area:accounting', 'priority:medium'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-fx-01.md' },
 
-    $mode = ""
-    foreach ($line in (Get-Content -Path $DocPath)) {
-        if ($line -match '^##\s+Épicas') {
-            $mode = "Epic"
-            continue
-        }
-        if ($line -match '^##\s+Historias') {
-            $mode = "Story"
-            continue
-        }
+        @{title = 'STORY: Crear modelo de usuario interno vinculado a Entra (sin password)'; labels = @('story', 'phase:0', 'area:iam', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-2.md' },
+        @{title = 'STORY: CRUD de roles internos (Admin/Operador/Tesorero/Contador/Junta) con auditoría'; labels = @('story', 'phase:0', 'area:iam', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-3.md' },
+        @{title = 'STORY: Implementar matriz de permisos (RBAC) en API y UI'; labels = @('story', 'phase:0', 'area:iam', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-4.md' },
+        @{title = 'STORY: Parametrizar centros de costo (CAPITULO/FUNDACION/PROYECTO/EVENTO)'; labels = @('story', 'phase:0', 'area:accounting', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-5.md' },
+        @{title = 'STORY: Catálogo de medios de pago obligatorio en transacciones monetarias'; labels = @('story', 'phase:0', 'area:treasury', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-6.md' },
+        @{title = 'STORY: Catálogo de tipos de afiliación y CC por defecto (CAPITULO/FUNDACION)'; labels = @('story', 'phase:0', 'area:members', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-7.md' },
+        @{title = 'STORY: Parametrizar cuenta bancaria Bancolombia (única activa) y cuenta contable asociada'; labels = @('story', 'phase:0', 'area:treasury', 'priority:high'); milestone = 'Phase 0 - Foundations'; file = 'issue-story-0-8.md' },
 
-        if ($mode -eq "Epic" -and $line -match '^\s*\d+\.\s+(?<title>.+)\s*$') {
-            $result.Epic += $Matches.title.Trim()
-            continue
-        }
+        @{title = 'STORY: Importar PUC ESAL desde archivo entregado por contador'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-1.md' },
+        @{title = 'STORY: Parametrizar mapeo contable por tipo de operación'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-2.md' },
+        @{title = 'STORY: Registrar comprobante contable con líneas debe/haber balanceadas'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-3.md' },
+        @{title = 'STORY: Generar libros contables (diario, mayor, balance de prueba) en COP'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-4.md' },
+        @{title = 'STORY: Cierre contable mensual con bloqueo (valida Tesorero, ejecuta Contador)'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-5.md' },
+        @{title = 'STORY: Registrar movimiento bancario (ingreso/egreso) con soporte, CC y medio de pago'; labels = @('story', 'phase:1', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-6.md' },
+        @{title = 'STORY: Emitir recibo PDF con QR y verificación pública'; labels = @('story', 'phase:1', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-7.md' },
+        @{title = 'STORY: Anulación intra-mes con aprobación del Tesorero y motivo obligatorio'; labels = @('story', 'phase:1', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-8.md' },
+        @{title = 'STORY: Configurar cuota anual con mes de inicio y acta soporte'; labels = @('story', 'phase:1', 'area:members', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-9.md' },
+        @{title = 'STORY: Generar obligaciones mensuales de cuotas (CxC) por miembro activo'; labels = @('story', 'phase:1', 'area:members', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-10.md' },
+        @{title = 'STORY: Registrar pago de cuota y aplicar a obligaciones (anticipos permitidos)'; labels = @('story', 'phase:1', 'area:members', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-11.md' },
+        @{title = 'STORY: Reporte de mora y aging de cartera por miembro'; labels = @('story', 'phase:1', 'area:members', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-12.md' },
+        @{title = 'STORY: Registrar factura de proveedor como CxP (pendiente) con soporte'; labels = @('story', 'phase:1', 'area:accounting', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-13.md' },
+        @{title = 'STORY: Registrar pago de CxP y cruce contra obligación (impacta Banco)'; labels = @('story', 'phase:1', 'area:accounting', 'area:treasury', 'priority:high'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-14.md' },
+        @{title = 'STORY: Precargar TRM SFC del día hábil aplicable para operaciones en USD'; labels = @('story', 'phase:1', 'area:accounting', 'priority:medium'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-16.md' },
+        @{title = 'STORY: Generar diferencia en cambio al liquidar CxP/CxC en USD si COP difiere'; labels = @('story', 'phase:1', 'area:accounting', 'priority:medium'); milestone = 'Phase 1 - MVP Contabilidad + Cuotas'; file = 'issue-story-1-17.md' },
 
-        if ($mode -eq "Story" -and $line -match '^\s*-\s+\[Story\]\[Phase\s*\d+\]\s+(?<title>.+)\s*$') {
-            $result.Story += $Matches.title.Trim()
-            continue
-        }
-    }
+        @{title = 'STORY: Crear campaña de donación con meta, vigencia y CC/proyecto asociado'; labels = @('story', 'phase:2', 'area:donations', 'priority:high'); milestone = 'Phase 2 - Donaciones'; file = 'issue-story-2-1.md' },
+        @{title = 'STORY: Registrar donación (dinero o especie) con soporte y donante'; labels = @('story', 'phase:2', 'area:donations', 'priority:high'); milestone = 'Phase 2 - Donaciones'; file = 'issue-story-2-2.md' },
+        @{title = 'STORY: Emitir certificado obligatorio de donación (PDF + QR + verificación)'; labels = @('story', 'phase:2', 'area:donations', 'priority:high'); milestone = 'Phase 2 - Donaciones'; file = 'issue-story-2-3.md' },
+        @{title = 'STORY: Reporte de donaciones por campaña/donante/proyecto (exportable)'; labels = @('story', 'phase:2', 'area:donations', 'priority:medium'); milestone = 'Phase 2 - Donaciones'; file = 'issue-story-2-4.md' },
 
-    return $result
-}
+        @{title = 'STORY: Crear proyecto social con presupuesto, cronograma, actividades y evidencias'; labels = @('story', 'phase:3', 'area:projects', 'priority:high'); milestone = 'Phase 3 - Proyectos'; file = 'issue-story-3-1.md' },
+        @{title = 'STORY: Registrar beneficiario con consentimiento obligatorio para almacenar PII'; labels = @('story', 'phase:3', 'area:projects', 'priority:high'); milestone = 'Phase 3 - Proyectos'; file = 'issue-story-3-2.md' },
+        @{title = 'STORY: Control de acceso a PII de beneficiarios (Junta solo agregado/anónimo)'; labels = @('story', 'phase:3', 'area:projects', 'priority:high'); milestone = 'Phase 3 - Proyectos'; file = 'issue-story-3-3.md' },
+        @{title = 'STORY: Registrar indicadores agregados por proyecto y generar informe de rendición (PDF/Excel)'; labels = @('story', 'phase:3', 'area:projects', 'priority:high'); milestone = 'Phase 3 - Proyectos'; file = 'issue-story-3-4.md' },
 
-function Get-SectionSingleLine([string[]]$Lines, [string]$SectionHeading) {
-    for ($i = 0; $i -lt $Lines.Length; $i++) {
-        if ($Lines[$i] -match "^##\s+$SectionHeading\s*$") {
-            for ($j = $i + 1; $j -lt $Lines.Length; $j++) {
-                $candidate = $Lines[$j].Trim()
-                if ($candidate -eq "") { continue }
-                if ($candidate -match '^##\s+') { return "" }
-                return $candidate
-            }
-        }
-    }
-    return ""
-}
+        @{title = 'STORY: Registrar compra de inventario simple (cantidades + valor unitario) con CxP opcional'; labels = @('story', 'phase:4', 'area:business', 'priority:medium'); milestone = 'Phase 4 - Negocios'; file = 'issue-story-4-1.md' },
+        @{title = 'STORY: Registrar venta y emitir comprobante interno PDF + QR (sin facturación electrónica)'; labels = @('story', 'phase:4', 'area:business', 'priority:medium'); milestone = 'Phase 4 - Negocios'; file = 'issue-story-4-2.md' },
+        @{title = 'STORY: Reportes de inventario, ventas y utilidad simple (exportable)'; labels = @('story', 'phase:4', 'area:business', 'priority:low'); milestone = 'Phase 4 - Negocios'; file = 'issue-story-4-3.md' },
 
-function Resolve-IssueType([string]$FileName) {
-    if ($FileName -like "issue-epic-*.md") { return "epic" }
-    if ($FileName -like "issue-story-*.md") { return "story" }
-    return ""
-}
-
-function Resolve-Phase([string]$FileName, [string]$Title, [string]$BodyText) {
-    if ($FileName -match '^issue-story-(?<phase>[0-5])-') {
-        return $Matches.phase
-    }
-
-    if ($FileName -match 'issue-story-iam-') { return "0" }
-    if ($FileName -match 'issue-story-fx-') { return "1" }
-
-    $text = "$Title`n$BodyText"
-    if ($text -match '(?i)phase\s*(?<phase>[0-5])') {
-        return $Matches.phase
-    }
-
-    if ($text -match '(?i)\[phase\s*x\]') {
-        return "X"
-    }
-
-    return "X"
-}
-
-function Resolve-AreaLabel([string]$IssueType, [string]$FileName, [string]$Phase, [string]$Title, [string]$BodyText) {
-    $text = ("$FileName`n$Title`n$BodyText").ToLowerInvariant()
-
-    if ($IssueType -eq "story") {
-        if ($FileName -match 'issue-story-iam-') { return "area:iam" }
-        if ($FileName -match 'issue-story-fx-') { return "area:accounting" }
-        if ($FileName -match '^issue-story-0-') { return "area:iam" }
-        if ($FileName -match '^issue-story-1-') { return "area:accounting" }
-        if ($FileName -match '^issue-story-2-') { return "area:donations" }
-        if ($FileName -match '^issue-story-3-') { return "area:projects" }
-        if ($FileName -match '^issue-story-4-') { return "area:business" }
-        if ($FileName -match '^issue-story-5-') { return "area:reports" }
-    }
-
-    if ($IssueType -eq "epic" -and $FileName -match '^issue-epic-(?<idx>\d+)\.md$') {
-        $epicIdx = [int]$Matches.idx
-        $epicAreaMap = @{
-            1  = "area:iam"
-            2  = "area:infra"
-            3  = "area:accounting"
-            4  = "area:accounting"
-            5  = "area:treasury"
-            6  = "area:members"
-            7  = "area:accounting"
-            8  = "area:accounting"
-            9  = "area:donations"
-            10 = "area:projects"
-            11 = "area:business"
-            12 = "area:reports"
-            13 = "area:reports"
-        }
-        if ($epicAreaMap.ContainsKey($epicIdx)) {
-            return $epicAreaMap[$epicIdx]
-        }
-    }
-
-    if ($Phase -eq "2") { return "area:donations" }
-    if ($Phase -eq "3") { return "area:projects" }
-    if ($Phase -eq "4") { return "area:business" }
-    if ($Phase -eq "5") { return "area:reports" }
-
-    if ($text -match 'donaci[oó]n|donaciones|certificado|campa') { return "area:donations" }
-    if ($text -match 'proyecto|beneficiario|rendici[oó]n') { return "area:projects" }
-    if ($text -match '\bmerch\b|inventario|\bventa\b|\bventas\b|negocios?') { return "area:business" }
-    if ($text -match 'ex[oó]gena|dian|tributari|beneficiarios finales|\breporte\b|\breportes\b') { return "area:reports" }
-    if ($text -match 'miembro|afiliaci[oó]n|\bcuota\b|\bcuotas\b|\bcxc\b|cartera') { return "area:members" }
-    if ($text -match 'tesorer[ií]a|banco|conciliaci[oó]n|medio de pago|\brecibo\b|\brecibos\b') { return "area:treasury" }
-    if ($text -match 'contab|\bpuc\b|comprobante|libros? contables|balance|\bcxp\b|diferencia en cambio|\btrm\b|\busd\b|cierre mensual') { return "area:accounting" }
-    if ($text -match '\binfra\b|key vault|blob|app service|azure sql|observabil|insights|devops') { return "area:infra" }
-    if ($text -match '\biam\b|entra|oidc|mfa|auth|login|jwt|\brbac\b|permiso|roles?') { return "area:iam" }
-    if ($text -match 'docs|documentaci') { return "area:docs" }
-
-    return "area:docs"
-}
-
-function Resolve-PriorityLabel([string]$Title, [string]$BodyText) {
-    $text = ("$Title`n$BodyText").ToLowerInvariant()
-    if ($text -match 'priority:high|prioridad alta|alta prioridad') { return "priority:high" }
-    if ($text -match 'priority:low|prioridad baja|baja prioridad') { return "priority:low" }
-    return "priority:medium"
-}
-
-function Resolve-IssueTitle(
-    [System.IO.FileInfo]$File,
-    [string]$IssueType,
-    [string[]]$BodyLines,
-    [hashtable]$BacklogTitles
-) {
-    if ($IssueType -eq "epic" -and $File.Name -match '^issue-epic-(?<idx>\d+)\.md$') {
-        $index = [int]$Matches.idx - 1
-        if ($index -ge 0 -and $index -lt $BacklogTitles.Epic.Count) {
-            return $BacklogTitles.Epic[$index]
-        }
-    }
-
-    $rawQuiero = Get-SectionSingleLine -Lines $BodyLines -SectionHeading "Quiero"
-    if ($rawQuiero) {
-        if ($IssueType -eq "epic") { return "EPIC: $rawQuiero" }
-        return "STORY: $rawQuiero"
-    }
-
-    $rawObjetivo = Get-SectionSingleLine -Lines $BodyLines -SectionHeading "Objetivo"
-    if ($rawObjetivo) {
-        if ($IssueType -eq "epic") { return "EPIC: $rawObjetivo" }
-        return "STORY: $rawObjetivo"
-    }
-
-    if ($IssueType -eq "epic") { return "EPIC: $($File.BaseName)" }
-    return "STORY: $($File.BaseName)"
-}
-
-function Get-ExistingIssueTitles([string]$RepoName) {
-    $issues = & gh issue list --repo $RepoName --state all --limit 500 --json "number,title" | ConvertFrom-Json
-    $existing = @{}
-    foreach ($i in $issues) {
-        $existing[$i.title] = $i.number
-    }
-    return $existing
-}
-
-function Create-IssuesFromFiles(
-    [string]$RepoName,
-    [System.IO.FileInfo[]]$Files,
-    [hashtable]$MilestoneMap,
-    [hashtable]$BacklogTitles
-) {
-    $existingTitles = Get-ExistingIssueTitles -RepoName $RepoName
-    $created = 0
-    $skipped = 0
-
-    foreach ($file in $Files) {
-        $issueType = Resolve-IssueType -FileName $file.Name
-        if ($issueType -notin @("epic", "story")) {
-            Write-Warn "Saltando archivo no soportado: $($file.Name)"
-            continue
-        }
-
-        $bodyText = Get-Content -Path $file.FullName -Raw
-        $bodyLines = $bodyText -split "`r?`n"
-        $title = Resolve-IssueTitle -File $file -IssueType $issueType -BodyLines $bodyLines -BacklogTitles $BacklogTitles
-
-        if ($existingTitles.ContainsKey($title)) {
-            Write-Info "Issue ya existe (#$($existingTitles[$title])): $title"
-            $skipped++
-            continue
-        }
-
-        $phase = Resolve-Phase -FileName $file.Name -Title $title -BodyText $bodyText
-        $milestoneTitle = $MilestoneMap[$phase]
-        if (-not $milestoneTitle) { $milestoneTitle = $MilestoneMap["X"] }
-
-        $areaLabel = Resolve-AreaLabel -IssueType $issueType -FileName $file.Name -Phase $phase -Title $title -BodyText $bodyText
-        $priorityLabel = Resolve-PriorityLabel -Title $title -BodyText $bodyText
-
-        $labels = @($issueType)
-        if ($phase -match '^[0-5]$') {
-            $labels += "phase:$phase"
-        }
-        $labels += $areaLabel
-        $labels += $priorityLabel
-        $labelCsv = ($labels | Select-Object -Unique) -join ","
-
-        if ($WhatIf) {
-            Write-Info "[WhatIf] Crearía issue: '$title' | milestone='$milestoneTitle' | labels='$labelCsv'"
-            $created++
-            continue
-        }
-
-        Write-Info "Creando issue: $title"
-        $args = @(
-            "issue", "create",
-            "--repo", $RepoName,
-            "--title", $title,
-            "--body-file", $file.FullName,
-            "--label", $labelCsv
-        )
-        if ($milestoneTitle) {
-            $args += @("--milestone", $milestoneTitle)
-        }
-
-        $out = & gh @args 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "No se pudo crear '$title'. Error: $out"
-            continue
-        }
-
-        Write-Info "Creado: $out"
-        $created++
-    }
-
-    Write-Info "Resumen issues -> creados: $created | omitidos: $skipped"
+        @{title = 'STORY: Generar reporte estructurado exportable para exógena (base para diligenciamiento)'; labels = @('story', 'phase:5', 'area:reports', 'priority:medium'); milestone = 'Phase 5 - Tributario avanzado'; file = 'issue-story-5-1.md' },
+        @{title = 'STORY: Generar reporte base beneficiarios finales (estructura para diligenciar)'; labels = @('story', 'phase:5', 'area:reports', 'priority:medium'); milestone = 'Phase 5 - Tributario avanzado'; file = 'issue-story-5-2.md' }
+    )
 }
 
 if (-not $Repo) {
     $Repo = Resolve-RepoFromGit
-}
-
-if (-not $BacklogDocPath) {
-    $BacklogDocPath = Join-Path (Get-Location) "docs/BACKLOG.md"
 }
 
 if (-not (Test-Path $BacklogPath)) {
@@ -396,17 +206,90 @@ if (-not (Test-Path $BacklogPath)) {
 Ensure-GhReady
 Write-Info "Repo objetivo: $Repo"
 Write-Info "Backlog folder: $BacklogPath"
-Write-Info "Backlog doc (títulos): $BacklogDocPath"
+Write-Info "Modo reset canónico: $([bool]$ResetCatalog)"
 
 $milestoneMap = Get-MilestoneMap
 Ensure-Milestones -RepoName $Repo -MilestoneMap $milestoneMap
 Ensure-Labels -RepoName $Repo
 
-$titles = Get-BacklogTitles -DocPath $BacklogDocPath
-$files = Get-IssueFiles -Path $BacklogPath
-
-if (-not $files -or $files.Count -eq 0) {
-    throw "No se encontraron archivos issue-epic-*.md / issue-story-*.md en $BacklogPath"
+$targets = Get-CanonicalTargets
+if ($targets.Count -eq 0) {
+    throw "No hay catálogo canónico configurado."
 }
 
-Create-IssuesFromFiles -RepoName $Repo -Files $files -MilestoneMap $milestoneMap -BacklogTitles $titles
+$open = Get-OpenIssues -Repository $Repo
+$openEpicStory = @($open | Where-Object { (@($_.labels.name) -contains 'epic') -or (@($_.labels.name) -contains 'story') })
+
+if ($ResetCatalog) {
+    $closed = 0
+    foreach ($i in $openEpicStory) {
+        if ($WhatIf) {
+            Write-Info "[WhatIf] Cerraría issue #$($i.number): $($i.title)"
+        }
+        else {
+            gh issue close $i.number --repo $Repo --reason "not planned" 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { $closed++ }
+            Start-Sleep -Milliseconds 150
+        }
+    }
+    Write-Info "Issues epic/story cerrados: $closed"
+
+    $open = @()
+}
+
+$existingOpenTitles = @{}
+foreach ($i in $open) {
+    $existingOpenTitles[[string]$i.title] = $true
+}
+
+$created = 0
+$skipped = 0
+foreach ($t in $targets) {
+    if ($existingOpenTitles.ContainsKey([string]$t.title)) {
+        $skipped++
+        continue
+    }
+
+    $bodyPath = Join-Path $BacklogPath $t.file
+    if (-not (Test-Path $bodyPath)) {
+        throw "No existe body-file: $bodyPath"
+    }
+
+    $labelsCsv = (($t.labels | Select-Object -Unique) -join ',')
+
+    if ($WhatIf) {
+        Write-Info "[WhatIf] Crearía issue: $($t.title)"
+        $created++
+        continue
+    }
+
+    $createdOk = $false
+    $lastErrorText = ""
+    for ($attempt = 1; $attempt -le 4; $attempt++) {
+        $createOut = gh issue create --repo $Repo --title $t.title --body-file $bodyPath --label $labelsCsv --milestone $t.milestone 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $createdOk = $true
+            break
+        }
+
+        $lastErrorText = ($createOut | Out-String).Trim()
+        Start-Sleep -Seconds ([Math]::Min(2 * $attempt, 8))
+    }
+
+    if (-not $createdOk) {
+        throw "Error creando issue: $($t.title). Detalle: $lastErrorText"
+    }
+
+    Start-Sleep -Milliseconds 250
+    $created++
+}
+
+$after = Get-OpenIssues -Repository $Repo
+$afterEpic = @($after | Where-Object { @($_.labels.name) -contains 'epic' }).Count
+$afterStory = @($after | Where-Object { @($_.labels.name) -contains 'story' }).Count
+
+Write-Output "created_catalog=$created"
+Write-Output "skipped_existing_open=$skipped"
+Write-Output "open_epic=$afterEpic"
+Write-Output "open_story=$afterStory"
+Write-Output ("open_epic_story_total=" + ($afterEpic + $afterStory))
