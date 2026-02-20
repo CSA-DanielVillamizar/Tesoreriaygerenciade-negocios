@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hard Reset - Tesorería LAMA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            padding: 10px 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #f8f9ff;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        button.secondary {
+            background: #95a5a6;
+        }
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        #output {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-line {
+            margin-bottom: 8px;
+            padding: 5px;
+        }
+        .log-success {
+            color: #27ae60;
+        }
+        .log-error {
+            color: #e74c3c;
+        }
+        .log-warning {
+            color: #f39c12;
+        }
+        .log-info {
+            color: #3498db;
+        }
+        .file-info {
+            color: #666;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress.show {
+            display: block;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stats {
+            background: #f0f4ff;
+            border: 1px solid #e0e6ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        .stats.show {
+            display: block;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e6ff;
+        }
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        .stat-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .stat-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Hard Reset - Tesorería</h1>
+        <div class="subtitle">
+            ⚠️ OPERACIÓN DESTRUCTIVA: Eliminará todos los datos transaccionales y re-importará desde Excel
+        </div>
+
+        <div class="section">
+            <div class="section-title">1. Seleccionar archivo Excel</div>
+            <input type="file" id="excelFile" accept=".xlsx" />
+            <div class="file-info" id="fileInfo"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">2. Ejecutar operación</div>
+            <button id="executeBtn" class="danger">
+                🚀 Ejecutar Hard Reset
+            </button>
+            <button id="cancelBtn" class="secondary" style="display: none;">
+                ⏹️ Cancelar
+            </button>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">3. Resultado</div>
+            <div id="output"></div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-row">
+                <span class="stat-label">Recibos eliminados:</span>
+                <span class="stat-value" id="statRecibos">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Egresos eliminados:</span>
+                <span class="stat-value" id="statEgresos">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Movimientos eliminados:</span>
+                <span class="stat-value" id="statMovimientos">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Recibos importados:</span>
+                <span class="stat-value" id="statRecibosImportados">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Egresos importados:</span>
+                <span class="stat-value" id="statEgresosImportados">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Estado de validación:</span>
+                <span class="stat-value" id="statValidacion">Pendiente</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const excelFileInput = document.getElementById('excelFile');
+        const executeBtn = document.getElementById('executeBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const output = document.getElementById('output');
+        const progress = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const stats = document.getElementById('stats');
+        const fileInfo = document.getElementById('fileInfo');
+        let currentRequest = null;
+
+        function addLog(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log-line log-${type}`;
+            const timestamp = new Date().toLocaleTimeString('es-CO');
+            div.textContent = `[${timestamp}] ${message}`;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStats(data) {
+            if (data.recibosEliminados !== undefined) {
+                document.getElementById('statRecibos').textContent = data.recibosEliminados;
+            }
+            if (data.egresosEliminados !== undefined) {
+                document.getElementById('statEgresos').textContent = data.egresosEliminados;
+            }
+            if (data.movimientosEliminados !== undefined) {
+                document.getElementById('statMovimientos').textContent = data.movimientosEliminados;
+            }
+            if (data.recibosCreados !== undefined) {
+                document.getElementById('statRecibosImportados').textContent = data.recibosCreados;
+            }
+            if (data.egresosCreados !== undefined) {
+                document.getElementById('statEgresosImportados').textContent = data.egresosCreados;
+            }
+            stats.classList.add('show');
+        }
+
+        excelFileInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                fileInfo.textContent = `✅ Archivo seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                executeBtn.disabled = false;
+            } else {
+                fileInfo.textContent = '';
+                executeBtn.disabled = true;
+            }
+        });
+
+        executeBtn.addEventListener('click', async function () {
+            const file = excelFileInput.files[0];
+            if (!file) {
+                addLog('❌ Por favor selecciona un archivo Excel', 'error');
+                return;
+            }
+
+            if (!confirm('⚠️ ADVERTENCIA: Esta operación eliminará TODOS los datos transaccionales.\n\n¿Estás seguro de continuar?')) {
+                addLog('⚠️ Operación cancelada por el usuario', 'warning');
+                return;
+            }
+
+            output.innerHTML = '';
+            stats.classList.remove('show');
+            executeBtn.disabled = true;
+            cancelBtn.style.display = 'block';
+            progress.classList.add('show');
+            progressBar.style.width = '10%';
+            progressBar.textContent = '10%';
+
+            const formData = new FormData();
+            formData.append('excelFile', file);
+
+            try {
+                addLog('🔄 Iniciando Hard Reset...', 'info');
+                addLog(`📁 Archivo: ${file.name}`, 'info');
+                addLog('⏳ Enviando solicitud al servidor...', 'info');
+
+                const controller = new AbortController();
+                currentRequest = controller;
+
+                const response = await fetch('/api/admin/reset-and-reseed', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include',
+                    signal: controller.signal
+                });
+
+                progressBar.style.width = '50%';
+                progressBar.textContent = '50%';
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addLog(`❌ Error del servidor (${response.status}): ${errorText.substring(0, 200)}`, 'error');
+                    throw new Error(`Error HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                progressBar.style.width = '90%';
+                progressBar.textContent = '90%';
+
+                addLog('✅ Respuesta recibida del servidor', 'success');
+                addLog('', 'info');
+
+                // Mostrar resumen
+                addLog('═══ RESUMEN DE OPERACIÓN ═══', 'info');
+                addLog('', 'info');
+                addLog(`🗑️  FASE WIPE (Limpieza):`, 'info');
+                addLog(`   • Recibos eliminados: ${data.recibosEliminados}`, 'success');
+                addLog(`   • Egresos eliminados: ${data.egresosEliminados}`, 'success');
+                addLog(`   • Movimientos eliminados: ${data.movimientosEliminados}`, 'success');
+                addLog(`   • Cierres eliminados: ${data.cierresEliminados}`, 'success');
+                addLog('', 'info');
+
+                addLog(`📥 FASE IMPORT (Importación):`, 'info');
+                addLog(`   • Recibos creados: ${data.recibosCreados}`, 'success');
+                addLog(`   • Egresos creados: ${data.egresosCreados}`, 'success');
+                addLog(`   • Movimientos creados: ${data.movimientosCreados}`, 'success');
+                addLog('', 'info');
+
+                if (data.validaciones && data.validaciones.length > 0) {
+                    addLog(`⚠️  VALIDACIONES:`, 'warning');
+                    data.validaciones.forEach(v => {
+                        addLog(`   • ${v}`, 'warning');
+                    });
+                } else {
+                    addLog(`✅ Todas las validaciones pasaron correctamente`, 'success');
+                }
+
+                addLog('', 'info');
+                if (data.errores && data.errores.length > 0) {
+                    addLog(`❌ ERRORES (${data.errores.length}):`, 'error');
+                    data.errores.forEach(err => {
+                        addLog(`   • ${err}`, 'error');
+                    });
+                } else {
+                    addLog(`✅ Hard Reset completado exitosamente`, 'success');
+                }
+
+                // Actualizar stats
+                updateStats(data);
+
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    addLog('⏹️  Operación cancelada', 'warning');
+                } else {
+                    addLog(`❌ Error: ${error.message}`, 'error');
+                }
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+            } finally {
+                executeBtn.disabled = false;
+                cancelBtn.style.display = 'none';
+                setTimeout(() => {
+                    progress.classList.remove('show');
+                }, 2000);
+                currentRequest = null;
+            }
+        });
+
+        cancelBtn.addEventListener('click', function () {
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+        });
+
+        // Cargar archivo por defecto si existe
+        window.addEventListener('load', function () {
+            addLog('🟢 Herramienta de Hard Reset cargada', 'success');
+            addLog('📝 Pasos:', 'info');
+            addLog('1. Selecciona el archivo INFORME TESORERIA 2025.xlsx', 'info');
+            addLog('2. Haz clic en "Ejecutar Hard Reset"', 'info');
+            addLog('3. Espera a que se complete la operación', 'info');
+        });
+    </script>
+</body>
+</html>

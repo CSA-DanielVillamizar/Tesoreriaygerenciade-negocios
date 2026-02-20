@@ -1,0 +1,177 @@
+@page "/tesoreria/verificacion"
+@attribute [Authorize(Policy = "TesoreroJuntaConsulta")]
+@using Server.Services.Reportes
+@using MudBlazor
+@using Server.Components.Shared
+
+@inject IVerificacionTesoreriaService VerifService
+@inject Server.Services.LamaToastService Toast
+
+<PageTitle>Verificación de Tesorería - RTE</PageTitle>
+
+<div class="lama-container">
+  <LamaPageHeader Title="Verificación de Tesorería"
+                  Subtitle="Auditoría de saldos y consistencia de datos"
+                  Icon="@Icons.Material.Filled.CheckCircle">
+    <Actions>
+      <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" OnClick="RefrescarVerificacion">Refrescar</MudButton>
+    </Actions>
+  </LamaPageHeader>
+
+  <LamaFilterCard>
+    <ChildContent>
+      <MudItem xs="12" sm="6" md="3">
+        <MudNumericField @bind-Value="anio" Label="Año" Variant="Variant.Outlined" Margin="Margin.Dense" Min="2020" Max="2099" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudNumericField @bind-Value="mes" Label="Mes" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="12" />
+      </MudItem>
+    </ChildContent>
+    <Actions>
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="Verificar">Verificar</MudButton>
+      <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Build" OnClick="RepararSaldoInicial">Reparar Saldo</MudButton>
+    </Actions>
+  </LamaFilterCard>
+
+  @if (verificando)
+  {
+    <MudPaper Class="lama-card" Elevation="0" Style="text-align:center; padding:32px;">
+      <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+      <MudText Typo="Typo.body2" Class="mt-2">Verificando datos...</MudText>
+    </MudPaper>
+  }
+  else if (resultado == null)
+  {
+    <LamaEmptyState Title="Sin datos"
+                    Description="Selecciona un año y mes, luego haz clic en 'Verificar'"
+                    Icon="@Icons.Material.Outlined.VerifiedUser">
+    </LamaEmptyState>
+  }
+  else
+  {
+    <MudGrid Spacing="2">
+      <MudItem xs="12">
+        <MudPaper Class="lama-card" Elevation="0">
+          <MudText Typo="Typo.h6" Class="mb-4">Resultado de Verificación</MudText>
+          
+          <MudGrid Spacing="1">
+            <MudItem xs="12" sm="6">
+              <div style="padding: 12px; background: var(--lama-background-secondary); border-radius: 8px; margin-bottom: 12px;">
+                <MudText Typo="Typo.subtitle2" Class="lama-muted">Periodo</MudText>
+                <MudText Typo="Typo.body1">@($"{resultado.Anio}/{resultado.Mes:D2}")</MudText>
+              </div>
+            </MudItem>
+          </MudGrid>
+
+          <MudTable Items="ResultadoItems" Dense="true" Hover="false">
+            <HeaderContent>
+              <MudTh>Concepto</MudTh>
+              <MudTh Class="lama-numeric">Valor</MudTh>
+              <MudTh>Estado</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+              <MudTd><strong>@context.Concepto</strong></MudTd>
+              <MudTd Class="lama-numeric">
+                @if (context.EsValor)
+                {
+                  <span class="lama-currency">@FormatCurrency(context.Valor)</span>
+                }
+              </MudTd>
+              <MudTd>
+                @if (context.EsEstado)
+                {
+                  <LamaBadge Text="@context.Estado" Variant="@(context.Estado == "OK" ? "success" : "warning")" />
+                }
+              </MudTd>
+            </RowTemplate>
+          </MudTable>
+        </MudPaper>
+      </MudItem>
+    </MudGrid>
+  }
+</div>
+
+@code {
+    private int anio = 2025;
+    private int mes = 10;
+    private VerificacionResultado? resultado;
+    private bool verificando = false;
+    private bool reparando = false;
+
+    private List<ResultItem> ResultadoItems
+    {
+        get
+        {
+            var items = new List<ResultItem>();
+            if (resultado == null) return items;
+
+            items.Add(new("Saldo inicial", resultado.SaldoInicial, true, "", false));
+            items.Add(new("Ingresos", resultado.Ingresos, true, "", false));
+            items.Add(new("Egresos", resultado.Egresos, true, "", false));
+            items.Add(new("Saldo final", resultado.SaldoFinal, true, "", false));
+            items.Add(new("Item Saldo Inicial (AJUSTE-2025-0001)", 0, false, resultado.SaldoInicialItemExiste ? "OK" : "Faltante", true));
+            items.Add(new("Moneda de ítems (COP)", 0, false, resultado.MonedaOrigenConsistente ? "OK" : "Inconsistente", true));
+
+            return items;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Verificar();
+    }
+
+    private async Task Verificar()
+    {
+        verificando = true;
+        StateHasChanged();
+
+        try
+        {
+            resultado = await VerifService.VerificarAsync(anio, mes);
+            Toast.Success("Verificación completada", $"Análisis generado para {anio}/{mes:D2}");
+        }
+        catch (Exception ex)
+        {
+            resultado = null;
+            Toast.Error("Error", $"No se pudo verificar: {ex.Message}");
+        }
+        finally
+        {
+            verificando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RepararSaldoInicial()
+    {
+        reparando = true;
+        StateHasChanged();
+
+        try
+        {
+            var reparo = await VerifService.RepararSaldoInicialAsync();
+            Toast.Success("Reparación completada", "Saldo inicial reparado correctamente");
+            await Verificar();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error("Error", $"No se pudo reparar: {ex.Message}");
+        }
+        finally
+        {
+            reparando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RefrescarVerificacion()
+    {
+        if (resultado != null)
+            _ = Verificar();
+    }
+
+    private string FormatCurrency(decimal amount) => $"${amount:N0}";
+
+    private record ResultItem(string Concepto, decimal Valor, bool EsValor, string Estado, bool EsEstado);
+}

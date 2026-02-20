@@ -1,0 +1,778 @@
+@page "/tesoreria/presupuestos"
+@attribute [Authorize(Policy = "AdminGerenteTesorero")]
+@using Server.DTOs
+@using Server.Services
+@using MudBlazor
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ToastService Toast
+
+<PageTitle>Presupuestos - LAMA Medellín</PageTitle>
+
+<AuthorizeView>
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+    <Authorized>
+        <!-- Encabezado premium -->
+        <LamaPageHeader 
+            Icon="calculate" 
+            Title="Presupuestos"
+            Subtitle="Gestión de presupuestos y ejecución presupuestal">
+            <Actions>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" 
+                           OnClick="MostrarModalCopiar" StartIcon="@Icons.Material.Filled.ContentCopy">
+                    Copiar Presupuestos
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                           OnClick="NuevoPresupuesto" StartIcon="@Icons.Material.Filled.Add">
+                    Nuevo Presupuesto
+                </MudButton>
+            </Actions>
+        </LamaPageHeader>
+
+        <!-- KPIs de Ejecución premium -->
+        @if (estadisticas != null)
+        {
+            <MudGrid Class="mb-6">
+                <MudItem xs="12" sm="6" md="3">
+                    <LamaStatCard 
+                        Icon="account_balance_wallet"
+                        Title="Total Presupuestado"
+                        Value="@FormatCurrency(estadisticas.TotalPresupuestado)"
+                        Subtitle="@($"{estadisticas.CantidadPresupuestos} presupuestos activos")"
+                        Variant="LamaStatCard.ColorVariant.Primary" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <LamaStatCard 
+                        Icon="check_circle"
+                        Title="Total Ejecutado"
+                        Value="@FormatCurrency(estadisticas.TotalEjecutado)"
+                        Subtitle="@GetPorcentajeEjecucionTexto(estadisticas)"
+                        Variant="LamaStatCard.ColorVariant.Success" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <LamaStatCard 
+                        Icon="trending_up"
+                        Title="Diferencia"
+                        Value="@FormatCurrency(estadisticas.Diferencia)"
+                        Subtitle="@(estadisticas.Diferencia >= 0 ? "Disponible" : "Sobreejecución")"
+                        Variant="LamaStatCard.ColorVariant.Warning" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <LamaStatCard 
+                        Icon="bar_chart"
+                        Title="% Ejecución Promedio"
+                        Value="@($"{estadisticas.PorcentajeEjecucionPromedio:F1}%")"
+                        Subtitle="@GetEstadoEjecucion(estadisticas.PorcentajeEjecucionPromedio)"
+                        Variant="LamaStatCard.ColorVariant.Info" />
+                </MudItem>
+            </MudGrid>
+        }
+
+        <!-- Filtros premium -->
+        <LamaFilterCard>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="string" Value="filtroAno" Label="Año" Variant="Variant.Outlined" 
+                               AnchorOrigin="Origin.BottomCenter" FullWidth
+                               ValueChanged="@OnAnoChanged">
+                        <MudSelectItem T="string" Value="@(string.Empty)">Todos los años</MudSelectItem>
+                        @for (int i = DateTime.Now.Year + 1; i >= DateTime.Now.Year - 5; i--)
+                        {
+                            <MudSelectItem T="string" Value="@i.ToString()">@i</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="string" Value="filtroMes" Label="Mes" Variant="Variant.Outlined" 
+                               AnchorOrigin="Origin.BottomCenter" FullWidth
+                               ValueChanged="@OnMesChanged">
+                        <MudSelectItem T="string" Value="@(string.Empty)">Todos los meses</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("1")">Enero</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("2")">Febrero</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("3")">Marzo</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("4")">Abril</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("5")">Mayo</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("6")">Junio</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("7")">Julio</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("8")">Agosto</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("9")">Septiembre</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("10")">Octubre</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("11")">Noviembre</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("12")">Diciembre</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect T="string" Value="filtroConceptoId" Label="Concepto" Variant="Variant.Outlined" 
+                               AnchorOrigin="Origin.BottomCenter" FullWidth
+                               ValueChanged="@OnConceptoChanged">
+                        <MudSelectItem T="string" Value="@(string.Empty)">Todos los conceptos</MudSelectItem>
+                        @if (conceptos != null)
+                        {
+                            @foreach (var concepto in conceptos)
+                            {
+                                <MudSelectItem T="string" Value="@concepto.Id.ToString()">@concepto.Nombre</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="2" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" 
+                               OnClick="LimpiarFiltros" FullWidth
+                               StartIcon="@Icons.Material.Filled.FilterAltOff">
+                        Limpiar
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </LamaFilterCard>
+
+        <!-- Tabla de Presupuestos -->
+        <LamaTableWrapper>
+            @if (cargando)
+            {
+                <div class="d-flex justify-center align-center pa-12">
+                    <MudProgressCircular Size="Size.Large" Color="Color.Primary" Indeterminate />
+                </div>
+            }
+            else if (presupuestos == null || !presupuestos.Any())
+            {
+                <LamaEmptyState 
+                    Icon="@Icons.Material.Filled.Calculate"
+                    Title="No se encontraron presupuestos"
+                    Description="Crea tu primer presupuesto haciendo clic en 'Nuevo Presupuesto'" />
+            }
+            else
+            {
+                <MudTable T="PresupuestoDto" Items="@presupuestos" Hover Breakpoint="Breakpoint.Sm" Dense>
+                    <HeaderContent>
+                        <MudTh>Período</MudTh>
+                        <MudTh>Concepto</MudTh>
+                        <MudTh Style="text-align: right;">Presupuestado</MudTh>
+                        <MudTh Style="text-align: right;">Ejecutado</MudTh>
+                        <MudTh Style="text-align: right;">Diferencia</MudTh>
+                        <MudTh Style="text-align: center;">% Ejecución</MudTh>
+                        <MudTh Style="text-align: center;">Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="pres">
+                        <MudTd DataLabel="Período">
+                            <MudText Typo="Typo.body2" Class="font-weight-medium">@ObtenerNombreMes(pres.Mes) @pres.Ano</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@pres.Ano-@pres.Mes.ToString("00")</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Concepto">
+                            <MudText Typo="Typo.body2" Class="font-weight-medium">@pres.ConceptoNombre</MudText>
+                            @if (!string.IsNullOrEmpty(pres.Notas))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@pres.Notas">@pres.Notas</MudText>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Presupuestado" Style="text-align: right;">
+                            <MudText Typo="Typo.body2" Class="lama-numeric font-weight-bold" Color="Color.Primary">@FormatCurrency(pres.MontoPresupuestado)</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Ejecutado" Style="text-align: right;">
+                            <MudText Typo="Typo.body2" Class="lama-numeric font-weight-bold" Color="Color.Success">@FormatCurrency(pres.MontoEjecutado)</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Diferencia" Style="text-align: right;">
+                            <MudText Typo="Typo.body2" Class="lama-numeric font-weight-bold" Color="@GetColorDiferencia(pres.Diferencia)">@FormatCurrency(pres.Diferencia)</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="% Ejecución" Style="text-align: center;">
+                            <div class="d-flex align-center justify-center ga-2">
+                                <MudProgressLinear Color="@GetColorEjecucion(pres.PorcentajeEjecucion)" Value="@((double)Math.Min(pres.PorcentajeEjecucion, 100))" Class="" Style="width: 100px; max-width: 100px;" />
+                                <MudText Typo="Typo.body2" Class="font-weight-bold">@pres.PorcentajeEjecucion.ToString("F1")%</MudText>
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Acciones" Style="text-align: center;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" 
+                                           OnClick="@(() => VerDetalle(pres.Id))" title="Ver detalle" />
+                            <AuthorizeView Roles="Admin,Gerente" Context="adminContext">
+                                <Authorized>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Success" Size="Size.Small" 
+                                                   OnClick="@(() => EditarPresupuesto(pres.Id))" title="Editar" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" 
+                                                   OnClick="@(() => ConfirmarEliminar(pres))" title="Eliminar" />
+                                </Authorized>
+                            </AuthorizeView>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                    </PagerContent>
+                </MudTable>
+            }
+        </LamaTableWrapper>
+
+        <!-- Modal Eliminar -->
+        @if (mostrarModalEliminar && presupuestoEliminar != null)
+        {
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Confirmar Eliminación</h3>
+                    </div>
+
+                    <p class="text-slate-600 dark:text-slate-400 mb-6">
+                        ¿Estás seguro de eliminar el presupuesto de <strong>@presupuestoEliminar.ConceptoNombre</strong> para <strong>@ObtenerNombreMes(presupuestoEliminar.Mes) @presupuestoEliminar.Ano</strong>?
+                        <br/><br/>
+                        Esta acción no se puede deshacer.
+                    </p>
+
+                    <div class="flex gap-3 justify-end">
+                        <button @onclick="CerrarModalEliminar" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                            Cancelar
+                        </button>
+                        <button @onclick="EliminarPresupuesto" disabled="@eliminando" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition disabled:opacity-50 flex items-center gap-2">
+                            @if (eliminando)
+                            {
+                                <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                <span>Eliminando...</span>
+                            }
+                            else
+                            {
+                                <span>Eliminar</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Modal Copiar Presupuestos -->
+        @if (mostrarModalCopiar)
+        {
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-lg w-full p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Copiar Presupuestos</h3>
+                        <button @onclick="CerrarModalCopiar" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                            <p class="text-sm text-blue-900 dark:text-blue-100">
+                                Esta función copia todos los presupuestos de un período a otro. Solo se copiarán los presupuestos que no existan en el período destino.
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Año Origen</label>
+                                <select @bind="copiarAnoOrigen" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                                    @for (int i = DateTime.Now.Year; i >= DateTime.Now.Year - 5; i--)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Mes Origen</label>
+                                <select @bind="copiarMesOrigen" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <option value="@i">@ObtenerNombreMes(i)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Año Destino</label>
+                                <select @bind="copiarAnoDestino" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                                    @for (int i = DateTime.Now.Year + 1; i >= DateTime.Now.Year - 5; i--)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Mes Destino</label>
+                                <select @bind="copiarMesDestino" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <option value="@i">@ObtenerNombreMes(i)</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 justify-end">
+                        <button @onclick="CerrarModalCopiar" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                            Cancelar
+                        </button>
+                        <button @onclick="CopiarPresupuestos" disabled="@copiando" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition disabled:opacity-50 flex items-center gap-2">
+                            @if (copiando)
+                            {
+                                <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                <span>Copiando...</span>
+                            }
+                            else
+                            {
+                                <span>Copiar Presupuestos</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private List<PresupuestoDto>? presupuestos;
+    private List<ConceptoSimpleDto>? conceptos;
+    private bool cargando = false;
+    private int paginaActual = 1;
+    private int porPagina = 20;
+    private int totalCount = 0;
+
+    // Filtros
+    private string? filtroAno;
+    private string? filtroMes;
+    private string? filtroConceptoId;
+
+    // Estadísticas
+    private EstadisticasPresupuestoDto? estadisticas;
+
+    // Modal eliminar
+    private bool mostrarModalEliminar = false;
+    private PresupuestoDto? presupuestoEliminar;
+    private bool eliminando = false;
+
+    // Modal copiar
+    private bool mostrarModalCopiar = false;
+    private int copiarAnoOrigen = DateTime.Now.Year;
+    private int copiarMesOrigen = DateTime.Now.Month;
+    private int copiarAnoDestino = DateTime.Now.Year;
+    private int copiarMesDestino = DateTime.Now.Month == 12 ? 1 : DateTime.Now.Month + 1;
+    private bool copiando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarPresupuestos(),
+            CargarConceptos(),
+            CargarEstadisticas()
+        );
+    }
+
+    private async Task CargarPresupuestos()
+    {
+        try
+        {
+            cargando = true;
+            var query = $"api/presupuestos?pagina={paginaActual}&porPagina={porPagina}";
+
+            if (!string.IsNullOrEmpty(filtroAno))
+                query += $"&ano={filtroAno}";
+
+            if (!string.IsNullOrEmpty(filtroMes))
+                query += $"&mes={filtroMes}";
+
+            if (!string.IsNullOrEmpty(filtroConceptoId))
+                query += $"&conceptoId={filtroConceptoId}";
+
+            var response = await Http.GetFromJsonAsync<PresupuestosResponse>(query);
+            if (response != null)
+            {
+                presupuestos = response.Presupuestos;
+                totalCount = response.TotalCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error al cargar presupuestos: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarConceptos()
+    {
+        try
+        {
+            var httpResponse = await Http.GetAsync("api/conceptos/simples");
+            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+            
+            // Si la respuesta es HTML (probablemente un redirect de autenticación), inicializar lista vacía
+            if (contentType?.Contains("text/html") == true)
+            {
+                conceptos = new List<ConceptoSimpleDto>();
+                return;
+            }
+
+            conceptos = await httpResponse.Content.ReadFromJsonAsync<List<ConceptoSimpleDto>>() 
+                        ?? new List<ConceptoSimpleDto>();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // JSON inválido (probablemente HTML de login), inicializar vacío
+            conceptos = new List<ConceptoSimpleDto>();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error al cargar conceptos: {ex.Message}");
+            conceptos = new List<ConceptoSimpleDto>();
+        }
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        try
+        {
+            var query = "api/presupuestos?pagina=1&porPagina=1000"; // Cargar todos para estadísticas
+
+            if (!string.IsNullOrEmpty(filtroAno))
+                query += $"&ano={filtroAno}";
+
+            if (!string.IsNullOrEmpty(filtroMes))
+                query += $"&mes={filtroMes}";
+
+            if (!string.IsNullOrEmpty(filtroConceptoId))
+                query += $"&conceptoId={filtroConceptoId}";
+
+            var httpResponse = await Http.GetAsync(query);
+            
+            // Verificar si la respuesta es HTML (redirect a login)
+            var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+            if (contentType?.Contains("text/html") == true)
+            {
+                // Usuario no autenticado - inicializar vacío
+                estadisticas = new EstadisticasPresupuestoDto();
+                return;
+            }
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                estadisticas = new EstadisticasPresupuestoDto();
+                return;
+            }
+
+            var response = await httpResponse.Content.ReadFromJsonAsync<PresupuestosResponse>();
+            if (response != null && response.Presupuestos.Any())
+            {
+                estadisticas = new EstadisticasPresupuestoDto
+                {
+                    TotalPresupuestado = response.Presupuestos.Sum(p => p.MontoPresupuestado),
+                    TotalEjecutado = response.Presupuestos.Sum(p => p.MontoEjecutado),
+                    Diferencia = response.Presupuestos.Sum(p => p.Diferencia),
+                    PorcentajeEjecucionPromedio = response.Presupuestos.Average(p => p.PorcentajeEjecucion),
+                    CantidadPresupuestos = response.TotalCount
+                };
+            }
+            else
+            {
+                estadisticas = new EstadisticasPresupuestoDto();
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // Error de parseo JSON - probablemente HTML redirect
+            estadisticas = new EstadisticasPresupuestoDto();
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error al cargar estadísticas: {ex.Message}");
+            estadisticas = new EstadisticasPresupuestoDto();
+        }
+    }
+
+    private async Task Buscar()
+    {
+        paginaActual = 1;
+        await CargarDatos();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        filtroAno = null;
+        filtroMes = null;
+        filtroConceptoId = null;
+        await Buscar();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (paginaActual > 1)
+        {
+            paginaActual--;
+            await CargarPresupuestos();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (paginaActual < Math.Ceiling((decimal)totalCount / porPagina))
+        {
+            paginaActual++;
+            await CargarPresupuestos();
+        }
+    }
+
+    private void NuevoPresupuesto()
+    {
+        Navigation.NavigateTo("/tesoreria/presupuestos/form");
+    }
+
+    private void EditarPresupuesto(Guid id)
+    {
+        Navigation.NavigateTo($"/tesoreria/presupuestos/form/{id}");
+    }
+
+    private void VerDetalle(Guid id)
+    {
+        Navigation.NavigateTo($"/tesoreria/presupuestos/{id}");
+    }
+
+    private void ConfirmarEliminar(PresupuestoDto presupuesto)
+    {
+        presupuestoEliminar = presupuesto;
+        mostrarModalEliminar = true;
+    }
+
+    private void CerrarModalEliminar()
+    {
+        mostrarModalEliminar = false;
+        presupuestoEliminar = null;
+    }
+
+    private async Task EliminarPresupuesto()
+    {
+        if (presupuestoEliminar == null) return;
+
+        try
+        {
+            eliminando = true;
+            var response = await Http.DeleteAsync($"api/presupuestos/{presupuestoEliminar.Id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                Toast.ShowSuccess("Presupuesto eliminado exitosamente");
+                CerrarModalEliminar();
+                await CargarDatos();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Toast.ShowError($"Error al eliminar presupuesto: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error al eliminar presupuesto: {ex.Message}");
+        }
+        finally
+        {
+            eliminando = false;
+        }
+    }
+
+    private void MostrarModalCopiar()
+    {
+        copiarAnoOrigen = DateTime.Now.Year;
+        copiarMesOrigen = DateTime.Now.Month;
+        copiarAnoDestino = DateTime.Now.Year;
+        copiarMesDestino = DateTime.Now.Month == 12 ? 1 : DateTime.Now.Month + 1;
+        mostrarModalCopiar = true;
+    }
+
+    private void CerrarModalCopiar()
+    {
+        mostrarModalCopiar = false;
+    }
+
+    private async Task CopiarPresupuestos()
+    {
+        if (copiarAnoOrigen == copiarAnoDestino && copiarMesOrigen == copiarMesDestino)
+        {
+            Toast.ShowWarning("El período origen y destino no pueden ser iguales");
+            return;
+        }
+
+        try
+        {
+            copiando = true;
+            var dto = new CopiarPresupuestosDto
+            {
+                AnoOrigen = copiarAnoOrigen,
+                MesOrigen = copiarMesOrigen,
+                AnoDestino = copiarAnoDestino,
+                MesDestino = copiarMesDestino
+            };
+
+            var response = await Http.PostAsJsonAsync("api/presupuestos/copiar", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CopiarPresupuestosResultDto>();
+                if (result != null && result.CantidadCopiada > 0)
+                {
+                    Toast.ShowSuccess($"Se copiaron {result.CantidadCopiada} presupuestos exitosamente");
+                    CerrarModalCopiar();
+                    await CargarDatos();
+                }
+                else
+                {
+                    Toast.ShowInfo("No se encontraron presupuestos para copiar o ya existen en el período destino");
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Toast.ShowError($"Error al copiar presupuestos: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error al copiar presupuestos: {ex.Message}");
+        }
+        finally
+        {
+            copiando = false;
+        }
+    }
+
+    private string ObtenerNombreMes(int mes)
+    {
+        return mes switch
+        {
+            1 => "Enero",
+            2 => "Febrero",
+            3 => "Marzo",
+            4 => "Abril",
+            5 => "Mayo",
+            6 => "Junio",
+            7 => "Julio",
+            8 => "Agosto",
+            9 => "Septiembre",
+            10 => "Octubre",
+            11 => "Noviembre",
+            12 => "Diciembre",
+            _ => mes.ToString()
+        };
+    }
+
+    private string ObtenerColorBarraEjecucion(decimal porcentaje)
+    {
+        if (porcentaje < 50) return "bg-red-500 dark:bg-red-600";
+        if (porcentaje < 80) return "bg-yellow-500 dark:bg-yellow-600";
+        if (porcentaje <= 100) return "bg-emerald-500 dark:bg-emerald-600";
+        return "bg-purple-500 dark:bg-purple-600";
+    }
+
+    private string ObtenerColorTextoEjecucion(decimal porcentaje)
+    {
+        if (porcentaje < 50) return "text-red-600 dark:text-red-400";
+        if (porcentaje < 80) return "text-yellow-600 dark:text-yellow-400";
+        if (porcentaje <= 100) return "text-emerald-600 dark:text-emerald-400";
+        return "text-purple-600 dark:text-purple-400";
+    }
+
+    // Clases helper para respuestas
+    private class PresupuestosResponse
+    {
+        public List<PresupuestoDto> Presupuestos { get; set; } = new();
+        public int TotalCount { get; set; }
+    }
+
+    private class ConceptoSimpleDto
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+    }
+
+    private class EstadisticasPresupuestoDto
+    {
+        public decimal TotalPresupuestado { get; set; }
+        public decimal TotalEjecutado { get; set; }
+        public decimal Diferencia { get; set; }
+        public decimal PorcentajeEjecucionPromedio { get; set; }
+        public int CantidadPresupuestos { get; set; }
+    }
+
+    private class CopiarPresupuestosDto
+    {
+        public int AnoOrigen { get; set; }
+        public int MesOrigen { get; set; }
+        public int AnoDestino { get; set; }
+        public int MesDestino { get; set; }
+    }
+
+    private class CopiarPresupuestosResultDto
+    {
+        public string Message { get; set; } = string.Empty;
+        public int CantidadCopiada { get; set; }
+    }
+
+    // Handlers para filtros MudSelect
+    private void OnAnoChanged(string valor)
+    {
+        filtroAno = valor;
+        Buscar();
+    }
+
+    private void OnMesChanged(string valor)
+    {
+        filtroMes = valor;
+        Buscar();
+    }
+
+    private void OnConceptoChanged(string valor)
+    {
+        filtroConceptoId = valor;
+        Buscar();
+    }
+
+    // Helpers para formateo y KPIs
+    private string FormatCurrency(decimal value) => value.ToString("C0");
+
+    private string GetPorcentajeEjecucionTexto(EstadisticasPresupuestoDto stats)
+    {
+        if (stats.TotalPresupuestado == 0) return "Sin datos";
+        var porcentaje = (stats.TotalEjecutado / stats.TotalPresupuestado) * 100;
+        return $"{porcentaje:F1}% del presupuesto";
+    }
+
+    private string GetEstadoEjecucion(decimal porcentaje)
+    {
+        if (porcentaje < 50) return "Ejecución baja";
+        if (porcentaje < 80) return "Ejecución normal";
+        if (porcentaje <= 100) return "Ejecución alta";
+        return "Sobreejecución";
+    }
+
+    private Color GetColorEjecucion(decimal porcentaje)
+    {
+        if (porcentaje < 50) return Color.Error;
+        if (porcentaje < 80) return Color.Warning;
+        if (porcentaje <= 100) return Color.Success;
+        return Color.Info;
+    }
+
+    private Color GetColorDiferencia(decimal diferencia)
+    {
+        return diferencia >= 0 ? Color.Warning : Color.Error;
+    }
+}

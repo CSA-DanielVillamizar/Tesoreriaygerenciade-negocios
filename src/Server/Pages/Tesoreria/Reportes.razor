@@ -1,0 +1,178 @@
+@page "/tesoreria/reportes"
+@attribute [Authorize(Policy = "TesoreroJuntaConsulta")]
+@using Microsoft.JSInterop
+@using Server.Services.Reportes
+@using Server.Models
+@using MudBlazor
+
+@inject IJSRuntime JS
+@inject IReportesService ReportesService
+@inject Server.Services.LamaToastService Toast
+
+<PageTitle>Reportes de Tesorería - RTE</PageTitle>
+
+<div class="lama-container">
+  <LamaPageHeader Title="Reportes de Tesorería"
+                  Subtitle="Análisis mensual de saldos, ingresos y egresos"
+                  Icon="@Icons.Material.Filled.BarChart">
+    <Actions>
+      <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="DescargarPdf">PDF</MudButton>
+      <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.DataObject" OnClick="DescargarExcel">Excel</MudButton>
+      <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Refrescar">Refrescar</MudButton>
+    </Actions>
+  </LamaPageHeader>
+
+  <LamaFilterCard>
+    <ChildContent>
+      <MudItem xs="12" sm="6" md="3">
+        <MudNumericField @bind-Value="anio" Label="Año" Variant="Variant.Outlined" Margin="Margin.Dense" Min="2020" Max="2099" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudNumericField @bind-Value="mes" Label="Mes" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="12" />
+      </MudItem>
+    </ChildContent>
+    <Actions>
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Search" OnClick="Cargar">Generar</MudButton>
+      <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Limpiar">Limpiar</MudButton>
+    </Actions>
+  </LamaFilterCard>
+
+  @if (cargando)
+  {
+    <MudGrid Spacing="2">
+      @for (int i = 0; i < 4; i++)
+      {
+        <MudItem xs="12" sm="6" md="3">
+          <MudSkeleton SkeletonType="SkeletonType.Text" Height="120px" />
+        </MudItem>
+      }
+    </MudGrid>
+  }
+  else if (resultado == null)
+  {
+    <LamaEmptyState Title="Sin datos"
+                    Description="Selecciona un año y mes, luego haz clic en 'Generar' para ver el reporte"
+                    Icon="@Icons.Material.Outlined.DatasetLinked">
+    </LamaEmptyState>
+  }
+  else
+  {
+    <MudGrid Spacing="2">
+      <MudItem xs="12" sm="6" md="3">
+        <LamaStatCard Title="Saldo Inicial"
+                      Value="@FormatCurrency(resultado.SaldoInicial)"
+                      Icon="@Icons.Material.Filled.Wallet"
+                      Variant="primary" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <LamaStatCard Title="Ingresos"
+                      Value="@FormatCurrency(resultado.Ingresos)"
+                      Icon="@Icons.Material.Filled.TrendingUp"
+                      Variant="success" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <LamaStatCard Title="Egresos"
+                      Value="@FormatCurrency(resultado.Egresos)"
+                      Icon="@Icons.Material.Filled.TrendingDown"
+                      Variant="danger" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <LamaStatCard Title="Saldo Final"
+                      Value="@FormatCurrency(resultado.SaldoFinal)"
+                      Icon="@Icons.Material.Filled.AccountBalance"
+                      Variant="@(resultado.SaldoFinal >= 0 ? "success" : "danger")" />
+      </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="lama-card" Elevation="0" Style="margin-top: 24px;">
+      <MudText Typo="Typo.h6" Class="mb-4">Detalle Mensual</MudText>
+      <div style="padding: 16px; background: var(--lama-background-secondary); border-radius: 8px;">
+        <MudGrid Spacing="1">
+          <MudItem xs="12" sm="6">
+            <MudText Typo="Typo.subtitle2" Class="lama-muted">Periodo</MudText>
+            <MudText Typo="Typo.body1">@($"{anio}-{mes:D2}")</MudText>
+          </MudItem>
+          <MudItem xs="12" sm="6" Class="text-right">
+            <MudText Typo="Typo.subtitle2" Class="lama-muted">Generado</MudText>
+            <MudText Typo="Typo.body1">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</MudText>
+          </MudItem>
+        </MudGrid>
+      </div>
+    </MudPaper>
+  }
+</div>
+
+@code {
+    private int anio = 0;
+    private int mes = 0;
+    private TesoreriaMesResult? resultado;
+    private bool cargando = false;
+
+    protected override void OnInitialized()
+    {
+        anio = DateTime.Today.Year;
+        mes = DateTime.Today.Month;
+    }
+
+    private async Task Cargar()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            resultado = await ReportesService.GenerarReporteMensualAsync(anio, mes);
+            Toast.Success("Reporte generado", $"Reporte cargado para {anio}/{mes:D2}");
+        }
+        catch (Exception ex)
+        {
+            resultado = null;
+            Toast.Error("Error", $"No se pudo generar el reporte: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void DescargarPdf()
+    {
+        if (resultado == null)
+        {
+            Toast.Warning("Advertencia", "Genera un reporte primero");
+            return;
+        }
+
+        var url = $"/api/reportes/tesoreria/pdf?anio={anio}&mes={mes}";
+        JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private void DescargarExcel()
+    {
+        if (resultado == null)
+        {
+            Toast.Warning("Advertencia", "Genera un reporte primero");
+            return;
+        }
+
+        var url = $"/api/reportes/tesoreria/excel?anio={anio}&mes={mes}";
+        JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private void Refrescar()
+    {
+        if (resultado != null)
+            _ = Cargar();
+    }
+
+    private void Limpiar()
+    {
+        resultado = null;
+        anio = DateTime.Today.Year;
+        mes = DateTime.Today.Month;
+        StateHasChanged();
+    }
+
+    private string FormatCurrency(decimal amount) => $"${amount:N0}";
+}

@@ -1,0 +1,309 @@
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
+using Server.DTOs.Dashboards;
+using Server.Models.Enums;
+using Server.Services.Interfaces;
+using System.Globalization;
+
+namespace Server.Services;
+
+/// <summary>
+/// Servicio que implementa la lógica de negocio del Radar de Tesorería L.A.M.A.
+/// Encapsula toda la complejidad de cálculo de KPIs, conversiones de divisas y agregaciones.
+/// Sigue principios de Clean Architecture manteniendo la UI limpia.
+/// </summary>
+public class DashboardService : IDashboardService
+{
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
+    private readonly IDeudoresService _deudoresService;
+    private readonly IExchangeRateService _exchangeRateService;
+
+    public DashboardService(
+        IDbContextFactory<AppDbContext> contextFactory,
+        IDeudoresService deudoresService,
+        IExchangeRateService exchangeRateService)
+    {
+        _contextFactory = contextFactory;
+        _deudoresService = deudoresService;
+        _exchangeRateService = exchangeRateService;
+    }
+
+    /// <summary>
+    /// Obtiene todos los datos consolidados del Radar de Tesorería.
+    /// Executa consultas paralelas para optimizar performance.
+    /// </summary>
+    public async Task<DashboardDto> ObtenerRadarAsync()
+    {
+        try
+        {
+            var hoy = DateTime.UtcNow;
+            var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
+            var finMesExclusivo = inicioMes.AddMonths(1);
+            var fechaReferencia = DateOnly.FromDateTime(hoy);
+
+            // Ejecutar cálculos en paralelo para mejor performance
+            var tareasSaldoCuentas = CalcularSaldoEnBancosAsync(fechaReferencia);
+            var tareasRecaudo = CalcularRecaudoMesActualAsync(inicioMes, finMesExclusivo);
+            var tareasEgresos = CalcularEgresosMesActualAsync(inicioMes, finMesExclusivo);
+            var tareasCartera = CalcularCarteraPorCobrarAsync();
+            var tareasGraficos = PrepararDatosGraficosAsync(inicioMes, finMesExclusivo);
+
+            await Task.WhenAll(tareasSaldoCuentas, tareasRecaudo, tareasEgresos, tareasCartera, tareasGraficos);
+
+            var dashboard = new DashboardDto
+            {
+                SaldoEnBancos = tareasSaldoCuentas.Result,
+                RecaudoMesActual = tareasRecaudo.Result,
+                EgresosMesActual = tareasEgresos.Result,
+                CarteraPorCobrar = tareasCartera.Result,
+                IngresosPorConceptoData = tareasGraficos.Result.ingresosPorConceptoData,
+                IngresosPorConceptoLabels = tareasGraficos.Result.ingresosPorConceptoLabels,
+                BalanceSemestralSeries = tareasGraficos.Result.balanceSemestralSeries,
+                BalanceSemestralLabels = tareasGraficos.Result.balanceSemestralLabels,
+                IsLoading = false,
+                ErrorMessage = null
+            };
+
+            return dashboard;
+        }
+        catch (Exception ex)
+        {
+            return new DashboardDto
+            {
+                IsLoading = false,
+                ErrorMessage = $"Error al cargar el dashboard: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Calcula el saldo total en bancos y cajas.
+    /// Suma todos los SaldoActual de CuentasFinancieras.
+    /// Convierte cuentas en USD a COP usando TRM del día.
+    /// </summary>
+    private async Task<decimal> CalcularSaldoEnBancosAsync(DateOnly fechaReferencia)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+
+        var cuentas = await context.CuentasFinancieras
+            .Where(c => c.EstaActivo)
+            .ToListAsync();
+
+        decimal totalCop = 0;
+
+        foreach (var cuenta in cuentas)
+        {
+            if (EsCuentaUsd(cuenta))
+            {
+                // Obtener TRM para conversión
+                var trm = await _exchangeRateService.GetUsdCopAsync(fechaReferencia);
+                totalCop += cuenta.SaldoActual * trm;
+            }
+            else
+            {
+                totalCop += cuenta.SaldoActual;
+            }
+        }
+
+        return totalCop;
+    }
+
+    /// <summary>
+    /// Calcula el recaudo del mes actual.
+    /// Suma TotalCop de todos los recibos emitidos en el mes.
+    /// </summary>
+    private async Task<decimal> CalcularRecaudoMesActualAsync(DateTime inicioMes, DateTime finMesExclusivo)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+
+        const int pageSize = 50;
+        int pagina = 1;
+        decimal totalRecaudo = 0;
+
+        while (true)
+        {
+            var recibos = await context.Recibos
+                .Where(r => r.Estado == EstadoRecibo.Emitido &&
+                           r.FechaEmision >= inicioMes &&
+                           r.FechaEmision < finMesExclusivo)
+                .Skip((pagina - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => r.TotalCop)
+                .ToListAsync();
+
+            if (recibos.Count == 0)
+                break;
+
+            totalRecaudo += recibos.Sum();
+
+            if (recibos.Count < pageSize)
+                break;
+
+            pagina++;
+        }
+
+        return totalRecaudo;
+    }
+
+    /// <summary>
+    /// Calcula los egresos del mes actual.
+    /// Suma ValorCop de todos los egresos registrados en el mes.
+    /// </summary>
+    private async Task<decimal> CalcularEgresosMesActualAsync(DateTime inicioMes, DateTime finMesExclusivo)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+
+        var totalEgresos = await context.Egresos
+            .Where(e => e.Fecha >= inicioMes && e.Fecha < finMesExclusivo)
+            .SumAsync(e => (decimal?)e.ValorCop) ?? 0m;
+
+        return totalEgresos;
+    }
+
+    /// <summary>
+    /// Calcula la cartera por cobrar (deuda total).
+    /// Utiliza el servicio de deudores para obtener cálculos consolidados.
+    /// </summary>
+    private async Task<decimal> CalcularCarteraPorCobrarAsync()
+    {
+        try
+        {
+            var deudores = await _deudoresService.CalcularAsync();
+            return deudores.Sum(d => d.DeudaTotalExacta);
+        }
+        catch
+        {
+            // Si hay error en cálculo de deudores, retornar 0
+            return 0m;
+        }
+    }
+
+    /// <summary>
+    /// Prepara los datos para los gráficos del dashboard.
+    /// 
+    /// 1. Gráfico Donut: Distribución de ingresos por concepto (Mensualidades vs Otros)
+    /// 2. Gráfico Bar: Comparativa de Ingresos vs Egresos últimos 6 meses
+    /// </summary>
+    private async Task<(double[] ingresosPorConceptoData, string[] ingresosPorConceptoLabels, 
+        List<ChartSeries> balanceSemestralSeries, string[] balanceSemestralLabels)> 
+        PrepararDatosGraficosAsync(DateTime inicioMes, DateTime finMesExclusivo)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+
+        // GRÁFICO DONUT: Ingresos por concepto
+        var ingresosPorConcepto = await context.ReciboItems
+            .Where(ri => ri.Recibo!.Estado == EstadoRecibo.Emitido &&
+                        ri.Recibo.FechaEmision >= inicioMes &&
+                        ri.Recibo.FechaEmision < finMesExclusivo)
+            .GroupBy(ri => ri.Concepto!.Codigo)
+            .Select(g => new
+            {
+                Concepto = g.Key,
+                Total = g.Sum(x => x.SubtotalCop)
+            })
+            .ToListAsync();
+
+        var mensualidades = ingresosPorConcepto
+            .Where(x => x.Concepto == "MENSUALIDAD")
+            .Sum(x => (double)x.Total);
+
+        var otros = ingresosPorConcepto
+            .Where(x => x.Concepto != "MENSUALIDAD")
+            .Sum(x => (double)x.Total);
+
+        var donutData = new[] { mensualidades, otros };
+        var donutLabels = new[] { "Mensualidades", "Otros" };
+
+        // GRÁFICO BAR: Ingresos vs Egresos últimos 6 meses
+        var ahora = DateTime.UtcNow;
+        var hace6Meses = ahora.AddMonths(-5); // 6 meses incluyendo el actual
+        
+        var ingresosPorMes = new Dictionary<(int ano, int mes), decimal>();
+        var egresosPorMes = new Dictionary<(int ano, int mes), decimal>();
+
+        // Inicializar diccionarios para 6 meses
+        for (int i = 5; i >= 0; i--)
+        {
+            var fecha = ahora.AddMonths(-i);
+            var clave = (fecha.Year, fecha.Month);
+            ingresosPorMes[clave] = 0;
+            egresosPorMes[clave] = 0;
+        }
+
+        // Agregar ingresos por mes
+        var ingresosMeses = await context.Recibos
+            .Where(r => r.Estado == EstadoRecibo.Emitido &&
+                       r.FechaEmision >= hace6Meses)
+            .GroupBy(r => new { r.FechaEmision.Year, r.FechaEmision.Month })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Total = g.Sum(x => x.TotalCop)
+            })
+            .ToListAsync();
+
+        foreach (var mes in ingresosMeses)
+        {
+            ingresosPorMes[(mes.Year, mes.Month)] = mes.Total;
+        }
+
+        // Agregar egresos por mes
+        var egresosMeses = await context.Egresos
+            .Where(e => e.Fecha >= hace6Meses)
+            .GroupBy(e => new { e.Fecha.Year, e.Fecha.Month })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                Total = g.Sum(x => (decimal?)x.ValorCop) ?? 0m
+            })
+            .ToListAsync();
+
+        foreach (var mes in egresosMeses)
+        {
+            egresosPorMes[(mes.Year, mes.Month)] = mes.Total;
+        }
+
+        // Construir arrays para el gráfico
+        var ingresosSerie = new List<double>();
+        var egresosSerie = new List<double>();
+        var etiquetas = new List<string>();
+
+        var culture = new CultureInfo("es-CO");
+
+        for (int i = 5; i >= 0; i--)
+        {
+            var fecha = ahora.AddMonths(-i);
+            var clave = (fecha.Year, fecha.Month);
+
+            ingresosSerie.Add((double)ingresosPorMes[clave]);
+            egresosSerie.Add((double)egresosPorMes[clave]);
+
+            var nombreMes = fecha.ToString("MMM yyyy", culture);
+            etiquetas.Add(nombreMes);
+        }
+
+        var seriesBalance = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Ingresos", Data = ingresosSerie.ToArray() },
+            new ChartSeries { Name = "Egresos", Data = egresosSerie.ToArray() }
+        };
+
+        return (donutData, donutLabels, seriesBalance, etiquetas.ToArray());
+    }
+
+    /// <summary>
+    /// Detecta si una cuenta está en USD basándose en el código o nombre.
+    /// </summary>
+    private bool EsCuentaUsd(Models.CuentaFinanciera cuenta)
+    {
+        var codigo = cuenta.Codigo?.ToUpper() ?? string.Empty;
+        var nombre = cuenta.Nombre?.ToUpper() ?? string.Empty;
+        var banco = cuenta.Banco?.ToUpper() ?? string.Empty;
+
+        return codigo.Contains("USD") || codigo.Contains("DOLAR") || codigo.Contains("DÓLAR") ||
+               nombre.Contains("USD") || nombre.Contains("DOLAR") || nombre.Contains("DÓLAR") ||
+               banco.Contains("USD") || banco.Contains("DOLAR") || banco.Contains("DÓLAR");
+    }
+}

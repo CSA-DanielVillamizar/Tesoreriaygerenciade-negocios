@@ -1,0 +1,266 @@
+@page "/tesoreria/donaciones"
+@using Server.DTOs.Donaciones
+@using Server.Models
+@using Server.Services.Donaciones
+@using MudBlazor
+@using Server.Components.Shared
+@attribute [Authorize(Policy = "TesoreroJuntaConsulta")]
+
+@inject ICertificadosDonacionService CertificadosService
+@inject NavigationManager Nav
+@inject Server.Services.LamaToastService Toast
+@inject IDialogService DialogService
+
+<PageTitle>Certificados de Donación - RTE</PageTitle>
+
+<div class="lama-container">
+  <LamaPageHeader Title="Certificados de Donación"
+                  Subtitle="Emisión, control y auditoría RTE"
+                  Icon="@Icons.Material.Filled.VolunteerActivism">
+    <Actions>
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="IrANuevo">Nueva donación</MudButton>
+      <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FileDownload" OnClick="ExportarListado">Exportar</MudButton>
+      <MudButton Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Refrescar">Refrescar</MudButton>
+    </Actions>
+  </LamaPageHeader>
+
+  <LamaFilterCard>
+    <ChildContent>
+      <MudItem xs="12" sm="6" md="3">
+        <MudDatePicker @bind-Date="filtroInicio" Label="Desde" Variant="Variant.Outlined" Margin="Margin.Dense" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudDatePicker @bind-Date="filtroFin" Label="Hasta" Variant="Variant.Outlined" Margin="Margin.Dense" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudTextField @bind-Value="filtroDonante" Label="Donante / Miembro" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudTextField @bind-Value="filtroTexto" Label="Búsqueda (concepto/nota)" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" />
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudSelect T="EstadoCertificado?" @bind-Value="filtroEstado" Label="Estado" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+          <MudSelectItem Value="@(EstadoCertificado.Borrador)">Borrador</MudSelectItem>
+          <MudSelectItem Value="@(EstadoCertificado.Emitido)">Emitido</MudSelectItem>
+          <MudSelectItem Value="@(EstadoCertificado.Anulado)">Anulado</MudSelectItem>
+        </MudSelect>
+      </MudItem>
+      <MudItem xs="12" sm="6" md="3">
+        <MudSelect T="string" @bind-Value="filtroMetodo" Label="Medio" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense">
+          <MudSelectItem Value="@("Transferencia")">Transferencia</MudSelectItem>
+          <MudSelectItem Value="@("Efectivo")">Efectivo</MudSelectItem>
+          <MudSelectItem Value="@("Cheque")">Cheque</MudSelectItem>
+        </MudSelect>
+      </MudItem>
+    </ChildContent>
+    <Actions>
+      <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="Buscar">Filtrar</MudButton>
+      <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LimpiarFiltros">Limpiar</MudButton>
+    </Actions>
+  </LamaFilterCard>
+
+  @if (cargando)
+  {
+    <MudPaper Class="lama-card" Elevation="0" Style="text-align:center; padding:32px;">
+      <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+      <MudText Typo="Typo.body2" Class="mt-2">Cargando certificados...</MudText>
+    </MudPaper>
+  }
+  else if (CertificadosFiltrados.Count == 0)
+  {
+    <LamaEmptyState Title="Sin donaciones"
+                    Description="No hay donaciones que coincidan con los filtros seleccionados"
+                    Icon="@Icons.Material.Outlined.Inbox">
+      <Action>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="IrANuevo">Crear donación</MudButton>
+      </Action>
+    </LamaEmptyState>
+  }
+  else
+  {
+    <LamaTableWrapper>
+      <MudTable Items="CertificadosFiltrados" Dense="true" Hover="true" FixedHeader="true" Height="520px" Loading="@cargando">
+        <HeaderContent>
+          <MudTh>No.</MudTh>
+          <MudTh>Emisión</MudTh>
+          <MudTh>Donación</MudTh>
+          <MudTh>Donante</MudTh>
+          <MudTh Class="lama-numeric">Valor</MudTh>
+          <MudTh>Estado</MudTh>
+          <MudTh>Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+          <MudTd><span class="lama-mono">@context.NumeroCompleto</span></MudTd>
+          <MudTd>@context.FechaEmision.ToString("dd/MM/yyyy")</MudTd>
+          <MudTd>@context.FechaDonacion.ToString("dd/MM/yyyy")</MudTd>
+          <MudTd>
+            <div>@context.NombreDonante</div>
+            <div class="lama-muted">@context.IdentificacionDonante</div>
+          </MudTd>
+          <MudTd Class="lama-numeric"><span class="lama-currency">@FormatCurrency(context.ValorDonacionCOP)</span></MudTd>
+          <MudTd>
+            <LamaBadge Text="@context.Estado.ToString()" Variant="@EstadoVariant(context.Estado)" />
+          </MudTd>
+          <MudTd Class="lama-actions">
+            <MudTooltip Text="Detalle">
+              <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" OnClick="@(() => VerDetalle(context.Id))" />
+            </MudTooltip>
+            <MudTooltip Text="Editar">
+              <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => Editar(context.Id))" />
+            </MudTooltip>
+            <MudTooltip Text="PDF">
+              <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Size="Size.Small" OnClick="@(() => DescargarPdf(context.Id))" />
+            </MudTooltip>
+            <MudTooltip Text="Anular">
+              <MudIconButton Icon="@Icons.Material.Filled.Block" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmarAnular(context))" Disabled="@(!PuedeAnular(context))" />
+            </MudTooltip>
+          </MudTd>
+        </RowTemplate>
+      </MudTable>
+    </LamaTableWrapper>
+  }
+</div>
+
+@code {
+    private bool cargando = false;
+    private PagedResult<CertificadoDonacionListItem>? resultado;
+    private List<CertificadoDonacionListItem> certificados = new();
+
+    private string filtroTexto = string.Empty;
+    private string filtroDonante = string.Empty;
+    private EstadoCertificado? filtroEstado;
+    private string? filtroMetodo;
+    private DateTime? filtroInicio;
+    private DateTime? filtroFin;
+    private int paginaActual = 1;
+    private const int registrosPorPagina = 100;
+
+    private List<CertificadoDonacionListItem> CertificadosFiltrados => certificados
+        .Where(c => !filtroEstado.HasValue || c.Estado == filtroEstado.Value)
+        .Where(c => !filtroInicio.HasValue || c.FechaDonacion.Date >= filtroInicio.Value.Date)
+        .Where(c => !filtroFin.HasValue || c.FechaDonacion.Date <= filtroFin.Value.Date)
+        .Where(c => string.IsNullOrWhiteSpace(filtroMetodo) || true) // Forma/medio no disponible en ListItem; sin efecto
+        .Where(c => string.IsNullOrWhiteSpace(filtroTexto) ||
+                    c.NumeroCompleto.Contains(filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                    c.IdentificacionDonante.Contains(filtroTexto, StringComparison.OrdinalIgnoreCase))
+        .Where(c => string.IsNullOrWhiteSpace(filtroDonante) ||
+                    c.NombreDonante.Contains(filtroDonante, StringComparison.OrdinalIgnoreCase) ||
+                    c.IdentificacionDonante.Contains(filtroDonante, StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(c => c.FechaDonacion)
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCertificados();
+    }
+
+    private async Task CargarCertificados()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var estado = filtroEstado;
+            resultado = await CertificadosService.GetPagedAsync(
+                string.IsNullOrWhiteSpace(filtroTexto) ? null : filtroTexto,
+                estado,
+                paginaActual,
+                registrosPorPagina);
+
+            certificados = resultado?.Items ?? new();
+        }
+        catch (Exception ex)
+        {
+            certificados = new();
+            Toast.Error("Error", $"No se pudieron cargar las donaciones: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Buscar()
+    {
+        paginaActual = 1;
+        await CargarCertificados();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        filtroTexto = string.Empty;
+        filtroDonante = string.Empty;
+        filtroEstado = null;
+        filtroMetodo = null;
+        filtroInicio = null;
+        filtroFin = null;
+        paginaActual = 1;
+        await CargarCertificados();
+    }
+
+    private void Refrescar() => _ = CargarCertificados();
+
+    private void IrANuevo() => Nav.NavigateTo("/tesoreria/donaciones/nuevo");
+
+    private void Editar(Guid id) => Nav.NavigateTo($"/tesoreria/donaciones/{id}");
+
+    private void VerDetalle(Guid id) => Nav.NavigateTo($"/tesoreria/donaciones/{id}");
+
+    private void DescargarPdf(Guid id) => Nav.NavigateTo($"/api/certificados-donacion/{id}/pdf", true);
+
+    private bool PuedeAnular(CertificadoDonacionListItem c) => c.Estado != EstadoCertificado.Anulado;
+
+    private async Task ConfirmarAnular(CertificadoDonacionListItem cert)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Title"] = $"Anular certificado {cert.NumeroCompleto}",
+            ["Message"] = "Esta acción es irreversible. Ingresa el motivo de anulación.",
+            ["Severity"] = Severity.Warning,
+            ["ShowTextField"] = true,
+            ["TextFieldLabel"] = "Motivo de anulación",
+            ["TextFieldRequired"] = true
+        };
+
+        var dialogRef = DialogService.Show<LamaConfirmDialog>("Confirmar anulación", parameters);
+        var result = await dialogRef.Result;
+        if (!result.Canceled && result.Data is string razon && !string.IsNullOrWhiteSpace(razon))
+        {
+            try
+            {
+                var dto = new AnularCertificadoDto { Id = cert.Id, RazonAnulacion = razon };
+                var ok = await CertificadosService.AnularAsync(dto, "ui");
+                if (ok)
+                {
+                    Toast.Success("Anulado", $"Certificado {cert.NumeroCompleto} anulado correctamente");
+                    await CargarCertificados();
+                }
+                else
+                {
+                    Toast.Warning("Advertencia", "No se pudo anular el certificado");
+                }
+            }
+            catch (Exception ex)
+            {
+                Toast.Error("Error", $"No se pudo anular: {ex.Message}");
+            }
+        }
+    }
+
+    private void ExportarListado()
+    {
+        Toast.Info("Exportar", "Funcionalidad de exportación no está disponible en esta vista. Usa el reporte dedicado.");
+    }
+
+    private string EstadoVariant(EstadoCertificado estado) => estado switch
+    {
+        EstadoCertificado.Emitido => "success",
+        EstadoCertificado.Borrador => "warning",
+        EstadoCertificado.Anulado => "danger",
+        _ => "neutral"
+    };
+
+    private string FormatCurrency(decimal amount) => $"${amount:N0}";
+}

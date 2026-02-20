@@ -1,0 +1,237 @@
+@page "/tesoreria/movimientos"
+@using Server.Data
+@using Server.Models
+@using Server.Services.MovimientosTesoreria
+@using Microsoft.EntityFrameworkCore
+@attribute [Authorize(Roles = "Admin,Tesorero")]
+
+<PageTitle>Movimientos de Tesorería</PageTitle>
+
+<h3>Movimientos de Tesorería</h3>
+
+@code {
+    [Inject] AppDbContext Db { get; set; } = default!;
+    [Inject] MovimientosTesoreriaService MovimientosService { get; set; } = default!;
+    [Inject] IHttpContextAccessor HttpContext { get; set; } = default!;
+
+    private List<MovimientoTesoreria> movimientos = new();
+    private MovimientoTesoreria nuevo = new();
+    private string? errorMessage;
+    private string? successMessage;
+
+    private DateTime? filtroInicio;
+    private DateTime? filtroFin;
+    private Guid? filtroCuenta;
+    private TipoMovimientoTesoreria? filtroTipo;
+    private EstadoMovimientoTesoreria? filtroEstado;
+
+    private List<CuentaFinanciera> cuentas = new();
+    private List<FuenteIngreso> fuentes = new();
+    private List<CategoriaEgreso> categorias = new();
+
+    private string CurrentUser => HttpContext.HttpContext?.User?.Identity?.Name ?? "system";
+
+    protected override async Task OnInitializedAsync()
+    {
+        cuentas = await Db.CuentasFinancieras.OrderBy(c => c.Nombre).ToListAsync();
+        fuentes = await Db.FuentesIngreso.OrderBy(f => f.Nombre).ToListAsync();
+        categorias = await Db.CategoriasEgreso.OrderBy(c => c.Nombre).ToListAsync();
+        await CargarMovimientos();
+    }
+
+    private async Task CargarMovimientos()
+    {
+        errorMessage = null;
+        try
+        {
+            movimientos = await MovimientosService.ListAsync(
+                inicio: filtroInicio,
+                fin: filtroFin,
+                cuentaId: filtroCuenta,
+                tipo: filtroTipo,
+                estado: filtroEstado,
+                maxResults: 200
+            );
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar movimientos: {ex.Message}";
+        }
+    }
+
+    private void PrepararNuevo()
+    {
+        errorMessage = null;
+        successMessage = null;
+        nuevo = new MovimientoTesoreria
+        {
+            NumeroMovimiento = $"MV-{DateTime.UtcNow:yyyy}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
+            Fecha = DateTime.UtcNow,
+            Tipo = TipoMovimientoTesoreria.Ingreso,
+            Medio = MedioPagoTesoreria.Transferencia,
+            Descripcion = string.Empty,
+            Valor = 0m
+        };
+    }
+
+    private async Task GuardarNuevo()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (nuevo.CuentaFinancieraId == Guid.Empty || string.IsNullOrWhiteSpace(nuevo.NumeroMovimiento))
+        {
+            errorMessage = "Complete todos los campos obligatorios.";
+            return;
+        }
+
+        try
+        {
+            // ✅ El servicio valida automáticamente si el mes está cerrado
+            await MovimientosService.CreateAsync(nuevo, CurrentUser);
+            successMessage = $"✅ Movimiento {nuevo.NumeroMovimiento} creado exitosamente.";
+            nuevo = new MovimientoTesoreria(); // Limpiar formulario
+            await CargarMovimientos();
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al guardar: {ex.Message}";
+        }
+        
+        StateHasChanged();
+    }
+}
+
+<!-- UI básica sin MudBlazor para MVP -->
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert" style="margin-bottom:1rem;">
+        @errorMessage
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success" role="alert" style="margin-bottom:1rem;">
+        @successMessage
+    </div>
+}
+
+<div class="filters" style="margin-bottom:1rem;">
+    <label>Inicio: <input type="date" @bind="filtroInicio" /></label>
+    <label>Fin: <input type="date" @bind="filtroFin" /></label>
+    <label>Cuenta:
+        <select @bind="filtroCuenta">
+            <option value="">(Todas)</option>
+            @foreach (var c in cuentas)
+            {
+                <option value="@c.Id">@c.Nombre</option>
+            }
+        </select>
+    </label>
+    <label>Tipo:
+        <select @bind="filtroTipo">
+            <option value="">(Todos)</option>
+            <option value="@TipoMovimientoTesoreria.Ingreso">Ingreso</option>
+            <option value="@TipoMovimientoTesoreria.Egreso">Egreso</option>
+        </select>
+    </label>
+    <label>Estado:
+        <select @bind="filtroEstado">
+            <option value="">(Todos)</option>
+            <option value="@EstadoMovimientoTesoreria.Borrador">Borrador</option>
+            <option value="@EstadoMovimientoTesoreria.Aprobado">Aprobado</option>
+            <option value="@EstadoMovimientoTesoreria.Anulado">Anulado</option>
+        </select>
+    </label>
+    <button @onclick="CargarMovimientos">Filtrar</button>
+</div>
+
+<button @onclick="PrepararNuevo">Nuevo Movimiento</button>
+
+@if (!string.IsNullOrEmpty(nuevo.NumeroMovimiento))
+{
+    <div class="card" style="padding:1rem; margin-top:1rem;">
+        <label>Número: <input @bind="nuevo.NumeroMovimiento" /></label><br />
+        <label>Fecha: <input type="datetime-local" @bind="nuevo.Fecha" /></label><br />
+        <label>Cuenta:
+            <select @bind="nuevo.CuentaFinancieraId">
+                @foreach (var c in cuentas)
+                {
+                    <option value="@c.Id">@c.Nombre</option>
+                }
+            </select>
+        </label><br />
+        <label>Tipo:
+            <select @bind="nuevo.Tipo">
+                <option value="@TipoMovimientoTesoreria.Ingreso">Ingreso</option>
+                <option value="@TipoMovimientoTesoreria.Egreso">Egreso</option>
+            </select>
+        </label><br />
+        <label>Fuente ingreso:
+            <select @bind="nuevo.FuenteIngresoId">
+                <option value="">(N/A)</option>
+                @foreach (var f in fuentes)
+                {
+                    <option value="@f.Id">@f.Nombre</option>
+                }
+            </select>
+        </label><br />
+        <label>Categoría egreso:
+            <select @bind="nuevo.CategoriaEgresoId">
+                <option value="">(N/A)</option>
+                @foreach (var cat in categorias)
+                {
+                    <option value="@cat.Id">@cat.Nombre</option>
+                }
+            </select>
+        </label><br />
+        <label>Medio:
+            <select @bind="nuevo.Medio">
+                <option value="@MedioPagoTesoreria.Transferencia">Transferencia</option>
+                <option value="@MedioPagoTesoreria.Consignacion">Consignación</option>
+                <option value="@MedioPagoTesoreria.Efectivo">Efectivo</option>
+                <option value="@MedioPagoTesoreria.Cheque">Cheque</option>
+                <option value="@MedioPagoTesoreria.Nequi">Nequi</option>
+                <option value="@MedioPagoTesoreria.Daviplata">Daviplata</option>
+                <option value="@MedioPagoTesoreria.Tarjeta">Tarjeta</option>
+            </select>
+        </label><br />
+        <label>Valor: <input type="number" step="0.01" @bind="nuevo.Valor" /></label><br />
+        <label>Descripción: <input @bind="nuevo.Descripcion" /></label><br />
+        <button @onclick="GuardarNuevo">Guardar</button>
+    </div>
+}
+
+<table class="table" style="margin-top:1rem;">
+    <thead>
+        <tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Cuenta</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Valor</th>
+            <th>Descripción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in movimientos)
+        {
+            <tr>
+                <td>@m.NumeroMovimiento</td>
+                <td>@m.Fecha</td>
+                <td>@cuentas.FirstOrDefault(c => c.Id == m.CuentaFinancieraId)?.Nombre</td>
+                <td>@m.Tipo</td>
+                <td>@m.Estado</td>
+                <td>@m.Valor.ToString("N0")</td>
+                <td>@m.Descripcion</td>
+            </tr>
+        }
+    </tbody>
+</table>
