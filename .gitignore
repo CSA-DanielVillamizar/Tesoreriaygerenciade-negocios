@@ -180,6 +180,7 @@ secrets/
 !.gitignore
 !.github/
 !.vscode/settings.json
+!.vscode/tasks.json
 !MIGRATION-NOTES.md
 
 # ============================================================================
