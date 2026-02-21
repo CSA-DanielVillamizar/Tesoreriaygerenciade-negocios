@@ -1,4 +1,5 @@
 using LAMAMedellin.Application.Features.Cartera.Commands.GenerarObligacionesMensuales;
+using LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,14 @@ public sealed class CarteraController(ISender sender) : ControllerBase
         {
             mensaje = $"Se han generado {resultado} obligaciones para el periodo {request.Periodo}"
         });
+    }
+
+    [HttpGet("pendiente")]
+    [ProducesResponseType(typeof(List<CarteraPendienteDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCarteraPendiente(CancellationToken cancellationToken)
+    {
+        var cartera = await sender.Send(new GetCarteraPendienteQuery(), cancellationToken);
+        return Ok(cartera);
     }
 }
 
