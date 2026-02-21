@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ingresoSchema, type IngresoFormValues } from '@/features/transacciones/schemas/ingresoSchema';
+import { ingresoSchema, type IngresoFormInput, type IngresoFormValues } from '@/features/transacciones/schemas/ingresoSchema';
 import { useCrearIngreso } from '@/features/transacciones/hooks/useCrearIngreso';
 
-const defaultValues: IngresoFormValues = {
+const defaultValues: IngresoFormInput = {
     MontoCOP: 0,
     CentroCostoId: '',
     MedioPago: '',
@@ -23,7 +23,7 @@ export default function RegistroIngresoForm() {
         handleSubmit,
         reset,
         formState: { errors },
-    } = useForm<IngresoFormValues>({
+    } = useForm<IngresoFormInput, unknown, IngresoFormValues>({
         resolver: zodResolver(ingresoSchema),
         defaultValues,
     });

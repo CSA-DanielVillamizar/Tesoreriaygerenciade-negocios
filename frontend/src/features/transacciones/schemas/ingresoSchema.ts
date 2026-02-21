@@ -41,4 +41,5 @@ export const ingresoSchema = z
         }
     });
 
-export type IngresoFormValues = z.infer<typeof ingresoSchema>;
+export type IngresoFormInput = z.input<typeof ingresoSchema>;
+export type IngresoFormValues = z.output<typeof ingresoSchema>;
