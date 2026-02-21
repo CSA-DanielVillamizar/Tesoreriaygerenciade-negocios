@@ -1,7 +1,9 @@
 using LAMAMedellin.API.Middleware;
 using LAMAMedellin.Application;
 using LAMAMedellin.Infrastructure.Configuration;
+using LAMAMedellin.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +36,19 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
+
+// Seed database on startup (Development mode only)
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<LamaDbContext>();
+
+    // Run migrations
+    await context.Database.MigrateAsync();
+
+    // Seed initial data
+    await context.SeedAsync();
+}
 
 app.UseExceptionHandler();
 

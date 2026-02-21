@@ -14,11 +14,12 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
     public async Task<int> Handle(GenerarObligacionesMensualesCommand request, CancellationToken cancellationToken)
     {
         var anio = int.Parse(request.Periodo.AsSpan(0, 4));
+        var mes = int.Parse(request.Periodo.AsSpan(5, 2));
 
-        var cuotaAsamblea = await cuotaAsambleaRepository.GetByAnioAsync(anio, cancellationToken);
+        var cuotaAsamblea = await cuotaAsambleaRepository.GetVigentePorPeriodoAsync(anio, mes, cancellationToken);
         if (cuotaAsamblea is null)
         {
-            throw new ExcepcionNegocio($"No existe CuotaAsamblea para el año {anio}.");
+            throw new ExcepcionNegocio($"No existe CuotaAsamblea vigente para el periodo {request.Periodo}.");
         }
 
         var miembrosActivos = await miembroRepository.GetActivosAsync(cancellationToken);

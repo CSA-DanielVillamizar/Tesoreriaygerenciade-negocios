@@ -14,6 +14,11 @@ public sealed partial class CuentaPorCobrar : BaseEntity
 
     public Miembro? Miembro { get; private set; }
 
+    // Constructor privado para EF Core
+#pragma warning disable CS8618
+    private CuentaPorCobrar() { }
+#pragma warning restore CS8618
+
     public CuentaPorCobrar(Guid miembroId, string periodo, decimal valorEsperadoCop)
     {
         if (miembroId == Guid.Empty)

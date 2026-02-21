@@ -9,6 +9,11 @@ public sealed class CuotaAsamblea : BaseEntity
     public int MesInicioCobro { get; private set; }
     public string? ActaSoporte { get; private set; }
 
+    // Constructor privado para EF Core
+#pragma warning disable CS8618
+    private CuotaAsamblea() { }
+#pragma warning restore CS8618
+
     public CuotaAsamblea(int anio, decimal valorMensualCop, int mesInicioCobro, string? actaSoporte = null)
     {
         if (anio <= 0)

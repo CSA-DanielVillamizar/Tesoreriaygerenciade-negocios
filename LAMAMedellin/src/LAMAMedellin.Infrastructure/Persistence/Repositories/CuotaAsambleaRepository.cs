@@ -6,9 +6,12 @@ namespace LAMAMedellin.Infrastructure.Persistence.Repositories;
 
 public sealed class CuotaAsambleaRepository(LamaDbContext dbContext) : ICuotaAsambleaRepository
 {
-    public Task<CuotaAsamblea?> GetByAnioAsync(int anio, CancellationToken cancellationToken = default)
+    public Task<CuotaAsamblea?> GetVigentePorPeriodoAsync(int anio, int mes, CancellationToken cancellationToken = default)
     {
         return dbContext.CuotasAsamblea
-            .FirstOrDefaultAsync(c => c.Anio == anio, cancellationToken);
+            .Where(c => c.Anio < anio || (c.Anio == anio && c.MesInicioCobro <= mes))
+            .OrderByDescending(c => c.Anio)
+            .ThenByDescending(c => c.MesInicioCobro)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }
