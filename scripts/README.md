@@ -7,9 +7,10 @@
 - Sesión iniciada: `gh auth login`
 - Permisos para crear milestones, labels e issues en el repo
 
-## Script
+## Scripts
 
 - `scripts/create_github_backlog.ps1`
+- `scripts/upsert_pr_comment.ps1`
 
 Este script:
 
@@ -44,3 +45,25 @@ powershell -ExecutionPolicy Bypass -File .\scripts\create_github_backlog.ps1 \
 
 - Si omites `-Repo`, el script intenta detectarlo desde `git remote origin`.
 - `-ResetCatalog` es el modo recomendado para reconciliar y dejar el backlog exacto.
+
+## Publicar/actualizar comentario en PR (REST)
+
+Este script crea o actualiza un comentario del PR usando un `Marker` para poder reutilizar el mismo comentario en iteraciones sucesivas.
+
+Ejemplo (actualiza o crea):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\upsert_pr_comment.ps1 \
+  -Repo "CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin" \
+  -PullRequestNumber 1 \
+  -BodyText "Release notes de prueba"
+```
+
+Ejemplo (solo verificar si existe):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\upsert_pr_comment.ps1 \
+  -Repo "CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin" \
+  -PullRequestNumber 1 \
+  -VerifyOnly
+```
