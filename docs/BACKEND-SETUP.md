@@ -146,8 +146,8 @@ dotnet test
 
 ### 1. **No Local User Tables**
 
--  All authentication via **Microsoft Entra External ID**
--  NEVER create a `Users` or `Identity` table in Domain/Persistence
+- All authentication via **Microsoft Entra External ID**
+- NEVER create a `Users` or `Identity` table in Domain/Persistence
 
 ### 2. **Mandatory Fields**
 
