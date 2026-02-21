@@ -20,6 +20,9 @@ public static class DependencyInjection
         services.AddScoped<ITransaccionRepository, TransaccionRepository>();
         services.AddScoped<IBancoRepository, BancoRepository>();
         services.AddScoped<ICentroCostoRepository, CentroCostoRepository>();
+        services.AddScoped<IMiembroRepository, MiembroRepository>();
+        services.AddScoped<ICuotaAsambleaRepository, CuotaAsambleaRepository>();
+        services.AddScoped<ICuentaPorCobrarRepository, CuentaPorCobrarRepository>();
 
         return services;
     }
