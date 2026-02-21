@@ -9,11 +9,8 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(
-    async (config) => {
-        // TODO: Extraer el access token desde la sesión activa de Microsoft Entra External ID.
-        // Ejemplo esperado:
-        // const accessToken = await getAccessTokenFromSession();
-        const accessToken = '';
+    (config) => {
+        const accessToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;
@@ -21,7 +18,7 @@ apiClient.interceptors.request.use(
 
         return config;
     },
-    async (error) => Promise.reject(error),
+    (error) => Promise.reject(error),
 );
 
 export default apiClient;
