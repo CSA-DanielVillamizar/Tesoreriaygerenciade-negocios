@@ -11,6 +11,21 @@ public sealed class BancoRepository(LamaDbContext dbContext) : IBancoRepository
         return dbContext.Bancos.FirstOrDefaultAsync(banco => banco.Id == id, cancellationToken);
     }
 
+    public async Task<Banco?> GetDefaultAsync(CancellationToken cancellationToken = default)
+    {
+        var bancoPrincipal = await dbContext.Bancos
+            .FirstOrDefaultAsync(banco => banco.NumeroCuenta == "Bancolombia Ahorros", cancellationToken);
+
+        if (bancoPrincipal is not null)
+        {
+            return bancoPrincipal;
+        }
+
+        return await dbContext.Bancos
+            .OrderBy(banco => banco.NumeroCuenta)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);

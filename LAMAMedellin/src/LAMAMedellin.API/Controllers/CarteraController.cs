@@ -1,4 +1,5 @@
 using LAMAMedellin.Application.Features.Cartera.Commands.GenerarObligacionesMensuales;
+using LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPago;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +35,22 @@ public sealed class CarteraController(ISender sender) : ControllerBase
         var cartera = await sender.Send(new GetCarteraPendienteQuery(), cancellationToken);
         return Ok(cartera);
     }
+
+    [HttpPost("{id:guid}/pago")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegistrarPago(
+        Guid id,
+        [FromBody] RegistrarPagoRequest request,
+        CancellationToken cancellationToken)
+    {
+        await sender.Send(new RegistrarPagoCuotaCommand(id, request.MontoCOP), cancellationToken);
+
+        return Ok(new
+        {
+            mensaje = "Pago registrado correctamente."
+        });
+    }
 }
 
 public sealed record GenerarObligacionesRequest(string Periodo);
+public sealed record RegistrarPagoRequest(decimal MontoCOP);

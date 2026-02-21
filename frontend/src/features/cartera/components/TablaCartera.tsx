@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
 
 type CarteraPendienteItem = {
@@ -12,12 +13,43 @@ type CarteraPendienteItem = {
     saldoPendienteCOP: number;
 };
 
+type ProblemDetails = {
+    title?: string;
+    detail?: string;
+};
+
+type RegistrarPagoRequest = {
+    MontoCOP: number;
+};
+
 export default function TablaCartera() {
+    const queryClient = useQueryClient();
     const { data: cartera, isLoading, error } = useQuery<CarteraPendienteItem[]>({
         queryKey: ['cartera-pendiente'],
         queryFn: async () => {
             const response = await apiClient.get<CarteraPendienteItem[]>('/api/cartera/pendiente');
             return response.data;
+        },
+    });
+
+    const { mutateAsync: registrarPagoAsync, isPending: isRegistrandoPago } = useMutation<void, Error, { id: string; montoCOP: number }>({
+        mutationFn: async ({ id, montoCOP }) => {
+            try {
+                await apiClient.post(`/api/cartera/${id}/pago`, {
+                    MontoCOP: montoCOP,
+                } satisfies RegistrarPagoRequest);
+            } catch (err) {
+                if (axios.isAxiosError<ProblemDetails>(err)) {
+                    const mensaje = err.response?.data?.detail ?? err.response?.data?.title ?? 'No fue posible registrar el pago.';
+                    throw new Error(mensaje);
+                }
+
+                throw new Error('No fue posible registrar el pago.');
+            }
+        },
+        onSuccess: async () => {
+            window.alert('Pago registrado exitosamente.');
+            await queryClient.invalidateQueries({ queryKey: ['cartera-pendiente'] });
         },
     });
 
@@ -61,6 +93,21 @@ export default function TablaCartera() {
 
     const totalSaldo = cartera.reduce((sum, item) => sum + item.saldoPendienteCOP, 0);
 
+    const handleRegistrarPago = async (item: CarteraPendienteItem): Promise<void> => {
+        const confirmar = window.confirm(
+            `¿Deseas registrar el pago por el saldo total de ${formatCurrency(item.saldoPendienteCOP)} para ${item.nombreMiembro}?`,
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        await registrarPagoAsync({
+            id: item.id,
+            montoCOP: item.saldoPendienteCOP,
+        });
+    };
+
     return (
         <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -103,9 +150,11 @@ export default function TablaCartera() {
                                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                                         <button
                                             type="button"
+                                            disabled={isRegistrandoPago}
+                                            onClick={() => void handleRegistrarPago(item)}
                                             className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                         >
-                                            Registrar Pago
+                                            {isRegistrandoPago ? 'Registrando...' : 'Registrar Pago'}
                                         </button>
                                     </td>
                                 </tr>

@@ -5,5 +5,6 @@ namespace LAMAMedellin.Application.Common.Interfaces.Repositories;
 public interface IBancoRepository
 {
     Task<Banco?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Banco?> GetDefaultAsync(CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

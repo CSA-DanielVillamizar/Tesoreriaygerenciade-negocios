@@ -22,6 +22,12 @@ public sealed class CuentaPorCobrarRepository(LamaDbContext dbContext) : ICuenta
             .ToListAsync(cancellationToken);
     }
 
+    public Task<CuentaPorCobrar?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return dbContext.CuentasPorCobrar
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
     public Task AddRangeAsync(IEnumerable<CuentaPorCobrar> cuentasPorCobrar, CancellationToken cancellationToken = default)
     {
         return dbContext.CuentasPorCobrar

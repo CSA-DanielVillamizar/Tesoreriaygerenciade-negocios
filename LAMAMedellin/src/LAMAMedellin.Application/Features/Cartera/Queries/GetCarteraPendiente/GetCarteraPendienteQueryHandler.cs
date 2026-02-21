@@ -1,5 +1,6 @@
 using LAMAMedellin.Application.Common.Interfaces.Repositories;
 using LAMAMedellin.Domain.Enums;
+using MediatR;
 
 namespace LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
 
@@ -16,11 +17,12 @@ public sealed class GetCarteraPendienteQueryHandler(
 
         return cuentasPendientes
             .OrderByDescending(c => c.Periodo)
-            .ThenBy(c => c.Miembro!.NombreCompleto)
+            .ThenBy(c => c.Miembro!.Nombre)
+            .ThenBy(c => c.Miembro!.Apellidos)
             .Select(c => new CarteraPendienteDto(
                 c.Id,
                 c.MiembroId,
-                c.Miembro!.NombreCompleto,
+                $"{c.Miembro!.Nombre} {c.Miembro!.Apellidos}".Trim(),
                 c.Periodo,
                 c.ValorEsperadoCOP,
                 c.SaldoPendienteCOP))
