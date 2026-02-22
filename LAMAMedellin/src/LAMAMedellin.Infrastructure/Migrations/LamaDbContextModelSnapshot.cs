@@ -70,6 +70,112 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.ToTable("CentrosCosto", (string)null);
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaPorCobrar", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MiembroId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Periodo")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<decimal>("SaldoPendienteCOP")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ValorEsperadoCOP")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MiembroId", "Periodo")
+                        .IsUnique();
+
+                    b.ToTable("CuentasPorCobrar", (string)null);
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuotaAsamblea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ActaSoporte")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MesInicioCobro")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ValorMensualCOP")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CuotasAsamblea", (string)null);
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Miembro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Apellidos")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Documento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("TipoAfiliacion")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Miembros", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Transaccion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -105,6 +211,17 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.HasIndex("CentroCostoId");
 
                     b.ToTable("Transacciones", (string)null);
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaPorCobrar", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.Miembro", "Miembro")
+                        .WithMany()
+                        .HasForeignKey("MiembroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Miembro");
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Transaccion", b =>
