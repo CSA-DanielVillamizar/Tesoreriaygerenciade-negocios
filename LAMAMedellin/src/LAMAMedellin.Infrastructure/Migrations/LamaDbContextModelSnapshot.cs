@@ -188,6 +188,11 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Property<Guid>("CentroCostoId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
 

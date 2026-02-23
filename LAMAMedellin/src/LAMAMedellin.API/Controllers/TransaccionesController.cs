@@ -2,6 +2,7 @@ using LAMAMedellin.Application.Features.Transacciones.Commands.RegistrarIngreso;
 using LAMAMedellin.Application.Features.Transacciones.Commands.RegistrarEgreso;
 using LAMAMedellin.Application.Features.Transacciones.Queries.GetCatalogoBancos;
 using LAMAMedellin.Application.Features.Transacciones.Queries.GetCatalogoCentrosCosto;
+using LAMAMedellin.Application.Features.Transacciones.Queries.GetTransacciones;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,14 @@ namespace LAMAMedellin.API.Controllers;
 [Authorize]
 public sealed class TransaccionesController(ISender sender) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(List<TransaccionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTransacciones(CancellationToken cancellationToken)
+    {
+        var transacciones = await sender.Send(new GetTransaccionesQuery(), cancellationToken);
+        return Ok(transacciones);
+    }
+
     [HttpGet("bancos")]
     [ProducesResponseType(typeof(List<CatalogoBancoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCatalogoBancos(CancellationToken cancellationToken)

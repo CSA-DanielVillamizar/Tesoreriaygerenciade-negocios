@@ -8,6 +8,7 @@ public sealed record RegistrarIngresoCommand(
     Guid CentroCostoId,
     Guid BancoId,
     MedioPago MedioPago,
+    string Descripcion,
     string? MonedaOrigen = null,
     decimal? MontoMonedaOrigen = null,
     decimal? TasaCambioUsada = null,

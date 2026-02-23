@@ -16,6 +16,7 @@ export const egresoSchema = z
             .uuid('Banco inválido.')
             .refine((value) => value !== guidVacio, 'Debes seleccionar un banco válido.'),
         MedioPago: z.string().trim().min(1, 'Medio de pago es requerido.'),
+        Descripcion: z.string().trim().min(1, 'La descripción es requerida.').max(500, 'La descripción no puede superar 500 caracteres.'),
         EsMonedaOrigenUSD: z.boolean().default(false),
         MontoMonedaOrigen: z.coerce.number().optional(),
         TasaCambioUsada: z.coerce.number().optional(),

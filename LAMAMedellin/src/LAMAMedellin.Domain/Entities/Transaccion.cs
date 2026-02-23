@@ -16,6 +16,7 @@ public sealed class Transaccion : BaseEntity
     public MedioPago MedioPago { get; private set; }
     public Guid CentroCostoId { get; private set; }
     public Guid BancoId { get; private set; }
+    public string Descripcion { get; private set; } = string.Empty;
 
     public CentroCosto? CentroCosto { get; private set; }
     public Banco? Banco { get; private set; }
@@ -29,6 +30,7 @@ public sealed class Transaccion : BaseEntity
         MedioPago medioPago,
         Guid centroCostoId,
         Guid bancoId,
+        string descripcion,
         TransaccionMultimoneda? transaccionMultimoneda = null)
     {
         if (montoCOP <= 0)
@@ -46,12 +48,18 @@ public sealed class Transaccion : BaseEntity
             throw new ArgumentException("BancoId es obligatorio.", nameof(bancoId));
         }
 
+        if (string.IsNullOrWhiteSpace(descripcion))
+        {
+            throw new ArgumentException("Descripcion es obligatoria.", nameof(descripcion));
+        }
+
         MontoCOP = montoCOP;
         Fecha = fecha;
         Tipo = tipo;
         MedioPago = medioPago;
         CentroCostoId = centroCostoId;
         BancoId = bancoId;
+        Descripcion = descripcion.Trim();
         TransaccionMultimoneda = transaccionMultimoneda;
     }
 

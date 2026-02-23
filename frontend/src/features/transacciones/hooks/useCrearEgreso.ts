@@ -7,6 +7,7 @@ export type CrearEgresoRequest = {
     CentroCostoId: string;
     BancoId: string;
     MedioPago: number;
+    Descripcion: string;
     MonedaOrigen?: string;
     MontoMonedaOrigen?: number;
     TasaCambioUsada?: number;

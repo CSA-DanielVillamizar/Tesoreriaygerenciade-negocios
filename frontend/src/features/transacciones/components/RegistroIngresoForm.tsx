@@ -14,6 +14,7 @@ const defaultValues: IngresoFormInput = {
     CentroCostoId: '',
     BancoId: '',
     MedioPago: '',
+    Descripcion: '',
     EsMonedaOrigenUSD: false,
 };
 
@@ -112,6 +113,7 @@ export default function RegistroIngresoForm() {
             CentroCostoId: values.CentroCostoId,
             BancoId: values.BancoId,
             MedioPago: Number(values.MedioPago),
+            Descripcion: values.Descripcion,
             MonedaOrigen: values.EsMonedaOrigenUSD ? 'USD' : undefined,
             MontoMonedaOrigen: values.EsMonedaOrigenUSD ? values.MontoMonedaOrigen : undefined,
             TasaCambioUsada: values.EsMonedaOrigenUSD ? values.TasaCambioUsada : undefined,
@@ -192,6 +194,16 @@ export default function RegistroIngresoForm() {
                         <option value="4">QR</option>
                     </select>
                     {errors.MedioPago && <p className="mt-1 text-sm text-red-600">{errors.MedioPago.message}</p>}
+                </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Descripción</label>
+                    <textarea
+                        rows={3}
+                        {...register('Descripcion')}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                    />
+                    {errors.Descripcion && <p className="mt-1 text-sm text-red-600">{errors.Descripcion.message}</p>}
                 </div>
 
                 <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">

@@ -160,6 +160,13 @@ export default function Home() {
                     >
                         Ver cartera pendiente
                     </Link>
+
+                    <Link
+                        href="/transacciones/listado"
+                        className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
+                    >
+                        Ver movimientos
+                    </Link>
                 </section>
             </div>
         </main>

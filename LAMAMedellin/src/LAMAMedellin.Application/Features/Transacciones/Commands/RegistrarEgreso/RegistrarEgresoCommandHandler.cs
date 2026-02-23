@@ -50,6 +50,7 @@ public sealed class RegistrarEgresoCommandHandler(
             request.MedioPago,
             request.CentroCostoId,
             request.BancoId,
+            request.Descripcion,
             transaccionMultimoneda);
 
         transaccion.VincularBanco(banco);

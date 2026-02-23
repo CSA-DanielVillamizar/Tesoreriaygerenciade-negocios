@@ -31,6 +31,10 @@ public sealed class TransaccionConfiguration : IEntityTypeConfiguration<Transacc
         builder.Property(t => t.BancoId)
             .IsRequired();
 
+        builder.Property(t => t.Descripcion)
+            .HasMaxLength(500)
+            .IsRequired();
+
         builder.HasOne(t => t.CentroCosto)
             .WithMany()
             .HasForeignKey(t => t.CentroCostoId)

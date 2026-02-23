@@ -15,6 +15,10 @@ public sealed class RegistrarIngresoCommandValidator : AbstractValidator<Registr
         RuleFor(x => x.BancoId)
             .NotEmpty();
 
+        RuleFor(x => x.Descripcion)
+            .NotEmpty()
+            .MaximumLength(500);
+
         When(EsUsd, () =>
         {
             RuleFor(x => x.MontoMonedaOrigen)
