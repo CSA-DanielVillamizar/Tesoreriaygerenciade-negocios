@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ingresoSchema, type IngresoFormInput, type IngresoFormValues } from '@/features/transacciones/schemas/ingresoSchema';
 import { useCrearIngreso } from '@/features/transacciones/hooks/useCrearIngreso';
+import { useTrmOficial } from '@/features/transacciones/hooks/useTrmOficial';
 import apiClient from '@/lib/apiClient';
 
 const defaultValues: IngresoFormInput = {
@@ -53,7 +54,7 @@ export default function RegistroIngresoForm() {
         reset,
         setValue,
         getValues,
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
+        formState: { errors },
     } = useForm<IngresoFormInput, unknown, IngresoFormValues>({
         resolver: zodResolver(ingresoSchema),
         defaultValues,
@@ -72,6 +73,36 @@ export default function RegistroIngresoForm() {
     }, [centrosCostoQuery.data, getValues, setValue]);
 
     const esMonedaOrigenUSD = watch('EsMonedaOrigenUSD');
+    const trmQuery = useTrmOficial(esMonedaOrigenUSD);
+
+    useEffect(() => {
+        if (!esMonedaOrigenUSD || !trmQuery.data) {
+            return;
+        }
+
+        if (!getValues('TasaCambioUsada')) {
+            setValue('TasaCambioUsada', trmQuery.data.tasaCambioUsada, { shouldValidate: true });
+        }
+
+        if (!getValues('FechaTasaCambio')) {
+            setValue('FechaTasaCambio', trmQuery.data.fechaTasaCambio, { shouldValidate: true });
+        }
+
+        if (!getValues('FuenteTasaCambio')) {
+            setValue('FuenteTasaCambio', trmQuery.data.fuenteTasaCambio, { shouldValidate: true });
+        }
+    }, [esMonedaOrigenUSD, getValues, setValue, trmQuery.data]);
+
+    const cargarTrmOficial = async () => {
+        const response = await trmQuery.refetch();
+        if (!response.data) {
+            return;
+        }
+
+        setValue('TasaCambioUsada', response.data.tasaCambioUsada, { shouldValidate: true });
+        setValue('FechaTasaCambio', response.data.fechaTasaCambio, { shouldValidate: true });
+        setValue('FuenteTasaCambio', response.data.fuenteTasaCambio, { shouldValidate: true });
+    };
 
     const onSubmit = async (values: IngresoFormValues) => {
         setMensajeExito('');
@@ -170,6 +201,25 @@ export default function RegistroIngresoForm() {
 
                 {esMonedaOrigenUSD && (
                     <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/40 p-4 md:grid-cols-4">
+                        <div className="md:col-span-4">
+                            <button
+                                type="button"
+                                onClick={cargarTrmOficial}
+                                disabled={trmQuery.isFetching}
+                                className="inline-flex items-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {trmQuery.isFetching ? 'Consultando TRM oficial...' : 'Cargar TRM oficial'}
+                            </button>
+                            {trmQuery.isError && (
+                                <p className="mt-1 text-sm text-red-600">{(trmQuery.error as Error).message}</p>
+                            )}
+                            {trmQuery.data && (
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Fuente: {trmQuery.data.fuenteNombre} · Fecha: {trmQuery.data.fechaTasaCambio}
+                                </p>
+                            )}
+                        </div>
+
                         <div>
                             <label className="mb-1 block text-sm font-medium text-slate-700">Monto en USD</label>
                             <input
