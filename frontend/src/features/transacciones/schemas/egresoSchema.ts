@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const guidVacio = '00000000-0000-0000-0000-000000000000';
 
-export const ingresoSchema = z
+export const egresoSchema = z
     .object({
         MontoCOP: z.coerce.number().gt(0, 'El monto en COP debe ser mayor a 0.'),
         CentroCostoId: z
@@ -61,5 +61,5 @@ export const ingresoSchema = z
         }
     });
 
-export type IngresoFormInput = z.input<typeof ingresoSchema>;
-export type IngresoFormValues = z.output<typeof ingresoSchema>;
+export type EgresoFormInput = z.input<typeof egresoSchema>;
+export type EgresoFormValues = z.output<typeof egresoSchema>;

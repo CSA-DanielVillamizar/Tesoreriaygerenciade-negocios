@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ingresoSchema, type IngresoFormInput, type IngresoFormValues } from '@/features/transacciones/schemas/ingresoSchema';
-import { useCrearIngreso } from '@/features/transacciones/hooks/useCrearIngreso';
+import { egresoSchema, type EgresoFormInput, type EgresoFormValues } from '@/features/transacciones/schemas/egresoSchema';
+import { useCrearEgreso } from '@/features/transacciones/hooks/useCrearEgreso';
 import apiClient from '@/lib/apiClient';
 
-const defaultValues: IngresoFormInput = {
+const defaultValues: EgresoFormInput = {
     MontoCOP: 0,
     CentroCostoId: '',
     BancoId: '',
@@ -26,9 +26,9 @@ type CentroCostoCatalogo = {
     nombre: string;
 };
 
-export default function RegistroIngresoForm() {
+export default function RegistroEgresoForm() {
     const [mensajeExito, setMensajeExito] = useState<string>('');
-    const { mutateAsync, isPending, error } = useCrearIngreso();
+    const { mutateAsync, isPending, error } = useCrearEgreso();
 
     const bancosQuery = useQuery({
         queryKey: ['transacciones', 'catalogo', 'bancos'],
@@ -53,9 +53,9 @@ export default function RegistroIngresoForm() {
         reset,
         setValue,
         getValues,
+        formState: { errors },
                     <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
-    } = useForm<IngresoFormInput, unknown, IngresoFormValues>({
-        resolver: zodResolver(ingresoSchema),
+        resolver: zodResolver(egresoSchema),
         defaultValues,
     });
 
@@ -73,7 +73,7 @@ export default function RegistroIngresoForm() {
 
     const esMonedaOrigenUSD = watch('EsMonedaOrigenUSD');
 
-    const onSubmit = async (values: IngresoFormValues) => {
+    const onSubmit = async (values: EgresoFormValues) => {
         setMensajeExito('');
 
         await mutateAsync({
@@ -88,7 +88,7 @@ export default function RegistroIngresoForm() {
             FuenteTasaCambio: values.EsMonedaOrigenUSD ? values.FuenteTasaCambio : undefined,
         });
 
-        setMensajeExito('Ingreso registrado correctamente.');
+        setMensajeExito('Egreso registrado correctamente.');
         reset({
             ...defaultValues,
             BancoId: bancosQuery.data?.[0]?.id ?? '',
@@ -231,7 +231,7 @@ export default function RegistroIngresoForm() {
                     disabled={isPending}
                     className="inline-flex items-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    {isPending ? 'Guardando...' : 'Registrar ingreso'}
+                    {isPending ? 'Guardando...' : 'Registrar egreso'}
                 </button>
             </form>
         </section>

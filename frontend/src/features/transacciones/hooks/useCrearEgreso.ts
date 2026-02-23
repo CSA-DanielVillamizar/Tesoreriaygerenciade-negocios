@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
 
-export type CrearIngresoRequest = {
+export type CrearEgresoRequest = {
     MontoCOP: number;
     CentroCostoId: string;
     BancoId: string;
@@ -14,7 +14,7 @@ export type CrearIngresoRequest = {
     FuenteTasaCambio?: number;
 };
 
-type CrearIngresoResponse = {
+type CrearEgresoResponse = {
     id: string;
 };
 
@@ -24,15 +24,17 @@ type ProblemDetails = {
     errors?: Record<string, string[]>;
 };
 
-export const useCrearIngreso = () => {
-    return useMutation<CrearIngresoResponse, Error, CrearIngresoRequest>({
+export const useCrearEgreso = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation<CrearEgresoResponse, Error, CrearEgresoRequest>({
         mutationFn: async (request) => {
             if (!request) {
-                throw new Error('No se recibieron datos del formulario de ingreso.');
+                throw new Error('No se recibieron datos del formulario de egreso.');
             }
 
             try {
-                const response = await apiClient.post<CrearIngresoResponse>('/api/transacciones/ingreso', request);
+                const response = await apiClient.post<CrearEgresoResponse>('/api/transacciones/egreso', request);
                 return response.data;
             } catch (error) {
                 if (axios.isAxiosError<ProblemDetails>(error)) {
@@ -45,12 +47,15 @@ export const useCrearIngreso = () => {
                         firstValidationError ??
                         error.response?.data?.detail ??
                         error.response?.data?.title ??
-                        'No fue posible registrar el ingreso.';
+                        'No fue posible registrar el egreso.';
                     throw new Error(mensaje);
                 }
 
-                throw new Error('No fue posible registrar el ingreso.');
+                throw new Error('No fue posible registrar el egreso.');
             }
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         },
     });
 };
