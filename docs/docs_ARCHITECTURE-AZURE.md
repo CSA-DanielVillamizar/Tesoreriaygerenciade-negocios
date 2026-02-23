@@ -88,3 +88,24 @@ ConnectionStrings__DefaultConnection="Server=tcp:<server>.database.windows.net,1
 ```
 
 **Nota:** El connection string en Production **SÍ** incluye `Authentication=Active Directory Default` para usar Managed Identity.
+
+
+## Resource Group
+
+SUBSCRIPTIONID="<subscription-id>"
+RESOURCE_GROUP="<resource-group-name>"
+LOCATION="<azure-region>"
+SERVER_NAME="<sql-server-name>.database.windows.net"
+DB_NAME="<database-name>"
+ADMIN_USER="<sql-admin-user>"
+ADMIN_PASSWORD="<do-not-store-secrets-in-repo>"
+APPSERVICE="<app-service-name>.azurewebsites.net"
+RUNTIME="<runtime-stack>"
+BLOB="<storage-account-name>"
+
+
+## Autenticación Azure
+
+- ✅ Entra ID Admin (Daniel Villamizar)
+- ✅ Database User con roles `db_datareader` / `db_datawriter`
+- ✅ Autenticación vía Azure CLI (`az account get-access-token`)
