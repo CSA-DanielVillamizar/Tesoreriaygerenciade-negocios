@@ -54,186 +54,186 @@ export default function RegistroEgresoForm() {
         setValue,
         getValues,
         formState: { errors },
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
+    } = useForm<EgresoFormInput>({
         resolver: zodResolver(egresoSchema),
         defaultValues,
     });
 
-    useEffect(() => {
-        if ((bancosQuery.data?.length ?? 0) > 0 && !getValues('BancoId')) {
-            setValue('BancoId', bancosQuery.data![0].id, { shouldValidate: true });
-        }
-    }, [bancosQuery.data, getValues, setValue]);
+useEffect(() => {
+    if ((bancosQuery.data?.length ?? 0) > 0 && !getValues('BancoId')) {
+        setValue('BancoId', bancosQuery.data![0].id, { shouldValidate: true });
+    }
+}, [bancosQuery.data, getValues, setValue]);
 
-    useEffect(() => {
-        if ((centrosCostoQuery.data?.length ?? 0) > 0 && !getValues('CentroCostoId')) {
-            setValue('CentroCostoId', centrosCostoQuery.data![0].id, { shouldValidate: true });
-        }
-    }, [centrosCostoQuery.data, getValues, setValue]);
+useEffect(() => {
+    if ((centrosCostoQuery.data?.length ?? 0) > 0 && !getValues('CentroCostoId')) {
+        setValue('CentroCostoId', centrosCostoQuery.data![0].id, { shouldValidate: true });
+    }
+}, [centrosCostoQuery.data, getValues, setValue]);
 
-    const esMonedaOrigenUSD = watch('EsMonedaOrigenUSD');
+const esMonedaOrigenUSD = watch('EsMonedaOrigenUSD');
 
-    const onSubmit = async (values: EgresoFormValues) => {
-        setMensajeExito('');
+const onSubmit = async (values: EgresoFormValues) => {
+    setMensajeExito('');
 
-        await mutateAsync({
-            MontoCOP: values.MontoCOP,
-            CentroCostoId: values.CentroCostoId,
-            BancoId: values.BancoId,
-            MedioPago: Number(values.MedioPago),
-            MonedaOrigen: values.EsMonedaOrigenUSD ? 'USD' : undefined,
-            MontoMonedaOrigen: values.EsMonedaOrigenUSD ? values.MontoMonedaOrigen : undefined,
-            TasaCambioUsada: values.EsMonedaOrigenUSD ? values.TasaCambioUsada : undefined,
-            FechaTasaCambio: values.EsMonedaOrigenUSD ? values.FechaTasaCambio : undefined,
-            FuenteTasaCambio: values.EsMonedaOrigenUSD ? values.FuenteTasaCambio : undefined,
-        });
+    await mutateAsync({
+        MontoCOP: values.MontoCOP,
+        CentroCostoId: values.CentroCostoId,
+        BancoId: values.BancoId,
+        MedioPago: Number(values.MedioPago),
+        MonedaOrigen: values.EsMonedaOrigenUSD ? 'USD' : undefined,
+        MontoMonedaOrigen: values.EsMonedaOrigenUSD ? values.MontoMonedaOrigen : undefined,
+        TasaCambioUsada: values.EsMonedaOrigenUSD ? values.TasaCambioUsada : undefined,
+        FechaTasaCambio: values.EsMonedaOrigenUSD ? values.FechaTasaCambio : undefined,
+        FuenteTasaCambio: values.EsMonedaOrigenUSD ? values.FuenteTasaCambio : undefined,
+    });
 
-        setMensajeExito('Egreso registrado correctamente.');
-        reset({
-            ...defaultValues,
-            BancoId: bancosQuery.data?.[0]?.id ?? '',
-            CentroCostoId: centrosCostoQuery.data?.[0]?.id ?? '',
-        });
-    };
+    setMensajeExito('Egreso registrado correctamente.');
+    reset({
+        ...defaultValues,
+        BancoId: bancosQuery.data?.[0]?.id ?? '',
+        CentroCostoId: centrosCostoQuery.data?.[0]?.id ?? '',
+    });
+};
 
-    return (
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Monto en COP</label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        {...register('MontoCOP')}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                    />
-                    {errors.MontoCOP && <p className="mt-1 text-sm text-red-600">{errors.MontoCOP.message}</p>}
-                </div>
+return (
+    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Monto en COP</label>
+                <input
+                    type="number"
+                    step="0.01"
+                    {...register('MontoCOP')}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                />
+                {errors.MontoCOP && <p className="mt-1 text-sm text-red-600">{errors.MontoCOP.message}</p>}
+            </div>
 
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Centro de costo</label>
-                    <select
-                        {...register('CentroCostoId')}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                        disabled={centrosCostoQuery.isLoading || (centrosCostoQuery.data?.length ?? 0) === 0}
-                    >
-                        <option value="">Seleccione...</option>
-                        {(centrosCostoQuery.data ?? []).map((centroCosto) => (
-                            <option key={centroCosto.id} value={centroCosto.id}>
-                                {centroCosto.nombre}
-                            </option>
-                        ))}
-                    </select>
-                    {centrosCostoQuery.isLoading && <p className="mt-1 text-sm text-slate-500">Cargando centros de costo...</p>}
-                    {centrosCostoQuery.isError && <p className="mt-1 text-sm text-red-600">No fue posible cargar centros de costo.</p>}
-                    {errors.CentroCostoId && <p className="mt-1 text-sm text-red-600">{errors.CentroCostoId.message}</p>}
-                </div>
-
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Banco</label>
-                    <select
-                        {...register('BancoId')}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                        disabled={bancosQuery.isLoading || (bancosQuery.data?.length ?? 0) === 0}
-                    >
-                        <option value="">Seleccione...</option>
-                        {(bancosQuery.data ?? []).map((banco) => (
-                            <option key={banco.id} value={banco.id}>
-                                {banco.numeroCuenta}
-                            </option>
-                        ))}
-                    </select>
-                    {bancosQuery.isLoading && <p className="mt-1 text-sm text-slate-500">Cargando bancos...</p>}
-                    {bancosQuery.isError && <p className="mt-1 text-sm text-red-600">No fue posible cargar bancos.</p>}
-                    {errors.BancoId && <p className="mt-1 text-sm text-red-600">{errors.BancoId.message}</p>}
-                </div>
-
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
-                    <select
-                        {...register('MedioPago')}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                    >
-                        <option value="">Seleccione...</option>
-                        <option value="1">Transferencia</option>
-                        <option value="2">Consignación</option>
-                        <option value="3">Corresponsal</option>
-                        <option value="4">QR</option>
-                    </select>
-                    {errors.MedioPago && <p className="mt-1 text-sm text-red-600">{errors.MedioPago.message}</p>}
-                </div>
-
-                <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <input type="checkbox" {...register('EsMonedaOrigenUSD')} />
-                    La transacción fue en USD
-                </label>
-
-                {esMonedaOrigenUSD && (
-                    <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/40 p-4 md:grid-cols-4">
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-700">Monto en USD</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                {...register('MontoMonedaOrigen')}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                            />
-                            {errors.MontoMonedaOrigen && <p className="mt-1 text-sm text-red-600">{errors.MontoMonedaOrigen.message}</p>}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-700">Tasa de cambio</label>
-                            <input
-                                type="number"
-                                step="0.0001"
-                                {...register('TasaCambioUsada')}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                            />
-                            {errors.TasaCambioUsada && <p className="mt-1 text-sm text-red-600">{errors.TasaCambioUsada.message}</p>}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-700">Fecha de tasa de cambio</label>
-                            <input
-                                type="date"
-                                {...register('FechaTasaCambio')}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                            />
-                            {errors.FechaTasaCambio && <p className="mt-1 text-sm text-red-600">{errors.FechaTasaCambio.message}</p>}
-                        </div>
-
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-700">Fuente de tasa de cambio</label>
-                            <select
-                                {...register('FuenteTasaCambio')}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
-                            >
-                                <option value="">Seleccione...</option>
-                                <option value="1">TRM SFC</option>
-                                <option value="2">Tasa Banco</option>
-                                <option value="3">Manual con Soporte</option>
-                            </select>
-                            {errors.FuenteTasaCambio && <p className="mt-1 text-sm text-red-600">{errors.FuenteTasaCambio.message}</p>}
-                        </div>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error.message}</div>
-                )}
-
-                {mensajeExito && (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{mensajeExito}</div>
-                )}
-
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className="inline-flex items-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Centro de costo</label>
+                <select
+                    {...register('CentroCostoId')}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                    disabled={centrosCostoQuery.isLoading || (centrosCostoQuery.data?.length ?? 0) === 0}
                 >
-                    {isPending ? 'Guardando...' : 'Registrar egreso'}
-                </button>
-            </form>
-        </section>
-    );
+                    <option value="">Seleccione...</option>
+                    {(centrosCostoQuery.data ?? []).map((centroCosto) => (
+                        <option key={centroCosto.id} value={centroCosto.id}>
+                            {centroCosto.nombre}
+                        </option>
+                    ))}
+                </select>
+                {centrosCostoQuery.isLoading && <p className="mt-1 text-sm text-slate-500">Cargando centros de costo...</p>}
+                {centrosCostoQuery.isError && <p className="mt-1 text-sm text-red-600">No fue posible cargar centros de costo.</p>}
+                {errors.CentroCostoId && <p className="mt-1 text-sm text-red-600">{errors.CentroCostoId.message}</p>}
+            </div>
+
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Banco</label>
+                <select
+                    {...register('BancoId')}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                    disabled={bancosQuery.isLoading || (bancosQuery.data?.length ?? 0) === 0}
+                >
+                    <option value="">Seleccione...</option>
+                    {(bancosQuery.data ?? []).map((banco) => (
+                        <option key={banco.id} value={banco.id}>
+                            {banco.numeroCuenta}
+                        </option>
+                    ))}
+                </select>
+                {bancosQuery.isLoading && <p className="mt-1 text-sm text-slate-500">Cargando bancos...</p>}
+                {bancosQuery.isError && <p className="mt-1 text-sm text-red-600">No fue posible cargar bancos.</p>}
+                {errors.BancoId && <p className="mt-1 text-sm text-red-600">{errors.BancoId.message}</p>}
+            </div>
+
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
+                <select
+                    {...register('MedioPago')}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                >
+                    <option value="">Seleccione...</option>
+                    <option value="1">Transferencia</option>
+                    <option value="2">Consignación</option>
+                    <option value="3">Corresponsal</option>
+                    <option value="4">QR</option>
+                </select>
+                {errors.MedioPago && <p className="mt-1 text-sm text-red-600">{errors.MedioPago.message}</p>}
+            </div>
+
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <input type="checkbox" {...register('EsMonedaOrigenUSD')} />
+                La transacción fue en USD
+            </label>
+
+            {esMonedaOrigenUSD && (
+                <div className="grid grid-cols-1 gap-4 rounded-lg border border-blue-100 bg-blue-50/40 p-4 md:grid-cols-4">
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Monto en USD</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            {...register('MontoMonedaOrigen')}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                        />
+                        {errors.MontoMonedaOrigen && <p className="mt-1 text-sm text-red-600">{errors.MontoMonedaOrigen.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Tasa de cambio</label>
+                        <input
+                            type="number"
+                            step="0.0001"
+                            {...register('TasaCambioUsada')}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                        />
+                        {errors.TasaCambioUsada && <p className="mt-1 text-sm text-red-600">{errors.TasaCambioUsada.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Fecha de tasa de cambio</label>
+                        <input
+                            type="date"
+                            {...register('FechaTasaCambio')}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                        />
+                        {errors.FechaTasaCambio && <p className="mt-1 text-sm text-red-600">{errors.FechaTasaCambio.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Fuente de tasa de cambio</label>
+                        <select
+                            {...register('FuenteTasaCambio')}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
+                        >
+                            <option value="">Seleccione...</option>
+                            <option value="1">TRM SFC</option>
+                            <option value="2">Tasa Banco</option>
+                            <option value="3">Manual con Soporte</option>
+                        </select>
+                        {errors.FuenteTasaCambio && <p className="mt-1 text-sm text-red-600">{errors.FuenteTasaCambio.message}</p>}
+                    </div>
+                </div>
+            )}
+
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error.message}</div>
+            )}
+
+            {mensajeExito && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{mensajeExito}</div>
+            )}
+
+            <button
+                type="submit"
+                disabled={isPending}
+                className="inline-flex items-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+                {isPending ? 'Guardando...' : 'Registrar egreso'}
+            </button>
+        </form>
+    </section>
+);
 }
