@@ -1,5 +1,5 @@
-using LAMAMedellin.Application.Features.Cartera.Commands.GenerarObligacionesMensuales;
-using LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPago;
+using LAMAMedellin.Application.Features.Cartera.Commands.GenerarCarteraMensual;
+using LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPagoCartera;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -12,15 +12,13 @@ namespace LAMAMedellin.API.Controllers;
 [Authorize]
 public sealed class CarteraController(ISender sender) : ControllerBase
 {
-    [HttpPost("generar-obligaciones")]
+    [HttpPost("generar-mensual")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GenerarObligaciones(
-        [FromBody] GenerarObligacionesRequest request,
+    public async Task<IActionResult> GenerarCarteraMensual(
+        [FromBody] GenerarCarteraMensualRequest request,
         CancellationToken cancellationToken)
     {
-        var resultado = await sender.Send(
-            new GenerarObligacionesMensualesCommand(request.Periodo),
-            cancellationToken);
+        var resultado = await sender.Send(new GenerarCarteraMensualCommand(request.Periodo), cancellationToken);
 
         return Ok(new
         {
@@ -43,7 +41,12 @@ public sealed class CarteraController(ISender sender) : ControllerBase
         [FromBody] RegistrarPagoRequest request,
         CancellationToken cancellationToken)
     {
-        await sender.Send(new RegistrarPagoCuotaCommand(id, request.MontoCOP), cancellationToken);
+        await sender.Send(new RegistrarPagoCarteraCommand(
+            id,
+            request.MontoPagadoCOP,
+            request.BancoId,
+            request.CentroCostoId,
+            request.Descripcion), cancellationToken);
 
         return Ok(new
         {
@@ -52,5 +55,5 @@ public sealed class CarteraController(ISender sender) : ControllerBase
     }
 }
 
-public sealed record GenerarObligacionesRequest(string Periodo);
-public sealed record RegistrarPagoRequest(decimal MontoCOP);
+public sealed record GenerarCarteraMensualRequest(string Periodo);
+public sealed record RegistrarPagoRequest(decimal MontoPagadoCOP, Guid BancoId, Guid CentroCostoId, string? Descripcion);
