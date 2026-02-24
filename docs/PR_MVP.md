@@ -4,7 +4,7 @@
 MVP completo: Miembros + Transacciones + Cartera + Documentacion final
 
 **Executive summary**
-Entrega del flujo end-to-end del MVP: registro de miembros, generacion de cartera mensual, recaudo de pagos con afectacion a bancos y libro mayor, y documentacion final para operacion local y uso del tesorero.
+Cierre del MVP del Sistema Contable L.A.M.A. Medellin: integra membresias, cartera, recaudo y libro mayor en un flujo continuo, con interfaz operativa y documentacion final para tesoreria.
 
 ## Backend
 - Generacion mensual de cartera y registro de pago con impacto en Banco y Transaccion (Ingreso).
