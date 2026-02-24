@@ -27,8 +27,16 @@ export default function TablaCartera() {
     const { data: cartera, isLoading, error } = useQuery<CarteraPendienteItem[]>({
         queryKey: ['cartera-pendiente'],
         queryFn: async () => {
-            const response = await apiClient.get<CarteraPendienteItem[]>('/api/cartera/pendiente');
-            return response.data;
+            const response = await apiClient.get<any[]>('/api/cartera/pendiente');
+
+            return (response.data ?? []).map((item) => ({
+                id: String(item?.id ?? item?.Id ?? ''),
+                miembroId: String(item?.miembroId ?? item?.MiembroId ?? ''),
+                nombreMiembro: String(item?.nombreMiembro ?? item?.NombreMiembro ?? ''),
+                periodo: String(item?.periodo ?? item?.Periodo ?? ''),
+                valorEsperadoCOP: Number(item?.valorEsperadoCOP ?? item?.ValorEsperadoCOP ?? 0),
+                saldoPendienteCOP: Number(item?.saldoPendienteCOP ?? item?.SaldoPendienteCOP ?? 0),
+            }));
         },
     });
 
@@ -133,8 +141,8 @@ export default function TablaCartera() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
-                            {cartera.map((item) => (
-                                <tr key={item.id} className="hover:bg-gray-50">
+                            {cartera.map((item, index) => (
+                                <tr key={`${item.id || item.miembroId || 'fila'}-${item.periodo}-${index}`} className="hover:bg-gray-50">
                                     <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                                         {item.nombreMiembro}
                                     </td>

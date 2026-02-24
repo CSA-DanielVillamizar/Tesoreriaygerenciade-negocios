@@ -62,7 +62,9 @@ export default function TablaTransacciones() {
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
             {data.map((transaccion) => {
-              const esIngreso = transaccion.tipo === 'Ingreso';
+              // Normalizamos el tipo a mayúsculas para evitar inconsistencias
+              const tipoNormalizado = String(transaccion.tipo || '').trim();
+              const esIngreso = tipoNormalizado === 'Ingreso';
               const signo = esIngreso ? '+' : '-';
               const montoConSigno = `${signo}${formatCOP(transaccion.montoCOP)}`;
               const montoClass = esIngreso ? 'text-emerald-700' : 'text-red-700';

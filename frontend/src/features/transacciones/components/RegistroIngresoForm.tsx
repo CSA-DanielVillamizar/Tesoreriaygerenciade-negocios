@@ -35,16 +35,28 @@ export default function RegistroIngresoForm() {
     const bancosQuery = useQuery({
         queryKey: ['transacciones', 'catalogo', 'bancos'],
         queryFn: async () => {
-            const response = await apiClient.get<BancoCatalogo[]>('/api/transacciones/bancos');
-            return response.data;
+            const response = await apiClient.get<any[]>('/api/transacciones/bancos');
+
+            return (response.data ?? [])
+                .map((item) => ({
+                    id: String(item?.id ?? item?.Id ?? ''),
+                    numeroCuenta: String(item?.numeroCuenta ?? item?.NumeroCuenta ?? ''),
+                }))
+                .filter((item) => item.id.length > 0);
         },
     });
 
     const centrosCostoQuery = useQuery({
         queryKey: ['transacciones', 'catalogo', 'centros-costo'],
         queryFn: async () => {
-            const response = await apiClient.get<CentroCostoCatalogo[]>('/api/transacciones/centros-costo');
-            return response.data;
+            const response = await apiClient.get<any[]>('/api/transacciones/centros-costo');
+
+            return (response.data ?? [])
+                .map((item) => ({
+                    id: String(item?.id ?? item?.Id ?? ''),
+                    nombre: String(item?.nombre ?? item?.Nombre ?? ''),
+                }))
+                .filter((item) => item.id.length > 0);
         },
     });
 
@@ -150,9 +162,8 @@ export default function RegistroIngresoForm() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
                         disabled={centrosCostoQuery.isLoading || (centrosCostoQuery.data?.length ?? 0) === 0}
                     >
-                        <option value="">Seleccione...</option>
-                        {(centrosCostoQuery.data ?? []).map((centroCosto) => (
-                            <option key={centroCosto.id} value={centroCosto.id}>
+                        {[{ id: '', nombre: 'Seleccione...' }, ...(centrosCostoQuery.data ?? [])].map((centroCosto, index) => (
+                            <option key={`centro-${centroCosto.id}-${index}`} value={centroCosto.id}>
                                 {centroCosto.nombre}
                             </option>
                         ))}
@@ -169,9 +180,8 @@ export default function RegistroIngresoForm() {
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
                         disabled={bancosQuery.isLoading || (bancosQuery.data?.length ?? 0) === 0}
                     >
-                        <option value="">Seleccione...</option>
-                        {(bancosQuery.data ?? []).map((banco) => (
-                            <option key={banco.id} value={banco.id}>
+                        {[{ id: '', numeroCuenta: 'Seleccione...' }, ...(bancosQuery.data ?? [])].map((banco, index) => (
+                            <option key={`banco-${banco.id}-${index}`} value={banco.id}>
                                 {banco.numeroCuenta}
                             </option>
                         ))}
@@ -187,11 +197,17 @@ export default function RegistroIngresoForm() {
                         {...register('MedioPago')}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
                     >
-                        <option value="">Seleccione...</option>
-                        <option value="1">Transferencia</option>
-                        <option value="2">Consignación</option>
-                        <option value="3">Corresponsal</option>
-                        <option value="4">QR</option>
+                        {[
+                            { value: '', label: 'Seleccione...' },
+                            { value: '1', label: 'Transferencia' },
+                            { value: '2', label: 'Consignación' },
+                            { value: '3', label: 'Corresponsal' },
+                            { value: '4', label: 'QR' },
+                        ].map((medio, index) => (
+                            <option key={`medio-${medio.value}-${index}`} value={medio.value}>
+                                {medio.label}
+                            </option>
+                        ))}
                     </select>
                     {errors.MedioPago && <p className="mt-1 text-sm text-red-600">{errors.MedioPago.message}</p>}
                 </div>
@@ -270,10 +286,16 @@ export default function RegistroIngresoForm() {
                                 {...register('FuenteTasaCambio')}
                                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-100 focus:border-blue-500 focus:ring-2"
                             >
-                                <option value="">Seleccione...</option>
-                                <option value="1">TRM SFC</option>
-                                <option value="2">Tasa Banco</option>
-                                <option value="3">Manual con Soporte</option>
+                                {[
+                                    { value: '', label: 'Seleccione...' },
+                                    { value: '1', label: 'TRM SFC' },
+                                    { value: '2', label: 'Tasa Banco' },
+                                    { value: '3', label: 'Manual con Soporte' },
+                                ].map((fuente, index) => (
+                                    <option key={`fuente-${fuente.value}-${index}`} value={fuente.value}>
+                                        {fuente.label}
+                                    </option>
+                                ))}
                             </select>
                             {errors.FuenteTasaCambio && <p className="mt-1 text-sm text-red-600">{errors.FuenteTasaCambio.message}</p>}
                         </div>

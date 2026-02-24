@@ -8,7 +8,12 @@ using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Mantener los nombres de propiedades sin conversión a camelCase
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration, builder.Environment);

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 
 type SaldoBanco = {
     nombre: string;
-    saldo: number;
+    saldo: number | null;
 };
 
 type ResumenCartera = {
@@ -21,6 +21,11 @@ function formatCOP(value: number): string {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(value);
+}
+
+function toNumber(value: unknown): number {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export default function Home() {
@@ -55,8 +60,17 @@ export default function Home() {
     const bancosQuery = useQuery({
         queryKey: ['dashboard', 'bancos'],
         queryFn: async () => {
-            const response = await apiClient.get<SaldoBanco[]>('/api/dashboard/bancos');
-            return response.data;
+            const response = await apiClient.get<any[]>('/api/dashboard/bancos');
+
+            return (response.data ?? []).map((item) => {
+                const saldoRaw = item?.saldo ?? item?.Saldo;
+                const saldoParsed = typeof saldoRaw === 'number' ? saldoRaw : Number(saldoRaw);
+
+                return {
+                    nombre: String(item?.nombre ?? item?.Nombre ?? ''),
+                    saldo: Number.isFinite(saldoParsed) ? saldoParsed : null,
+                } satisfies SaldoBanco;
+            });
         },
         enabled: hasToken,
     });
@@ -64,13 +78,18 @@ export default function Home() {
     const carteraQuery = useQuery({
         queryKey: ['dashboard', 'cartera'],
         queryFn: async () => {
-            const response = await apiClient.get<ResumenCartera>('/api/dashboard/cartera');
-            return response.data;
+            const response = await apiClient.get<any>('/api/dashboard/cartera');
+
+            return {
+                totalPendienteCOP: toNumber(response.data?.totalPendienteCOP ?? response.data?.TotalPendienteCOP),
+            } satisfies ResumenCartera;
         },
         enabled: hasToken,
     });
 
-    const saldoTotalBancos = (bancosQuery.data ?? []).reduce((sum, banco) => sum + banco.saldo, 0);
+    const saldoTotalBancos = (bancosQuery.data ?? []).reduce((sum, banco) => sum + (banco.saldo ?? 0), 0);
+    const tieneSaldosBancariosValidos = (bancosQuery.data ?? []).some((banco) => banco.saldo !== null);
+    const cantidadSaldosInvalidos = (bancosQuery.data ?? []).filter((banco) => banco.saldo === null).length;
     const totalPendienteCartera = carteraQuery.data?.totalPendienteCOP ?? 0;
 
     if (!authReady) {
@@ -117,10 +136,17 @@ export default function Home() {
                 <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <article className="rounded-xl border border-slate-200 bg-white p-6 lg:col-span-2">
                         <p className="text-sm text-slate-600">Saldo total en bancos</p>
-                        <p className="mt-2 text-4xl font-bold text-slate-900">{formatCOP(saldoTotalBancos)}</p>
+                        <p className="mt-2 text-4xl font-bold text-slate-900">
+                            {bancosQuery.isLoading || tieneSaldosBancariosValidos ? formatCOP(saldoTotalBancos) : 'Dato no disponible'}
+                        </p>
                         <p className="mt-2 text-sm text-slate-500">
                             {bancosQuery.isLoading ? 'Cargando bancos...' : `${bancosQuery.data?.length ?? 0} banco(s)`}
                         </p>
+                        {!bancosQuery.isLoading && cantidadSaldosInvalidos > 0 ? (
+                            <p className="mt-0.5 text-xs text-slate-400">
+                                {cantidadSaldosInvalidos} banco(s) sin saldo válido no se incluyen en el total.
+                            </p>
+                        ) : null}
                     </article>
 
                     <article className="rounded-xl border border-slate-200 bg-white p-6">
