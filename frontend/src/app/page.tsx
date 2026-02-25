@@ -214,6 +214,13 @@ export default function Home() {
                     >
                         Gestión Misional
                     </Link>
+
+                    <Link
+                        href="/contabilidad/comprobantes"
+                        className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
+                    >
+                        Comprobantes Contables
+                    </Link>
                 </section>
             </div>
         </main>
