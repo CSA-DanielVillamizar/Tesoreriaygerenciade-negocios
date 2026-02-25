@@ -44,6 +44,28 @@ export type DonacionItem = {
     codigoVerificacion: string;
 };
 
+export type CertificadoDonacionItem = {
+    fundacion: {
+        nombre: string;
+        nit: string;
+        direccion: string;
+        ciudad: string;
+    };
+    donante: {
+        donanteId: string;
+        nombreDonante: string;
+        tipoDocumento: string;
+        numeroDocumento: string;
+        email: string;
+    };
+    monto: {
+        valorCOP: number;
+        enLetras: string;
+    };
+    fecha: string;
+    codigoVerificacion: string;
+};
+
 type CrearResponse = {
     id: string;
 };
@@ -101,6 +123,43 @@ export function useCrearDonante() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['donaciones', 'donantes'] });
+        },
+    });
+}
+
+export function useCertificadoDonacion(id?: string) {
+    return useQuery<CertificadoDonacionItem | null>({
+        queryKey: ['donaciones', 'certificado', id],
+        enabled: Boolean(id),
+        queryFn: async () => {
+            if (!id) {
+                return null;
+            }
+
+            const response = await apiClient.get<any>(`/api/donaciones/${id}/certificado`);
+            const item = response.data ?? {};
+
+            return {
+                fundacion: {
+                    nombre: String(item?.fundacion?.nombre ?? item?.Fundacion?.Nombre ?? ''),
+                    nit: String(item?.fundacion?.nit ?? item?.Fundacion?.Nit ?? ''),
+                    direccion: String(item?.fundacion?.direccion ?? item?.Fundacion?.Direccion ?? ''),
+                    ciudad: String(item?.fundacion?.ciudad ?? item?.Fundacion?.Ciudad ?? ''),
+                },
+                donante: {
+                    donanteId: String(item?.donante?.donanteId ?? item?.Donante?.DonanteId ?? ''),
+                    nombreDonante: String(item?.donante?.nombreDonante ?? item?.Donante?.NombreDonante ?? ''),
+                    tipoDocumento: String(item?.donante?.tipoDocumento ?? item?.Donante?.TipoDocumento ?? ''),
+                    numeroDocumento: String(item?.donante?.numeroDocumento ?? item?.Donante?.NumeroDocumento ?? ''),
+                    email: String(item?.donante?.email ?? item?.Donante?.Email ?? ''),
+                },
+                monto: {
+                    valorCOP: Number(item?.monto?.valorCOP ?? item?.Monto?.ValorCOP ?? 0),
+                    enLetras: String(item?.monto?.enLetras ?? item?.Monto?.EnLetras ?? ''),
+                },
+                fecha: String(item?.fecha ?? item?.Fecha ?? ''),
+                codigoVerificacion: String(item?.codigoVerificacion ?? item?.CodigoVerificacion ?? ''),
+            };
         },
     });
 }

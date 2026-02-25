@@ -1,5 +1,6 @@
 using LAMAMedellin.Application.Features.Donaciones.Commands.CrearDonante;
 using LAMAMedellin.Application.Features.Donaciones.Commands.RegistrarDonacion;
+using LAMAMedellin.Application.Features.Donaciones.Queries.GetCertificadoDonacion;
 using LAMAMedellin.Application.Features.Donaciones.Queries.GetDonaciones;
 using LAMAMedellin.Application.Features.Donaciones.Queries.GetDonantes;
 using MediatR;
@@ -43,5 +44,45 @@ public sealed class DonacionesController(ISender sender) : ControllerBase
     {
         var donacionId = await sender.Send(command, cancellationToken);
         return Created($"/api/donaciones/{donacionId}", new { id = donacionId });
+    }
+
+    [HttpGet("{id:guid}/certificado")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCertificado(Guid id, CancellationToken cancellationToken)
+    {
+        var certificado = await sender.Send(new GetCertificadoDonacionQuery(id), cancellationToken);
+        if (certificado is null)
+        {
+            return NotFound();
+        }
+
+        var fundacion = new
+        {
+            Nombre = "Fundación L.A.M.A. Medellín",
+            Nit = "902007705-8",
+            Direccion = "Calle 8 Sur No. 43 B 112",
+            Ciudad = "Medellín, Antioquia, Colombia"
+        };
+
+        return Ok(new
+        {
+            Fundacion = fundacion,
+            Donante = new
+            {
+                certificado.DonanteId,
+                certificado.NombreDonante,
+                certificado.TipoDocumento,
+                certificado.NumeroDocumento,
+                certificado.Email
+            },
+            Monto = new
+            {
+                ValorCOP = certificado.MontoCOP,
+                EnLetras = certificado.MontoEnLetras
+            },
+            certificado.Fecha,
+            certificado.CodigoVerificacion
+        });
     }
 }

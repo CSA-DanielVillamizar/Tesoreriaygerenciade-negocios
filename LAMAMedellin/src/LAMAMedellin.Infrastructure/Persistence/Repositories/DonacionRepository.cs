@@ -33,6 +33,14 @@ public sealed class DonacionRepository : IDonacionRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task<Donacion?> GetByIdWithDetallesAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return _context.Donaciones
+            .AsNoTracking()
+            .Include(x => x.Donante)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         await _context.SaveChangesAsync(cancellationToken);
