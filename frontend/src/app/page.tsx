@@ -207,6 +207,13 @@ export default function Home() {
                     >
                         Gestión de Donaciones
                     </Link>
+
+                    <Link
+                        href="/proyectos"
+                        className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
+                    >
+                        Gestión Misional
+                    </Link>
                 </section>
             </div>
         </main>
