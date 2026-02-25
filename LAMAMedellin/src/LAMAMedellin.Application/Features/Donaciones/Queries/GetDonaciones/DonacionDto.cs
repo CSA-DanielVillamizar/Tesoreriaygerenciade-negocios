@@ -1,3 +1,5 @@
+using LAMAMedellin.Domain.Enums;
+
 namespace LAMAMedellin.Application.Features.Donaciones.Queries.GetDonaciones;
 
 public sealed record DonacionDto(
@@ -9,4 +11,6 @@ public sealed record DonacionDto(
     Guid BancoId,
     Guid CentroCostoId,
     bool CertificadoEmitido,
-    string CodigoVerificacion);
+    string CodigoVerificacion,
+    FormaDonacion FormaDonacion,
+    string MedioPagoODescripcion);

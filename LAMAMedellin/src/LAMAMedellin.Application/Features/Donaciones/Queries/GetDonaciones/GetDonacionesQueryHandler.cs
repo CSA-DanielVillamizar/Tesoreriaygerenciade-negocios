@@ -21,7 +21,9 @@ public sealed class GetDonacionesQueryHandler(IDonacionRepository donacionReposi
                 x.BancoId,
                 x.CentroCostoId,
                 x.CertificadoEmitido,
-                x.CodigoVerificacion))
+                x.CodigoVerificacion,
+                x.FormaDonacion,
+                x.MedioPagoODescripcion))
             .ToList();
     }
 }

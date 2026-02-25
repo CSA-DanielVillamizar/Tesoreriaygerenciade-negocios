@@ -24,7 +24,10 @@ public sealed class GetCertificadoDonacionQueryHandler(IDonacionRepository donac
             donacion.Donante.NombreORazonSocial,
             donacion.Donante.TipoDocumento.ToString(),
             donacion.Donante.NumeroDocumento,
-            donacion.Donante.Email);
+            donacion.Donante.Email,
+            donacion.FormaDonacion,
+            donacion.MedioPagoODescripcion,
+            2026);
     }
 
     private static string ConvertirMontoEnLetras(decimal monto)

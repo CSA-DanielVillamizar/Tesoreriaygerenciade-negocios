@@ -9,4 +9,6 @@ public sealed record RegistrarDonacionCommand(
     Guid BancoId,
     Guid CentroCostoId,
     MedioPago MedioPago,
+    FormaDonacion FormaDonacion,
+    string MedioPagoODescripcion,
     string? Descripcion = null) : IRequest<Guid>;

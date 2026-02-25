@@ -42,6 +42,8 @@ export type DonacionItem = {
     centroCosto: string;
     certificadoEmitido: boolean;
     codigoVerificacion: string;
+    formaDonacion: string;
+    medioPagoODescripcion: string;
 };
 
 export type CertificadoDonacionItem = {
@@ -62,6 +64,9 @@ export type CertificadoDonacionItem = {
         valorCOP: number;
         enLetras: string;
     };
+    formaDonacion: string;
+    medioPagoODescripcion: string;
+    anioGravable: number;
     fecha: string;
     codigoVerificacion: string;
 };
@@ -104,6 +109,8 @@ export function useDonaciones() {
                 centroCosto: String(item?.centroCosto ?? item?.CentroCosto ?? ''),
                 certificadoEmitido: Boolean(item?.certificadoEmitido ?? item?.CertificadoEmitido ?? false),
                 codigoVerificacion: String(item?.codigoVerificacion ?? item?.CodigoVerificacion ?? ''),
+                formaDonacion: String(item?.formaDonacion ?? item?.FormaDonacion ?? ''),
+                medioPagoODescripcion: String(item?.medioPagoODescripcion ?? item?.MedioPagoODescripcion ?? ''),
             }));
         },
     });
@@ -157,6 +164,9 @@ export function useCertificadoDonacion(id?: string) {
                     valorCOP: Number(item?.monto?.valorCOP ?? item?.Monto?.ValorCOP ?? 0),
                     enLetras: String(item?.monto?.enLetras ?? item?.Monto?.EnLetras ?? ''),
                 },
+                formaDonacion: String(item?.formaDonacion ?? item?.FormaDonacion ?? ''),
+                medioPagoODescripcion: String(item?.medioPagoODescripcion ?? item?.MedioPagoODescripcion ?? ''),
+                anioGravable: Number(item?.anioGravable ?? item?.AnioGravable ?? 2026),
                 fecha: String(item?.fecha ?? item?.Fecha ?? ''),
                 codigoVerificacion: String(item?.codigoVerificacion ?? item?.CodigoVerificacion ?? ''),
             };

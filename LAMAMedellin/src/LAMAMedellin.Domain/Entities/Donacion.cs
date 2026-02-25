@@ -1,4 +1,5 @@
 using LAMAMedellin.Domain.Common;
+using LAMAMedellin.Domain.Enums;
 
 namespace LAMAMedellin.Domain.Entities;
 
@@ -11,6 +12,8 @@ public sealed class Donacion : BaseEntity
     public Guid CentroCostoId { get; private set; }
     public bool CertificadoEmitido { get; private set; }
     public string CodigoVerificacion { get; private set; }
+    public FormaDonacion FormaDonacion { get; private set; }
+    public string MedioPagoODescripcion { get; private set; }
 
     public Donante? Donante { get; private set; }
     public Banco? Banco { get; private set; }
@@ -26,7 +29,9 @@ public sealed class Donacion : BaseEntity
         DateTime fecha,
         Guid bancoId,
         Guid centroCostoId,
-        string codigoVerificacion)
+        string codigoVerificacion,
+        FormaDonacion formaDonacion,
+        string medioPagoODescripcion)
     {
         if (donanteId == Guid.Empty)
         {
@@ -53,6 +58,11 @@ public sealed class Donacion : BaseEntity
             throw new ArgumentException("CodigoVerificacion requerido.", nameof(codigoVerificacion));
         }
 
+        if (string.IsNullOrWhiteSpace(medioPagoODescripcion))
+        {
+            throw new ArgumentException("MedioPagoODescripcion requerido.", nameof(medioPagoODescripcion));
+        }
+
         DonanteId = donanteId;
         MontoCOP = montoCop;
         Fecha = fecha;
@@ -60,6 +70,8 @@ public sealed class Donacion : BaseEntity
         CentroCostoId = centroCostoId;
         CertificadoEmitido = false;
         CodigoVerificacion = codigoVerificacion.Trim();
+        FormaDonacion = formaDonacion;
+        MedioPagoODescripcion = medioPagoODescripcion.Trim();
     }
 
     public void MarcarCertificadoEmitido()

@@ -60,7 +60,7 @@ public sealed class DonacionesController(ISender sender) : ControllerBase
         var fundacion = new
         {
             Nombre = "Fundación L.A.M.A. Medellín",
-            Nit = "902007705-8",
+            Nit = "900.000.000-0",
             Direccion = "Calle 8 Sur No. 43 B 112",
             Ciudad = "Medellín, Antioquia, Colombia"
         };
@@ -81,6 +81,9 @@ public sealed class DonacionesController(ISender sender) : ControllerBase
                 ValorCOP = certificado.MontoCOP,
                 EnLetras = certificado.MontoEnLetras
             },
+            certificado.FormaDonacion,
+            certificado.MedioPagoODescripcion,
+            certificado.AnioGravable,
             certificado.Fecha,
             certificado.CodigoVerificacion
         });

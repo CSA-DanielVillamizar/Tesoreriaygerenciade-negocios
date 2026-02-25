@@ -22,6 +22,11 @@ export const mediosPagoOptions = [
     { value: 4, label: 'QR' },
 ] as const;
 
+export const formasDonacionOptions = [
+    { value: 1, label: 'Dinero' },
+    { value: 2, label: 'Especie' },
+] as const;
+
 export const donanteSchema = z.object({
     NombreORazonSocial: z.string().trim().min(1, 'Nombre o razón social es obligatorio.').max(200, 'Máximo 200 caracteres.'),
     TipoDocumento: z.coerce.number().int().min(1).max(5),
@@ -39,8 +44,26 @@ export const donacionSchema = z.object({
         .trim()
         .uuid('Centro de costo inválido.')
         .refine((v) => v !== guidVacio, 'Debes seleccionar un centro de costo válido.'),
-    MedioPago: z.coerce.number().int().min(1).max(4),
+    FormaDonacion: z.coerce.number().int().min(1).max(2),
+    MedioPago: z.coerce.number().int().min(1).max(4).optional(),
+    MedioPagoODescripcion: z.string().trim().max(500, 'Máximo 500 caracteres.').optional(),
     Descripcion: z.string().trim().max(500, 'Máximo 500 caracteres.').optional(),
+}).superRefine((value, ctx) => {
+    if (value.FormaDonacion === 1 && !value.MedioPago) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['MedioPago'],
+            message: 'Debes seleccionar el medio de pago.',
+        });
+    }
+
+    if (value.FormaDonacion === 2 && !value.MedioPagoODescripcion?.trim()) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['MedioPagoODescripcion'],
+            message: 'Debes describir y valorar el bien donado.',
+        });
+    }
 });
 
 export type DonanteFormInput = z.input<typeof donanteSchema>;

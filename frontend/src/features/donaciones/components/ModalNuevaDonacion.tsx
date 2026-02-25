@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import apiClient from '@/lib/apiClient';
 import {
     donacionSchema,
+    formasDonacionOptions,
     mediosPagoOptions,
     type DonacionFormInput,
     type DonacionFormValues,
@@ -33,7 +34,9 @@ const defaultValues: DonacionFormInput = {
     MontoCOP: 0,
     BancoId: '',
     CentroCostoId: '',
+    FormaDonacion: 1,
     MedioPago: 1,
+    MedioPagoODescripcion: '',
     Descripcion: '',
 };
 
@@ -69,6 +72,7 @@ export default function ModalNuevaDonacion({ open, onClose }: ModalNuevaDonacion
 
     const {
         register,
+        watch,
         handleSubmit,
         reset,
         setValue,
@@ -77,6 +81,8 @@ export default function ModalNuevaDonacion({ open, onClose }: ModalNuevaDonacion
         resolver: zodResolver(donacionSchema),
         defaultValues,
     });
+
+    const formaDonacion = watch('FormaDonacion');
 
     useEffect(() => {
         if (!open) {
@@ -110,7 +116,17 @@ export default function ModalNuevaDonacion({ open, onClose }: ModalNuevaDonacion
     }, [open, centrosQuery.data, setValue]);
 
     const onSubmit = async (values: DonacionFormValues) => {
-        await registrarDonacion.mutateAsync(values);
+        const medioPagoSeleccionado = mediosPagoOptions.find((item) => item.value === values.MedioPago)?.label ?? '';
+
+        await registrarDonacion.mutateAsync({
+            ...values,
+            MedioPago: values.FormaDonacion === 1 ? (values.MedioPago ?? 1) : 1,
+            MedioPagoODescripcion:
+                values.FormaDonacion === 1
+                    ? medioPagoSeleccionado
+                    : (values.MedioPagoODescripcion ?? '').trim(),
+        });
+
         onClose();
     };
 
@@ -177,15 +193,42 @@ export default function ModalNuevaDonacion({ open, onClose }: ModalNuevaDonacion
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago</label>
-                        <select {...register('MedioPago')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
-                            {mediosPagoOptions.map((medio) => (
-                                <option key={medio.value} value={medio.value}>
-                                    {medio.label}
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Tipo de Donación</label>
+                        <select {...register('FormaDonacion')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                            {formasDonacionOptions.map((forma) => (
+                                <option key={forma.value} value={forma.value}>
+                                    {forma.label}
                                 </option>
                             ))}
                         </select>
                     </div>
+
+                    {formaDonacion === 1 ? (
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Medio de pago bancarizado</label>
+                            <select {...register('MedioPago')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                                <option value="">Seleccione...</option>
+                                {mediosPagoOptions.map((medio) => (
+                                    <option key={medio.value} value={medio.value}>
+                                        {medio.label}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.MedioPago ? <p className="mt-1 text-xs text-red-600">{errors.MedioPago.message}</p> : null}
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Descripción y Valoración del Bien</label>
+                            <textarea
+                                rows={3}
+                                {...register('MedioPagoODescripcion')}
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                            />
+                            {errors.MedioPagoODescripcion ? (
+                                <p className="mt-1 text-xs text-red-600">{errors.MedioPagoODescripcion.message}</p>
+                            ) : null}
+                        </div>
+                    )}
 
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">Descripción (opcional)</label>

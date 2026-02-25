@@ -23,6 +23,14 @@ public sealed class DonacionConfiguration : IEntityTypeConfiguration<Donacion>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(x => x.FormaDonacion)
+            .HasConversion<int>()
+            .IsRequired();
+
+        builder.Property(x => x.MedioPagoODescripcion)
+            .HasMaxLength(500)
+            .IsRequired();
+
         builder.HasIndex(x => x.CodigoVerificacion)
             .IsUnique();
 

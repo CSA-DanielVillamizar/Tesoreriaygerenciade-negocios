@@ -1,3 +1,5 @@
+using LAMAMedellin.Domain.Enums;
+
 namespace LAMAMedellin.Application.Features.Donaciones.Queries.GetCertificadoDonacion;
 
 public sealed record CertificadoDonacionDto(
@@ -10,4 +12,7 @@ public sealed record CertificadoDonacionDto(
     string NombreDonante,
     string TipoDocumento,
     string NumeroDocumento,
-    string Email);
+    string Email,
+    FormaDonacion FormaDonacion,
+    string MedioPagoODescripcion,
+    int AnioGravable);

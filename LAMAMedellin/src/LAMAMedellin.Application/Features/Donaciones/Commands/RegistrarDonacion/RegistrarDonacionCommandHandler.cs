@@ -42,7 +42,9 @@ public sealed class RegistrarDonacionCommandHandler(
             DateTime.UtcNow,
             request.BancoId,
             request.CentroCostoId,
-            codigoVerificacion);
+            codigoVerificacion,
+            request.FormaDonacion,
+            request.MedioPagoODescripcion);
 
         banco.AplicarIngreso(request.MontoCOP);
 

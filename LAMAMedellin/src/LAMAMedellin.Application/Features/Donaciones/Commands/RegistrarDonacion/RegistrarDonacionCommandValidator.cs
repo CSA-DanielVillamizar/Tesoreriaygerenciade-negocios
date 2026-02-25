@@ -21,6 +21,13 @@ public sealed class RegistrarDonacionCommandValidator : AbstractValidator<Regist
         RuleFor(x => x.MedioPago)
             .IsInEnum();
 
+        RuleFor(x => x.FormaDonacion)
+            .IsInEnum();
+
+        RuleFor(x => x.MedioPagoODescripcion)
+            .NotEmpty()
+            .MaximumLength(500);
+
         RuleFor(x => x.Descripcion)
             .MaximumLength(500);
     }
