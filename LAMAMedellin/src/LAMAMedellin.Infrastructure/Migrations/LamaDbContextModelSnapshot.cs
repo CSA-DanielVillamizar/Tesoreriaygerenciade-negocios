@@ -208,13 +208,22 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid?>("CuentaPadreId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<bool>("ExigeTercero")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int>("Naturaleza")
+                        .HasColumnType("int");
 
                     b.Property<bool>("PermiteMovimiento")
                         .HasColumnType("bit");
@@ -223,6 +232,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
 
                     b.HasIndex("Codigo")
                         .IsUnique();
+
+                    b.HasIndex("CuentaPadreId");
 
                     b.ToTable("CuentasContables", (string)null);
                 });
@@ -531,6 +542,16 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("CuentaContable");
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaContable", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.CuentaContable", "CuentaPadre")
+                        .WithMany("CuentasHijas")
+                        .HasForeignKey("CuentaPadreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CuentaPadre");
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaPorCobrar", b =>
                 {
                     b.HasOne("LAMAMedellin.Domain.Entities.Miembro", "Miembro")
@@ -640,6 +661,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaContable", b =>
                 {
                     b.Navigation("AsientosContables");
+
+                    b.Navigation("CuentasHijas");
                 });
 #pragma warning restore 612, 618
         }

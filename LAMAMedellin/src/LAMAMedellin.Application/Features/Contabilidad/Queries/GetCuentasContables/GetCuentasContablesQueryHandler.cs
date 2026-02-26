@@ -16,19 +16,9 @@ public sealed class GetCuentasContablesQueryHandler(ICuentaContableRepository cu
                 x.Id,
                 x.Codigo,
                 x.Descripcion,
-                DeterminarNaturaleza(x.Codigo),
+                x.Naturaleza.ToString().ToUpperInvariant(),
                 x.PermiteMovimiento,
                 x.ExigeTercero))
             .ToList();
-    }
-
-    private static string DeterminarNaturaleza(string codigo)
-    {
-        if (codigo.StartsWith('5') || codigo.StartsWith('6'))
-        {
-            return "DEBITO";
-        }
-
-        return "CREDITO";
     }
 }

@@ -20,14 +20,27 @@ public sealed class CuentaContableConfiguration : IEntityTypeConfiguration<Cuent
             .HasMaxLength(300)
             .IsRequired();
 
+        builder.Property(x => x.Naturaleza)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(x => x.PermiteMovimiento)
             .IsRequired();
 
         builder.Property(x => x.ExigeTercero)
             .IsRequired();
 
+        builder.Property(x => x.CuentaPadreId);
+
         builder.HasIndex(x => x.Codigo)
             .IsUnique();
+
+        builder.HasIndex(x => x.CuentaPadreId);
+
+        builder.HasOne(x => x.CuentaPadre)
+            .WithMany(x => x.CuentasHijas)
+            .HasForeignKey(x => x.CuentaPadreId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
