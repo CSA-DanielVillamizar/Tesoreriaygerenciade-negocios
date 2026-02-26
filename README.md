@@ -45,3 +45,7 @@ Gestiona donantes y donaciones, incluyendo soporte para dinero y especie, y perm
 ### 2) Modulo de Proyectos Sociales y Beneficiarios
 
 Gestiona proyectos sociales y beneficiarios con formularios y listados dedicados, aplicando validacion obligatoria de consentimiento de Habeas Data para el registro de beneficiarios.
+
+### 3) Modulo de Merchandising y POS (con integracion contable automatica)
+
+Gestiona inventario de articulos, registro de ventas POS e historial de ventas. Cada venta reduce stock y genera automaticamente el comprobante contable de partida doble (debito y credito por el total de la venta), garantizando trazabilidad financiera entre los modulos de Merchandising y Contabilidad.
