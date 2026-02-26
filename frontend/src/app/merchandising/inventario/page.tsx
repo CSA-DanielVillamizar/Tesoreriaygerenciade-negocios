@@ -2,11 +2,16 @@
 
 import { useState } from 'react';
 import ModalNuevoArticulo from '@/features/merchandising/components/ModalNuevoArticulo';
+import ModalNuevaVenta from '@/features/merchandising/components/ModalNuevaVenta';
 import TablaArticulos from '@/features/merchandising/components/TablaArticulos';
 import { useArticulos } from '@/features/merchandising/hooks/useArticulos';
 
+type SeccionInventario = 'inventario' | 'historial';
+
 export default function InventarioPage() {
     const [modalAbierto, setModalAbierto] = useState(false);
+    const [modalVentaAbierto, setModalVentaAbierto] = useState(false);
+    const [seccionActiva, setSeccionActiva] = useState<SeccionInventario>('inventario');
     const articulosQuery = useArticulos();
 
     return (
@@ -18,24 +23,57 @@ export default function InventarioPage() {
                         <p className="mt-1 text-slate-600">Gestión del catálogo de artículos y stock actual</p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => setModalAbierto(true)}
-                        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    >
-                        Nuevo Artículo
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setModalAbierto(true)}
+                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                        >
+                            Nuevo Artículo
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setModalVentaAbierto(true)}
+                            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white"
+                        >
+                            Registrar Venta
+                        </button>
+                    </div>
                 </header>
 
-                <TablaArticulos
-                    articulos={articulosQuery.data ?? []}
-                    isLoading={articulosQuery.isLoading}
-                    isError={articulosQuery.isError}
-                    error={articulosQuery.error as Error | null}
-                />
+                <section className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setSeccionActiva('inventario')}
+                        className={`rounded-lg px-4 py-2 text-sm font-medium ${seccionActiva === 'inventario' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-700'}`}
+                    >
+                        Inventario
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSeccionActiva('historial')}
+                        className={`rounded-lg px-4 py-2 text-sm font-medium ${seccionActiva === 'historial' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-700'}`}
+                    >
+                        Historial de Ventas
+                    </button>
+                </section>
+
+                {seccionActiva === 'inventario' ? (
+                    <TablaArticulos
+                        articulos={articulosQuery.data ?? []}
+                        isLoading={articulosQuery.isLoading}
+                        isError={articulosQuery.isError}
+                        error={articulosQuery.error as Error | null}
+                    />
+                ) : (
+                    <section className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+                        Historial de Ventas
+                    </section>
+                )}
             </div>
 
             <ModalNuevoArticulo open={modalAbierto} onClose={() => setModalAbierto(false)} />
+            <ModalNuevaVenta open={modalVentaAbierto} onClose={() => setModalVentaAbierto(false)} />
         </main>
     );
 }
