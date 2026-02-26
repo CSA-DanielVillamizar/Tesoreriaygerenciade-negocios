@@ -48,5 +48,4 @@ Gestiona proyectos sociales y beneficiarios con formularios y listados dedicados
 
 ### 3) Modulo de Merchandising y POS (con integracion contable automatica)
 
-Permite administrar articulos e inventario, registrar ventas POS y consultar historial de ventas. Cada venta actualiza stock y genera automaticamente su comprobante contable con asiento de debito/credito balanceado sobre el total de la venta.
-La Fase 4 de Merchandising queda cerrada con trazabilidad completa entre operacion comercial y registro contable.
+Gestiona inventario de articulos, registro de ventas POS e historial de ventas. Cada venta reduce stock y genera automaticamente el comprobante contable de partida doble (debito y credito por el total de la venta), garantizando trazabilidad financiera entre los modulos de Merchandising y Contabilidad.
