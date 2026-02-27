@@ -1,6 +1,7 @@
 name: Deploy Backend to Azure Web App
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -12,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AZURE_WEBAPP_NAME: app-lamaregionnorte-backend-prod
+      AZURE_WEBAPP_NAME: app-lamamedellin-backend-prod
       PROJECT_PATH: LAMAMedellin/src/LAMAMedellin.API/LAMAMedellin.API.csproj
       PUBLISH_PATH: ./publish
 
