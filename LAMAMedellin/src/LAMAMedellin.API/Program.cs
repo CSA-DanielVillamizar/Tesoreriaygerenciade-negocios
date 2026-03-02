@@ -64,6 +64,12 @@ app.UseCors("NextJsCors");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/", () => Results.Ok(new
+{
+    Servicio = "LAMAMedellin.API",
+    Estado = "OK"
+}));
+
 app.MapControllers();
 
 app.Run();
