@@ -10,6 +10,7 @@ public sealed class VentaRepository(LamaDbContext context) : IVentaRepository
     {
         return await context.Ventas
             .Include(x => x.CentroCosto)
+            .Include(x => x.DetallesVenta)
             .OrderByDescending(x => x.Fecha)
             .ToListAsync(cancellationToken);
     }
