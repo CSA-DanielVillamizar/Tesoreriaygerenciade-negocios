@@ -42,6 +42,7 @@ public sealed class BeneficiariosController(ISender sender) : ControllerBase
     {
         var id = await sender.Send(
             new CreateBeneficiarioCommand(
+                request.ProyectoSocialId,
                 request.NombreCompleto,
                 request.TipoDocumento,
                 request.NumeroDocumento,
@@ -60,6 +61,7 @@ public sealed class BeneficiariosController(ISender sender) : ControllerBase
         await sender.Send(
             new UpdateBeneficiarioCommand(
                 id,
+                request.ProyectoSocialId,
                 request.NombreCompleto,
                 request.TipoDocumento,
                 request.NumeroDocumento,
@@ -80,6 +82,7 @@ public sealed class BeneficiariosController(ISender sender) : ControllerBase
     }
 
     public sealed record UpsertBeneficiarioRequest(
+        Guid ProyectoSocialId,
         string NombreCompleto,
         string TipoDocumento,
         string NumeroDocumento,

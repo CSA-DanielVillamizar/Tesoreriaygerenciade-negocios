@@ -7,6 +7,7 @@ using MediatR;
 namespace LAMAMedellin.Application.Features.Beneficiarios.Commands.CreateBeneficiario;
 
 public sealed record CreateBeneficiarioCommand(
+    Guid ProyectoSocialId,
     string NombreCompleto,
     string TipoDocumento,
     string NumeroDocumento,
@@ -18,6 +19,7 @@ public sealed class CreateBeneficiarioCommandValidator : AbstractValidator<Creat
 {
     public CreateBeneficiarioCommandValidator()
     {
+        RuleFor(x => x.ProyectoSocialId).NotEmpty();
         RuleFor(x => x.NombreCompleto).NotEmpty().MaximumLength(200);
         RuleFor(x => x.TipoDocumento).NotEmpty().MaximumLength(30);
         RuleFor(x => x.NumeroDocumento).NotEmpty().MaximumLength(30);
@@ -29,11 +31,19 @@ public sealed class CreateBeneficiarioCommandValidator : AbstractValidator<Creat
     }
 }
 
-public sealed class CreateBeneficiarioCommandHandler(IBeneficiarioRepository beneficiarioRepository)
+public sealed class CreateBeneficiarioCommandHandler(
+    IBeneficiarioRepository beneficiarioRepository,
+    IProyectoSocialRepository proyectoSocialRepository)
     : IRequestHandler<CreateBeneficiarioCommand, Guid>
 {
     public async Task<Guid> Handle(CreateBeneficiarioCommand request, CancellationToken cancellationToken)
     {
+        var proyectoSocial = await proyectoSocialRepository.GetByIdAsync(request.ProyectoSocialId, cancellationToken);
+        if (proyectoSocial is null)
+        {
+            throw new ExcepcionNegocio("Proyecto social no encontrado.");
+        }
+
         var beneficiarioExistente = await beneficiarioRepository.GetByDocumentoAsync(
             request.TipoDocumento,
             request.NumeroDocumento,
@@ -45,6 +55,7 @@ public sealed class CreateBeneficiarioCommandHandler(IBeneficiarioRepository ben
         }
 
         var beneficiario = new Beneficiario(
+            request.ProyectoSocialId,
             request.NombreCompleto,
             request.TipoDocumento,
             request.NumeroDocumento,

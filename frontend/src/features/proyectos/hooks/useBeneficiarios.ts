@@ -17,6 +17,7 @@ type CrearResponse = {
 
 export type BeneficiarioItem = {
     id: string;
+    proyectoSocialId: string;
     nombreCompleto: string;
     tipoDocumento: string;
     numeroDocumento: string;
@@ -45,6 +46,7 @@ export function useBeneficiarios() {
 
             return (response.data ?? []).map((item) => ({
                 id: String(item?.id ?? item?.Id ?? ''),
+                proyectoSocialId: String(item?.proyectoSocialId ?? item?.ProyectoSocialId ?? ''),
                 nombreCompleto: String(item?.nombreCompleto ?? item?.NombreCompleto ?? ''),
                 tipoDocumento: String(item?.tipoDocumento ?? item?.TipoDocumento ?? ''),
                 numeroDocumento: String(item?.numeroDocumento ?? item?.NumeroDocumento ?? ''),

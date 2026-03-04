@@ -4,6 +4,7 @@ namespace LAMAMedellin.Domain.Entities;
 
 public sealed class Beneficiario : BaseEntity
 {
+    public Guid ProyectoSocialId { get; private set; }
     public string NombreCompleto { get; private set; }
     public string TipoDocumento { get; private set; }
     public string NumeroDocumento { get; private set; }
@@ -11,11 +12,14 @@ public sealed class Beneficiario : BaseEntity
     public string Telefono { get; private set; }
     public bool TieneConsentimientoHabeasData { get; private set; }
 
+    public ProyectoSocial? ProyectoSocial { get; private set; }
+
 #pragma warning disable CS8618
     private Beneficiario() { }
 #pragma warning restore CS8618
 
     public Beneficiario(
+        Guid proyectoSocialId,
         string nombreCompleto,
         string tipoDocumento,
         string numeroDocumento,
@@ -23,6 +27,12 @@ public sealed class Beneficiario : BaseEntity
         string telefono,
         bool tieneConsentimientoHabeasData)
     {
+        if (proyectoSocialId == Guid.Empty)
+        {
+            throw new ArgumentException("ProyectoSocialId es obligatorio.", nameof(proyectoSocialId));
+        }
+
+        ProyectoSocialId = proyectoSocialId;
         NombreCompleto = ValidarRequerido(nombreCompleto, nameof(nombreCompleto), 200);
         TipoDocumento = ValidarRequerido(tipoDocumento, nameof(tipoDocumento), 30);
         NumeroDocumento = ValidarRequerido(numeroDocumento, nameof(numeroDocumento), 30);
@@ -32,6 +42,7 @@ public sealed class Beneficiario : BaseEntity
     }
 
     public void Actualizar(
+        Guid proyectoSocialId,
         string nombreCompleto,
         string tipoDocumento,
         string numeroDocumento,
@@ -39,6 +50,12 @@ public sealed class Beneficiario : BaseEntity
         string telefono,
         bool tieneConsentimientoHabeasData)
     {
+        if (proyectoSocialId == Guid.Empty)
+        {
+            throw new ArgumentException("ProyectoSocialId es obligatorio.", nameof(proyectoSocialId));
+        }
+
+        ProyectoSocialId = proyectoSocialId;
         NombreCompleto = ValidarRequerido(nombreCompleto, nameof(nombreCompleto), 200);
         TipoDocumento = ValidarRequerido(tipoDocumento, nameof(tipoDocumento), 30);
         NumeroDocumento = ValidarRequerido(numeroDocumento, nameof(numeroDocumento), 30);

@@ -10,6 +10,7 @@ export const tiposDocumentoBeneficiarioOptions = [
 ] as const;
 
 export const beneficiarioSchema = z.object({
+    ProyectoSocialId: z.string().trim().uuid('Debes seleccionar un proyecto.'),
     NombreCompleto: z.string().trim().min(1, 'El nombre completo es obligatorio.').max(200, 'Máximo 200 caracteres.'),
     TipoDocumento: z.string().trim().min(1, 'El tipo de documento es obligatorio.').max(30, 'Máximo 30 caracteres.'),
     NumeroDocumento: z.string().trim().min(1, 'El número de documento es obligatorio.').max(30, 'Máximo 30 caracteres.'),

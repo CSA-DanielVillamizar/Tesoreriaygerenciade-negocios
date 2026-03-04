@@ -7,6 +7,7 @@ namespace LAMAMedellin.Application.Features.Beneficiarios.Commands.UpdateBenefic
 
 public sealed record UpdateBeneficiarioCommand(
     Guid Id,
+    Guid ProyectoSocialId,
     string NombreCompleto,
     string TipoDocumento,
     string NumeroDocumento,
@@ -19,6 +20,7 @@ public sealed class UpdateBeneficiarioCommandValidator : AbstractValidator<Updat
     public UpdateBeneficiarioCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.ProyectoSocialId).NotEmpty();
         RuleFor(x => x.NombreCompleto).NotEmpty().MaximumLength(200);
         RuleFor(x => x.TipoDocumento).NotEmpty().MaximumLength(30);
         RuleFor(x => x.NumeroDocumento).NotEmpty().MaximumLength(30);
@@ -30,11 +32,19 @@ public sealed class UpdateBeneficiarioCommandValidator : AbstractValidator<Updat
     }
 }
 
-public sealed class UpdateBeneficiarioCommandHandler(IBeneficiarioRepository beneficiarioRepository)
+public sealed class UpdateBeneficiarioCommandHandler(
+    IBeneficiarioRepository beneficiarioRepository,
+    IProyectoSocialRepository proyectoSocialRepository)
     : IRequestHandler<UpdateBeneficiarioCommand>
 {
     public async Task Handle(UpdateBeneficiarioCommand request, CancellationToken cancellationToken)
     {
+        var proyectoSocial = await proyectoSocialRepository.GetByIdAsync(request.ProyectoSocialId, cancellationToken);
+        if (proyectoSocial is null)
+        {
+            throw new ExcepcionNegocio("Proyecto social no encontrado.");
+        }
+
         var beneficiario = await beneficiarioRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new ExcepcionNegocio("Beneficiario no encontrado.");
 
@@ -49,6 +59,7 @@ public sealed class UpdateBeneficiarioCommandHandler(IBeneficiarioRepository ben
         }
 
         beneficiario.Actualizar(
+            request.ProyectoSocialId,
             request.NombreCompleto,
             request.TipoDocumento,
             request.NumeroDocumento,

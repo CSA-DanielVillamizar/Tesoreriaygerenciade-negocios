@@ -7,6 +7,7 @@ public sealed record GetBeneficiariosQuery : IRequest<IReadOnlyList<Beneficiario
 
 public sealed record BeneficiarioDto(
     Guid Id,
+    Guid ProyectoSocialId,
     string NombreCompleto,
     string TipoDocumento,
     string NumeroDocumento,
@@ -24,6 +25,7 @@ public sealed class GetBeneficiariosQueryHandler(IBeneficiarioRepository benefic
         return beneficiarios
             .Select(b => new BeneficiarioDto(
                 b.Id,
+                b.ProyectoSocialId,
                 b.NombreCompleto,
                 b.TipoDocumento,
                 b.NumeroDocumento,

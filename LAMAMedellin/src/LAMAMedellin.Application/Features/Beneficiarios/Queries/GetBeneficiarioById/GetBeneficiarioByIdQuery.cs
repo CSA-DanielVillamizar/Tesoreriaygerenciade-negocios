@@ -7,6 +7,7 @@ public sealed record GetBeneficiarioByIdQuery(Guid Id) : IRequest<BeneficiarioDt
 
 public sealed record BeneficiarioDto(
     Guid Id,
+    Guid ProyectoSocialId,
     string NombreCompleto,
     string TipoDocumento,
     string NumeroDocumento,
@@ -27,6 +28,7 @@ public sealed class GetBeneficiarioByIdQueryHandler(IBeneficiarioRepository bene
 
         return new BeneficiarioDto(
             beneficiario.Id,
+            beneficiario.ProyectoSocialId,
             beneficiario.NombreCompleto,
             beneficiario.TipoDocumento,
             beneficiario.NumeroDocumento,

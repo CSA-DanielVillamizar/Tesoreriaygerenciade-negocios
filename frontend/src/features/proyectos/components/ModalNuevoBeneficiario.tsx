@@ -10,6 +10,7 @@ import {
     type BeneficiarioFormValues,
 } from '@/features/proyectos/schemas/beneficiarioSchema';
 import { useCrearBeneficiario } from '@/features/proyectos/hooks/useBeneficiarios';
+import { useProyectos } from '@/features/proyectos/hooks/useProyectos';
 
 type ModalNuevoBeneficiarioProps = {
     open: boolean;
@@ -17,6 +18,7 @@ type ModalNuevoBeneficiarioProps = {
 };
 
 const defaultValues: BeneficiarioFormInput = {
+    ProyectoSocialId: '',
     NombreCompleto: '',
     TipoDocumento: 'CC',
     NumeroDocumento: '',
@@ -27,6 +29,7 @@ const defaultValues: BeneficiarioFormInput = {
 
 export default function ModalNuevoBeneficiario({ open, onClose }: ModalNuevoBeneficiarioProps) {
     const crearBeneficiario = useCrearBeneficiario();
+    const proyectos = useProyectos();
 
     const {
         register,
@@ -40,9 +43,13 @@ export default function ModalNuevoBeneficiario({ open, onClose }: ModalNuevoBene
 
     useEffect(() => {
         if (open) {
-            reset(defaultValues);
+            const proyectoSocialId = proyectos.data?.[0]?.id ?? '';
+            reset({
+                ...defaultValues,
+                ProyectoSocialId: proyectoSocialId,
+            });
         }
-    }, [open, reset]);
+    }, [open, proyectos.data, reset]);
 
     const onSubmit = async (values: BeneficiarioFormValues) => {
         await crearBeneficiario.mutateAsync(values);
@@ -59,6 +66,19 @@ export default function ModalNuevoBeneficiario({ open, onClose }: ModalNuevoBene
                 <h2 className="text-lg font-semibold text-slate-900">Nuevo Beneficiario</h2>
 
                 <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Proyecto social</label>
+                        <select {...register('ProyectoSocialId')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                            <option value="">Selecciona un proyecto</option>
+                            {(proyectos.data ?? []).map((proyecto) => (
+                                <option key={proyecto.id} value={proyecto.id}>
+                                    {proyecto.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.ProyectoSocialId ? <p className="mt-1 text-xs text-red-600">{errors.ProyectoSocialId.message}</p> : null}
+                    </div>
+
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">Nombre completo</label>
                         <input {...register('NombreCompleto')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900" />

@@ -12,6 +12,9 @@ public sealed class BeneficiarioConfiguration : IEntityTypeConfiguration<Benefic
 
         builder.HasKey(b => b.Id);
 
+        builder.Property(b => b.ProyectoSocialId)
+            .IsRequired();
+
         builder.Property(b => b.NombreCompleto)
             .HasMaxLength(200)
             .IsRequired();
@@ -37,6 +40,13 @@ public sealed class BeneficiarioConfiguration : IEntityTypeConfiguration<Benefic
 
         builder.HasIndex(b => new { b.TipoDocumento, b.NumeroDocumento })
             .IsUnique();
+
+        builder.HasIndex(b => b.ProyectoSocialId);
+
+        builder.HasOne(b => b.ProyectoSocial)
+            .WithMany()
+            .HasForeignKey(b => b.ProyectoSocialId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(b => !b.IsDeleted);
     }

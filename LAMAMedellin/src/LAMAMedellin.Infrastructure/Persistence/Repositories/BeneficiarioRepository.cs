@@ -9,13 +9,16 @@ public sealed class BeneficiarioRepository(LamaDbContext dbContext) : IBeneficia
     public async Task<IReadOnlyList<Beneficiario>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.Beneficiarios
+            .Include(b => b.ProyectoSocial)
             .OrderBy(b => b.NombreCompleto)
             .ToListAsync(cancellationToken);
     }
 
     public Task<Beneficiario?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return dbContext.Beneficiarios.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        return dbContext.Beneficiarios
+            .Include(b => b.ProyectoSocial)
+            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
     }
 
     public Task<Beneficiario?> GetByDocumentoAsync(string tipoDocumento, string numeroDocumento, CancellationToken cancellationToken = default)

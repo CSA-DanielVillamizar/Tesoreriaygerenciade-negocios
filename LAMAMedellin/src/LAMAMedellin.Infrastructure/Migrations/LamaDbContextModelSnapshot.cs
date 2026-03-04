@@ -167,6 +167,9 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<Guid>("ProyectoSocialId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Telefono")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -181,6 +184,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProyectoSocialId");
 
                     b.HasIndex("TipoDocumento", "NumeroDocumento")
                         .IsUnique();
@@ -672,6 +677,17 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("Comprobante");
 
                     b.Navigation("CuentaContable");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Beneficiario", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.ProyectoSocial", "ProyectoSocial")
+                        .WithMany()
+                        .HasForeignKey("ProyectoSocialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProyectoSocial");
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaContable", b =>
