@@ -22,7 +22,7 @@ export default function VistaCertificado({ data, onClose }: VistaCertificadoProp
     return (
         <section className="mx-auto w-full max-w-3xl rounded-xl border border-slate-300 bg-white p-8 text-slate-900 shadow-lg print:shadow-none">
             <header className="border-b border-slate-300 pb-4 text-center">
-                <h2 className="text-lg font-bold uppercase">FUNDACIÓN L.A.M.A. MEDELLÍN - NIT: 900.000.000-0</h2>
+                <h2 className="text-lg font-bold uppercase">FUNDACIÓN L.A.M.A. MEDELLÍN - NIT: 902.007.705-8</h2>
                 <p className="mt-2 text-sm text-left">Medellín, {fechaActual}</p>
                 <h3 className="mt-4 text-lg font-semibold uppercase">CERTIFICADO DE DONACIÓN - AÑO GRAVABLE 2026</h3>
             </header>

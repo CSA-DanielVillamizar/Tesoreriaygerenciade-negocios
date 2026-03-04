@@ -23,7 +23,7 @@ public sealed class CertificadoDonacionService : ICertificadoDonacionService
                 page.Header().Column(col =>
                 {
                     col.Item().Text("FUNDACIÓN L.A.M.A. MEDELLÍN").Bold().FontSize(16);
-                    col.Item().Text("NIT: 900.000.000-0");
+                    col.Item().Text("NIT: 902.007.705-8");
                     col.Item().Text($"Certificado de Donación - Año gravable {dto.AnioGravable}");
                 });
 
