@@ -13,6 +13,16 @@ public sealed class ArticuloRepository(LamaDbContext context) : IArticuloReposit
             .ToListAsync(cancellationToken);
     }
 
+    public Task<Articulo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return context.Articulos.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public Task<Articulo?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default)
+    {
+        return context.Articulos.FirstOrDefaultAsync(x => x.SKU == sku, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Articulo>> GetByIdsAsync(
         IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken = default)

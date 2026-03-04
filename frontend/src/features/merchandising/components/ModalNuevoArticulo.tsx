@@ -4,7 +4,7 @@ import { useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCuentasContables } from '@/features/contabilidad/hooks/useCuentasContables';
-import { useCrearArticulo } from '@/features/merchandising/hooks/useArticulos';
+import { useActualizarArticulo, useCrearArticulo, type ArticuloItem } from '@/features/merchandising/hooks/useArticulos';
 import {
     articuloSchema,
     categoriasArticuloOptions,
@@ -15,6 +15,7 @@ import {
 type ModalNuevoArticuloProps = {
     open: boolean;
     onClose: () => void;
+    articulo?: ArticuloItem | null;
 };
 
 const defaultValues: ArticuloFormInput = {
@@ -28,9 +29,11 @@ const defaultValues: ArticuloFormInput = {
     CuentaContableIngresoId: '',
 };
 
-export default function ModalNuevoArticulo({ open, onClose }: ModalNuevoArticuloProps) {
+export default function ModalNuevoArticulo({ open, onClose, articulo }: ModalNuevoArticuloProps) {
     const crearArticulo = useCrearArticulo();
+    const actualizarArticulo = useActualizarArticulo();
     const cuentasQuery = useCuentasContables();
+    const isEditMode = Boolean(articulo);
 
     const cuentasIngresoAsentables = useMemo(
         () =>
@@ -56,20 +59,38 @@ export default function ModalNuevoArticulo({ open, onClose }: ModalNuevoArticulo
             return;
         }
 
-        const cuentaDefault = cuentasIngresoAsentables[0]?.id ?? '';
-        reset({ ...defaultValues, CuentaContableIngresoId: cuentaDefault });
-    }, [open, reset, cuentasIngresoAsentables]);
+        const cuentaDefault = articulo?.cuentaContableIngresoId ?? cuentasIngresoAsentables[0]?.id ?? '';
+        reset({
+            ...defaultValues,
+            Nombre: articulo?.nombre ?? '',
+            SKU: articulo?.sku ?? '',
+            Descripcion: articulo?.descripcion ?? '',
+            Categoria: articulo?.categoriaId ?? 1,
+            PrecioVenta: articulo?.precioVenta ?? 0,
+            CostoPromedio: articulo?.costoPromedio ?? 0,
+            StockActual: articulo?.stockActual ?? 0,
+            CuentaContableIngresoId: cuentaDefault,
+        });
+    }, [open, reset, cuentasIngresoAsentables, articulo]);
 
     useEffect(() => {
-        if (!open || !cuentasIngresoAsentables.length) {
+        if (!open || !cuentasIngresoAsentables.length || articulo) {
             return;
         }
 
         setValue('CuentaContableIngresoId', cuentasIngresoAsentables[0].id);
-    }, [cuentasIngresoAsentables, open, setValue]);
+    }, [cuentasIngresoAsentables, open, setValue, articulo]);
 
     const onSubmit = async (values: ArticuloFormValues) => {
-        await crearArticulo.mutateAsync(values);
+        if (articulo) {
+            await actualizarArticulo.mutateAsync({
+                id: articulo.id,
+                payload: values,
+            });
+        } else {
+            await crearArticulo.mutateAsync(values);
+        }
+
         onClose();
     };
 
@@ -80,7 +101,7 @@ export default function ModalNuevoArticulo({ open, onClose }: ModalNuevoArticulo
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl">
-                <h2 className="text-lg font-semibold text-slate-900">Nuevo Artículo</h2>
+                <h2 className="text-lg font-semibold text-slate-900">{isEditMode ? 'Editar Artículo' : 'Nuevo Artículo'}</h2>
 
                 <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -165,6 +186,7 @@ export default function ModalNuevoArticulo({ open, onClose }: ModalNuevoArticulo
                     </div>
 
                     {crearArticulo.error ? <p className="text-sm text-red-600">{crearArticulo.error.message}</p> : null}
+                    {actualizarArticulo.error ? <p className="text-sm text-red-600">{actualizarArticulo.error.message}</p> : null}
 
                     <div className="flex justify-end gap-2">
                         <button
@@ -176,10 +198,10 @@ export default function ModalNuevoArticulo({ open, onClose }: ModalNuevoArticulo
                         </button>
                         <button
                             type="submit"
-                            disabled={crearArticulo.isPending || !cuentasIngresoAsentables.length}
+                            disabled={crearArticulo.isPending || actualizarArticulo.isPending || !cuentasIngresoAsentables.length}
                             className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
                         >
-                            {crearArticulo.isPending ? 'Guardando...' : 'Guardar'}
+                            {crearArticulo.isPending || actualizarArticulo.isPending ? 'Guardando...' : 'Guardar'}
                         </button>
                     </div>
                 </form>

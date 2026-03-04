@@ -90,4 +90,59 @@ public sealed class Articulo : BaseEntity
 
         StockActual -= cantidad;
     }
+
+    public void Actualizar(
+        string nombre,
+        string sku,
+        string descripcion,
+        CategoriaArticulo categoria,
+        decimal precioVenta,
+        decimal costoPromedio,
+        int stockActual,
+        Guid cuentaContableIngresoId)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            throw new ArgumentException("Nombre es obligatorio.", nameof(nombre));
+        }
+
+        if (string.IsNullOrWhiteSpace(sku))
+        {
+            throw new ArgumentException("SKU es obligatorio.", nameof(sku));
+        }
+
+        if (string.IsNullOrWhiteSpace(descripcion))
+        {
+            throw new ArgumentException("Descripcion es obligatoria.", nameof(descripcion));
+        }
+
+        if (precioVenta <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(precioVenta), "PrecioVenta debe ser mayor a cero.");
+        }
+
+        if (costoPromedio < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(costoPromedio), "CostoPromedio no puede ser negativo.");
+        }
+
+        if (stockActual < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stockActual), "StockActual no puede ser negativo.");
+        }
+
+        if (cuentaContableIngresoId == Guid.Empty)
+        {
+            throw new ArgumentException("CuentaContableIngresoId es obligatorio.", nameof(cuentaContableIngresoId));
+        }
+
+        Nombre = nombre.Trim();
+        SKU = sku.Trim();
+        Descripcion = descripcion.Trim();
+        Categoria = categoria;
+        PrecioVenta = precioVenta;
+        CostoPromedio = costoPromedio;
+        StockActual = stockActual;
+        CuentaContableIngresoId = cuentaContableIngresoId;
+    }
 }

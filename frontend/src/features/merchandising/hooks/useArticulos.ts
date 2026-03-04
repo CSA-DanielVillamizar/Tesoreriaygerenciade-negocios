@@ -20,6 +20,7 @@ export type ArticuloItem = {
     nombre: string;
     sku: string;
     descripcion: string;
+    categoriaId: number;
     categoria: string;
     precioVenta: number;
     costoPromedio: number;
@@ -50,6 +51,7 @@ export function useArticulos() {
                 nombre: String(item?.nombre ?? item?.Nombre ?? ''),
                 sku: String(item?.sku ?? item?.SKU ?? item?.Sku ?? ''),
                 descripcion: String(item?.descripcion ?? item?.Descripcion ?? ''),
+                categoriaId: Number(item?.categoriaId ?? item?.CategoriaId ?? 0),
                 categoria: String(item?.categoria ?? item?.Categoria ?? ''),
                 precioVenta: Number(item?.precioVenta ?? item?.PrecioVenta ?? 0),
                 costoPromedio: Number(item?.costoPromedio ?? item?.CostoPromedio ?? 0),
@@ -70,6 +72,28 @@ export function useCrearArticulo() {
                 return response.data;
             } catch (error) {
                 throw mapError(error, 'No fue posible registrar el artículo.');
+            }
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['merchandising', 'articulos'] });
+        },
+    });
+}
+
+type ActualizarArticuloVariables = {
+    id: string;
+    payload: ArticuloFormValues;
+};
+
+export function useActualizarArticulo() {
+    const queryClient = useQueryClient();
+
+    return useMutation<void, Error, ActualizarArticuloVariables>({
+        mutationFn: async ({ id, payload }) => {
+            try {
+                await apiClient.put(`/api/articulos/${id}`, payload);
+            } catch (error) {
+                throw mapError(error, 'No fue posible actualizar el artículo.');
             }
         },
         onSuccess: async () => {

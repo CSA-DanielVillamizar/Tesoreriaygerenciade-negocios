@@ -7,6 +7,7 @@ type TablaArticulosProps = {
     isLoading: boolean;
     isError: boolean;
     error: Error | null;
+    onEditar: (articulo: ArticuloItem) => void;
 };
 
 function formatCOP(value: number): string {
@@ -17,7 +18,7 @@ function formatCOP(value: number): string {
     }).format(value);
 }
 
-export default function TablaArticulos({ articulos, isLoading, isError, error }: TablaArticulosProps) {
+export default function TablaArticulos({ articulos, isLoading, isError, error, onEditar }: TablaArticulosProps) {
     if (isLoading) {
         return <p className="text-sm text-slate-600">Cargando artículos...</p>;
     }
@@ -42,6 +43,7 @@ export default function TablaArticulos({ articulos, isLoading, isError, error }:
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Precio</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Costo</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Stock Actual</th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
@@ -63,6 +65,15 @@ export default function TablaArticulos({ articulos, isLoading, isError, error }:
                                         ) : (
                                             <span className="text-slate-900">{item.stockActual}</span>
                                         )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-sm">
+                                        <button
+                                            type="button"
+                                            onClick={() => onEditar(item)}
+                                            className="rounded-lg border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                                        >
+                                            Editar
+                                        </button>
                                     </td>
                                 </tr>
                             );
