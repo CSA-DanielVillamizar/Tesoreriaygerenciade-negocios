@@ -6,7 +6,8 @@ namespace LAMAMedellin.Application.Features.Merchandising.Commands.ProcesarVenta
 public sealed record ProcesarVentaCommand(
     string NumeroFacturaInterna,
     Guid? CompradorId,
-    MetodoPagoVenta MetodoPago,
+    Guid CentroCostoId,
+    MetodoPagoVenta MedioPago,
     IReadOnlyList<ProcesarVentaDetalleDto> Detalles) : IRequest<Guid>;
 
 public sealed record ProcesarVentaDetalleDto(

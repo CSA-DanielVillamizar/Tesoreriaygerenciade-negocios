@@ -10,6 +10,8 @@ public sealed record VentaDto(
     DateTime Fecha,
     string NumeroFacturaInterna,
     string Cliente,
+    Guid CentroCostoId,
+    string CentroCosto,
     string MetodoPago,
     decimal Total);
 
@@ -27,6 +29,8 @@ public sealed class GetVentasQueryHandler(IVentaRepository ventaRepository)
                 x.Fecha,
                 x.NumeroFacturaInterna,
                 x.CompradorId?.ToString() ?? "Consumidor final",
+                x.CentroCostoId,
+                x.CentroCosto?.Nombre ?? string.Empty,
                 x.MetodoPago.ToString(),
                 x.Total))
             .ToList();

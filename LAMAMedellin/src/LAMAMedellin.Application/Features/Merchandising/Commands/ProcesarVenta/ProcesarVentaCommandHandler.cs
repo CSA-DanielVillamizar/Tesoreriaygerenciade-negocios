@@ -24,6 +24,9 @@ public sealed class ProcesarVentaCommandHandler(
             throw new ExcepcionNegocio("La venta debe contener al menos un detalle.");
         }
 
+        var centroCosto = await centroCostoRepository.GetByIdAsync(request.CentroCostoId, cancellationToken)
+            ?? throw new ExcepcionNegocio("Centro de costo no encontrado.");
+
         var idsArticulos = request.Detalles
             .Select(x => x.ArticuloId)
             .Distinct()
@@ -46,15 +49,18 @@ public sealed class ProcesarVentaCommandHandler(
             request.NumeroFacturaInterna,
             fechaVenta,
             request.CompradorId,
+            centroCosto.Id,
             0,
-            request.MetodoPago);
+            request.MedioPago);
 
         foreach (var detalle in request.Detalles)
         {
             var articulo = articulosPorId[detalle.ArticuloId];
-            articulo.ReducirStock(detalle.Cantidad);
+            articulo.RestarStock(detalle.Cantidad);
 
             var subtotal = articulo.PrecioVenta * detalle.Cantidad;
+            var costoUnitario = articulo.CostoPromedio;
+            var utilidad = (articulo.PrecioVenta - costoUnitario) * detalle.Cantidad;
             total += subtotal;
 
             var detalleVenta = new DetalleVenta(
@@ -62,7 +68,9 @@ public sealed class ProcesarVentaCommandHandler(
                 articulo.Id,
                 detalle.Cantidad,
                 articulo.PrecioVenta,
-                subtotal);
+                costoUnitario,
+                subtotal,
+                utilidad);
 
             venta.AgregarDetalle(detalleVenta);
         }
@@ -77,6 +85,7 @@ public sealed class ProcesarVentaCommandHandler(
             venta,
             total,
             articulosPorId,
+            centroCosto,
             cancellationToken);
 
         return venta.Id;
@@ -87,6 +96,7 @@ public sealed class ProcesarVentaCommandHandler(
         Venta venta,
         decimal total,
         IReadOnlyDictionary<Guid, Articulo> articulosPorId,
+        Domain.Entities.CentroCosto centroCosto,
         CancellationToken cancellationToken)
     {
         var cuentaIngresoIds = request.Detalles
@@ -103,9 +113,6 @@ public sealed class ProcesarVentaCommandHandler(
         var cuentaCajaOBancos = cuentas.FirstOrDefault(x => x.Codigo == CodigoCuentaCajaBancos)
             ?? cuentas.FirstOrDefault(x => x.PermiteMovimiento && x.Naturaleza == NaturalezaCuenta.Debito)
             ?? throw new ExcepcionNegocio("No existe una cuenta contable de débito disponible para registrar el ingreso de la venta.");
-
-        var centroCosto = (await centroCostoRepository.GetAllAsync(cancellationToken)).FirstOrDefault()
-            ?? throw new ExcepcionNegocio("No existe un centro de costo configurado para registrar el comprobante de venta.");
 
         var descripcion = $"Venta merchandising {venta.NumeroFacturaInterna}";
 

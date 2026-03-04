@@ -8,9 +8,12 @@ public sealed class Venta : BaseEntity
     public string NumeroFacturaInterna { get; private set; }
     public DateTime Fecha { get; private set; }
     public Guid? CompradorId { get; private set; }
+    public Guid CentroCostoId { get; private set; }
     public decimal Total { get; private set; }
     public MetodoPagoVenta MetodoPago { get; private set; }
     public List<DetalleVenta> DetallesVenta { get; private set; } = [];
+
+    public CentroCosto? CentroCosto { get; private set; }
 
 #pragma warning disable CS8618
     private Venta() { }
@@ -20,6 +23,7 @@ public sealed class Venta : BaseEntity
         string numeroFacturaInterna,
         DateTime fecha,
         Guid? compradorId,
+        Guid centroCostoId,
         decimal total,
         MetodoPagoVenta metodoPago)
     {
@@ -33,9 +37,15 @@ public sealed class Venta : BaseEntity
             throw new ArgumentOutOfRangeException(nameof(total), "Total no puede ser negativo.");
         }
 
+        if (centroCostoId == Guid.Empty)
+        {
+            throw new ArgumentException("CentroCostoId es obligatorio.", nameof(centroCostoId));
+        }
+
         NumeroFacturaInterna = numeroFacturaInterna.Trim();
         Fecha = fecha;
         CompradorId = compradorId;
+        CentroCostoId = centroCostoId;
         Total = total;
         MetodoPago = metodoPago;
     }

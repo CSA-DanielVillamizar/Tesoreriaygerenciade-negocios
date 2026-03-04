@@ -20,6 +20,8 @@ export type VentaHistorialItem = {
     fecha: string;
     numeroFacturaInterna: string;
     cliente: string;
+    centroCostoId: string;
+    centroCosto: string;
     metodoPago: string;
     total: number;
 };
@@ -44,7 +46,8 @@ export function useProcesarVenta() {
             try {
                 const response = await apiClient.post<ProcesarVentaResponse>('/api/ventas', {
                     compradorId: payload.CompradorId,
-                    metodoPago: payload.MetodoPago,
+                    centroCostoId: payload.CentroCostoId,
+                    medioPago: payload.MedioPago,
                     detalles: payload.Detalles.map((detalle) => ({
                         articuloId: detalle.ArticuloId,
                         cantidad: detalle.Cantidad,
@@ -74,6 +77,8 @@ export function useVentas() {
                 fecha: String(item?.fecha ?? item?.Fecha ?? ''),
                 numeroFacturaInterna: String(item?.numeroFacturaInterna ?? item?.NumeroFacturaInterna ?? ''),
                 cliente: String(item?.cliente ?? item?.Cliente ?? 'Consumidor final'),
+                centroCostoId: String(item?.centroCostoId ?? item?.CentroCostoId ?? ''),
+                centroCosto: String(item?.centroCosto ?? item?.CentroCosto ?? ''),
                 metodoPago: String(item?.metodoPago ?? item?.MetodoPago ?? ''),
                 total: Number(item?.total ?? item?.Total ?? 0),
             }));

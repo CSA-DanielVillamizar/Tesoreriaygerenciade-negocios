@@ -8,7 +8,9 @@ public sealed class DetalleVenta : BaseEntity
     public Guid ArticuloId { get; private set; }
     public int Cantidad { get; private set; }
     public decimal PrecioUnitario { get; private set; }
+    public decimal CostoUnitario { get; private set; }
     public decimal Subtotal { get; private set; }
+    public decimal Utilidad { get; private set; }
 
     public Venta? Venta { get; private set; }
     public Articulo? Articulo { get; private set; }
@@ -22,7 +24,9 @@ public sealed class DetalleVenta : BaseEntity
         Guid articuloId,
         int cantidad,
         decimal precioUnitario,
-        decimal subtotal)
+        decimal costoUnitario,
+        decimal subtotal,
+        decimal utilidad)
     {
         if (ventaId == Guid.Empty)
         {
@@ -44,15 +48,27 @@ public sealed class DetalleVenta : BaseEntity
             throw new ArgumentOutOfRangeException(nameof(precioUnitario), "PrecioUnitario debe ser mayor a cero.");
         }
 
+        if (costoUnitario < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(costoUnitario), "CostoUnitario no puede ser negativo.");
+        }
+
         if (subtotal < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(subtotal), "Subtotal no puede ser negativo.");
+        }
+
+        if (utilidad < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(utilidad), "Utilidad no puede ser negativa.");
         }
 
         VentaId = ventaId;
         ArticuloId = articuloId;
         Cantidad = cantidad;
         PrecioUnitario = precioUnitario;
+        CostoUnitario = costoUnitario;
         Subtotal = subtotal;
+        Utilidad = utilidad;
     }
 }

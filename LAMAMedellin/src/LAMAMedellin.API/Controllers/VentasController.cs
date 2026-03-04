@@ -30,7 +30,8 @@ public sealed class VentasController(ISender sender) : ControllerBase
             new ProcesarVentaCommand(
                 numeroFacturaInterna,
                 request.CompradorId,
-                request.MetodoPago,
+                request.CentroCostoId,
+                request.MedioPago,
                 request.Detalles
                     .Select(detalle => new ProcesarVentaDetalleDto(detalle.ArticuloId, detalle.Cantidad))
                     .ToList()),
@@ -41,7 +42,8 @@ public sealed class VentasController(ISender sender) : ControllerBase
 
     public sealed record ProcesarVentaRequest(
         Guid? CompradorId,
-        MetodoPagoVenta MetodoPago,
+        Guid CentroCostoId,
+        MetodoPagoVenta MedioPago,
         IReadOnlyList<ProcesarVentaDetalleRequest> Detalles);
 
     public sealed record ProcesarVentaDetalleRequest(

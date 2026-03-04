@@ -365,6 +365,9 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("CostoUnitario")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -372,6 +375,9 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Utilidad")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("VentaId")
@@ -613,6 +619,9 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CentroCostoId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("CompradorId")
                         .HasColumnType("uniqueidentifier");
 
@@ -634,6 +643,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CentroCostoId");
 
                     b.HasIndex("NumeroFacturaInterna")
                         .IsUnique();
@@ -824,6 +835,17 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("CentroCosto");
 
                     b.Navigation("TransaccionMultimoneda");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Venta", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.CentroCosto", "CentroCosto")
+                        .WithMany()
+                        .HasForeignKey("CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CentroCosto");
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Articulo", b =>

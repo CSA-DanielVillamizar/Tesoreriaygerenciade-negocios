@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/lib/apiClient';
 import { useArticulos } from '@/features/merchandising/hooks/useArticulos';
 import { useProcesarVenta } from '@/features/merchandising/hooks/useVentas';
 import {
@@ -25,8 +27,14 @@ const defaultDetalle: VentaFormInput['Detalles'][number] = {
 
 const defaultValues: VentaFormInput = {
     CompradorId: '',
-    MetodoPago: 1,
+    CentroCostoId: '',
+    MedioPago: 1,
     Detalles: [{ ...defaultDetalle }],
+};
+
+type CentroCostoItem = {
+    id: string;
+    nombre: string;
 };
 
 function formatCOP(value: number): string {
@@ -40,6 +48,17 @@ function formatCOP(value: number): string {
 export default function ModalNuevaVenta({ open, onClose }: ModalNuevaVentaProps) {
     const articulosQuery = useArticulos();
     const procesarVenta = useProcesarVenta();
+    const centrosCostoQuery = useQuery<CentroCostoItem[]>({
+        queryKey: ['transacciones', 'catalogo', 'centros-costo'],
+        queryFn: async () => {
+            const response = await apiClient.get<any[]>('/api/transacciones/centros-costo');
+
+            return (response.data ?? []).map((item) => ({
+                id: String(item?.id ?? item?.Id ?? ''),
+                nombre: String(item?.nombre ?? item?.Nombre ?? ''),
+            }));
+        },
+    });
 
     const {
         control,
@@ -61,9 +80,12 @@ export default function ModalNuevaVenta({ open, onClose }: ModalNuevaVentaProps)
 
     useEffect(() => {
         if (open) {
-            reset(defaultValues);
+            reset({
+                ...defaultValues,
+                CentroCostoId: centrosCostoQuery.data?.[0]?.id ?? '',
+            });
         }
-    }, [open, reset]);
+    }, [open, reset, centrosCostoQuery.data]);
 
     const detalles = watch('Detalles');
 
@@ -99,16 +121,29 @@ export default function ModalNuevaVenta({ open, onClose }: ModalNuevaVentaProps)
                 <h2 className="text-lg font-semibold text-slate-900">Registrar Venta</h2>
 
                 <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
                             <label className="mb-1 block text-sm font-medium text-slate-700">Método de pago</label>
-                            <select {...register('MetodoPago')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                            <select {...register('MedioPago')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
                                 {metodosPagoVentaOptions.map((metodo) => (
                                     <option key={metodo.value} value={metodo.value}>
                                         {metodo.label}
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="mb-1 block text-sm font-medium text-slate-700">Centro de costo</label>
+                            <select {...register('CentroCostoId')} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900">
+                                <option value="">Seleccione...</option>
+                                {(centrosCostoQuery.data ?? []).map((centro) => (
+                                    <option key={centro.id} value={centro.id}>
+                                        {centro.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.CentroCostoId ? <p className="mt-1 text-xs text-red-600">{errors.CentroCostoId.message}</p> : null}
                         </div>
 
                         <div>

@@ -27,6 +27,9 @@ public sealed class VentaConfiguration : IEntityTypeConfiguration<Venta>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(x => x.CentroCostoId)
+            .IsRequired();
+
         builder.HasIndex(x => x.NumeroFacturaInterna)
             .IsUnique();
 
@@ -34,6 +37,13 @@ public sealed class VentaConfiguration : IEntityTypeConfiguration<Venta>
             .WithOne(x => x.Venta)
             .HasForeignKey(x => x.VentaId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.CentroCosto)
+            .WithMany()
+            .HasForeignKey(x => x.CentroCostoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(x => x.CentroCostoId);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

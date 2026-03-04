@@ -48,6 +48,7 @@ export default function TablaVentas({ ventas, isLoading, isError, error }: Tabla
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Fecha</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Número de Factura</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Cliente</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Centro de Costo</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Método de Pago</th>
                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">Total</th>
                     </tr>
@@ -58,6 +59,7 @@ export default function TablaVentas({ ventas, isLoading, isError, error }: Tabla
                             <td className="px-4 py-3 text-sm text-slate-700">{formatoFecha.format(new Date(venta.fecha))}</td>
                             <td className="px-4 py-3 text-sm font-medium text-slate-900">{venta.numeroFacturaInterna}</td>
                             <td className="px-4 py-3 text-sm text-slate-700">{venta.cliente}</td>
+                            <td className="px-4 py-3 text-sm text-slate-700">{venta.centroCosto || '-'}</td>
                             <td className="px-4 py-3 text-sm text-slate-700">{venta.metodoPago}</td>
                             <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">{formatoMoneda.format(venta.total)}</td>
                         </tr>

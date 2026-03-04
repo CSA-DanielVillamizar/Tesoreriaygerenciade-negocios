@@ -17,7 +17,8 @@ export const ventaSchema = z.object({
         (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
         z.string().uuid('Comprador inválido.').optional(),
     ),
-    MetodoPago: z.coerce.number().int().min(1).max(3),
+    CentroCostoId: z.string().uuid('Selecciona un centro de costo válido.'),
+    MedioPago: z.coerce.number().int().min(1).max(3),
     Detalles: z.array(detalleVentaSchema).min(1, 'Debe agregar al menos 1 artículo en la venta.'),
 });
 

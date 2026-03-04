@@ -9,6 +9,7 @@ public sealed class VentaRepository(LamaDbContext context) : IVentaRepository
     public async Task<IReadOnlyList<Venta>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await context.Ventas
+            .Include(x => x.CentroCosto)
             .OrderByDescending(x => x.Fecha)
             .ToListAsync(cancellationToken);
     }

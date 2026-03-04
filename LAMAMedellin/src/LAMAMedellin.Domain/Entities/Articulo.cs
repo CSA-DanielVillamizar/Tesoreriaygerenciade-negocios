@@ -91,6 +91,11 @@ public sealed class Articulo : BaseEntity
         StockActual -= cantidad;
     }
 
+    public void RestarStock(int cantidad)
+    {
+        ReducirStock(cantidad);
+    }
+
     public void Actualizar(
         string nombre,
         string sku,

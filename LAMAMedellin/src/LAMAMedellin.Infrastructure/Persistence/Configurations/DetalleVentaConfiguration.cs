@@ -19,7 +19,15 @@ public sealed class DetalleVentaConfiguration : IEntityTypeConfiguration<Detalle
             .HasColumnType("decimal(18,2)")
             .IsRequired();
 
+        builder.Property(x => x.CostoUnitario)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
         builder.Property(x => x.Subtotal)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired();
+
+        builder.Property(x => x.Utilidad)
             .HasColumnType("decimal(18,2)")
             .IsRequired();
 
