@@ -41,6 +41,7 @@ export default function TablaProyectos() {
                     <thead className="bg-slate-50">
                         <tr>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Proyecto</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Centro de costo</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Cronograma</th>
                             <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Presupuesto</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Estado</th>
@@ -53,6 +54,7 @@ export default function TablaProyectos() {
                                     <p className="font-medium">{item.nombre}</p>
                                     <p className="text-xs text-slate-500">{item.descripcion}</p>
                                 </td>
+                                <td className="px-4 py-3 text-sm text-slate-700">{item.centroCosto || '—'}</td>
                                 <td className="px-4 py-3 text-sm text-slate-700">
                                     {formatFecha(item.fechaInicio)} — {formatFecha(item.fechaFin)}
                                 </td>

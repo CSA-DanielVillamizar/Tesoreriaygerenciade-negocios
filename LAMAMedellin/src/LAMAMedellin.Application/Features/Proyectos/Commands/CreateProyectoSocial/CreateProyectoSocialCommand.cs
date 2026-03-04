@@ -1,4 +1,5 @@
 using FluentValidation;
+using LAMAMedellin.Application.Common.Exceptions;
 using LAMAMedellin.Application.Common.Interfaces.Repositories;
 using LAMAMedellin.Domain.Entities;
 using LAMAMedellin.Domain.Enums;
@@ -7,6 +8,7 @@ using MediatR;
 namespace LAMAMedellin.Application.Features.Proyectos.Commands.CreateProyectoSocial;
 
 public sealed record CreateProyectoSocialCommand(
+    Guid CentroCostoId,
     string Nombre,
     string Descripcion,
     DateTime FechaInicio,
@@ -18,6 +20,7 @@ public sealed class CreateProyectoSocialCommandValidator : AbstractValidator<Cre
 {
     public CreateProyectoSocialCommandValidator()
     {
+        RuleFor(x => x.CentroCostoId).NotEmpty();
         RuleFor(x => x.Nombre).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Descripcion).NotEmpty().MaximumLength(1000);
         RuleFor(x => x.PresupuestoEstimado).GreaterThanOrEqualTo(0);
@@ -28,12 +31,21 @@ public sealed class CreateProyectoSocialCommandValidator : AbstractValidator<Cre
     }
 }
 
-public sealed class CreateProyectoSocialCommandHandler(IProyectoSocialRepository proyectoSocialRepository)
+public sealed class CreateProyectoSocialCommandHandler(
+    IProyectoSocialRepository proyectoSocialRepository,
+    ICentroCostoRepository centroCostoRepository)
     : IRequestHandler<CreateProyectoSocialCommand, Guid>
 {
     public async Task<Guid> Handle(CreateProyectoSocialCommand request, CancellationToken cancellationToken)
     {
+        var centroCosto = await centroCostoRepository.GetByIdAsync(request.CentroCostoId, cancellationToken);
+        if (centroCosto is null)
+        {
+            throw new ExcepcionNegocio("El centro de costo indicado no existe.");
+        }
+
         var proyecto = new ProyectoSocial(
+            request.CentroCostoId,
             request.Nombre,
             request.Descripcion,
             request.FechaInicio,

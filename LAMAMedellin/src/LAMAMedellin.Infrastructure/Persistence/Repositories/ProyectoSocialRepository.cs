@@ -9,13 +9,16 @@ public sealed class ProyectoSocialRepository(LamaDbContext dbContext) : IProyect
     public async Task<IReadOnlyList<ProyectoSocial>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.ProyectosSociales
+            .Include(p => p.CentroCosto)
             .OrderBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
     }
 
     public Task<ProyectoSocial?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return dbContext.ProyectosSociales.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        return dbContext.ProyectosSociales
+            .Include(p => p.CentroCosto)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
     public Task AddAsync(ProyectoSocial proyectoSocial, CancellationToken cancellationToken = default)

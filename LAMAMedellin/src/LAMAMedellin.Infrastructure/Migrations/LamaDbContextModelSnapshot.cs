@@ -524,6 +524,9 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("CentroCostoId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -551,6 +554,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CentroCostoId");
 
                     b.ToTable("ProyectosSociales", (string)null);
                 });
@@ -734,6 +739,17 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("CentroCosto");
 
                     b.Navigation("Donante");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.ProyectoSocial", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.CentroCosto", "CentroCosto")
+                        .WithMany()
+                        .HasForeignKey("CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CentroCosto");
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Transaccion", b =>

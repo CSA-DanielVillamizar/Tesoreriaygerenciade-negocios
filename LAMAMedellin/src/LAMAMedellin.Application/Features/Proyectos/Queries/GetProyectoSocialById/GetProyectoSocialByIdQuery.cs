@@ -7,6 +7,8 @@ public sealed record GetProyectoSocialByIdQuery(Guid Id) : IRequest<ProyectoSoci
 
 public sealed record ProyectoSocialDto(
     Guid Id,
+    Guid CentroCostoId,
+    string CentroCosto,
     string Nombre,
     string Descripcion,
     DateTime FechaInicio,
@@ -27,6 +29,8 @@ public sealed class GetProyectoSocialByIdQueryHandler(IProyectoSocialRepository 
 
         return new ProyectoSocialDto(
             proyecto.Id,
+            proyecto.CentroCostoId,
+            proyecto.CentroCosto?.Nombre ?? string.Empty,
             proyecto.Nombre,
             proyecto.Descripcion,
             proyecto.FechaInicio,

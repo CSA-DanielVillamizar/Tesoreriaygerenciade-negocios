@@ -7,6 +7,8 @@ public sealed record GetProyectosSocialesQuery : IRequest<IReadOnlyList<Proyecto
 
 public sealed record ProyectoSocialDto(
     Guid Id,
+    Guid CentroCostoId,
+    string CentroCosto,
     string Nombre,
     string Descripcion,
     DateTime FechaInicio,
@@ -24,6 +26,8 @@ public sealed class GetProyectosSocialesQueryHandler(IProyectoSocialRepository p
         return proyectos
             .Select(p => new ProyectoSocialDto(
                 p.Id,
+                p.CentroCostoId,
+                p.CentroCosto?.Nombre ?? string.Empty,
                 p.Nombre,
                 p.Descripcion,
                 p.FechaInicio,

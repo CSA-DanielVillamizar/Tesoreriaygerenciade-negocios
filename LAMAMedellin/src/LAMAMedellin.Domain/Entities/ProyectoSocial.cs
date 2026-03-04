@@ -5,6 +5,7 @@ namespace LAMAMedellin.Domain.Entities;
 
 public sealed class ProyectoSocial : BaseEntity
 {
+    public Guid CentroCostoId { get; private set; }
     public string Nombre { get; private set; }
     public string Descripcion { get; private set; }
     public DateTime FechaInicio { get; private set; }
@@ -12,11 +13,14 @@ public sealed class ProyectoSocial : BaseEntity
     public decimal PresupuestoEstimado { get; private set; }
     public EstadoProyectoSocial Estado { get; private set; }
 
+    public CentroCosto? CentroCosto { get; private set; }
+
 #pragma warning disable CS8618
     private ProyectoSocial() { }
 #pragma warning restore CS8618
 
     public ProyectoSocial(
+        Guid centroCostoId,
         string nombre,
         string descripcion,
         DateTime fechaInicio,
@@ -24,6 +28,11 @@ public sealed class ProyectoSocial : BaseEntity
         decimal presupuestoEstimado,
         EstadoProyectoSocial estado)
     {
+        if (centroCostoId == Guid.Empty)
+        {
+            throw new ArgumentException("CentroCostoId es obligatorio.", nameof(centroCostoId));
+        }
+
         Nombre = ValidarRequerido(nombre, nameof(nombre), 200);
         Descripcion = ValidarRequerido(descripcion, nameof(descripcion), 1000);
 
@@ -32,6 +41,7 @@ public sealed class ProyectoSocial : BaseEntity
             throw new ArgumentOutOfRangeException(nameof(presupuestoEstimado), "PresupuestoEstimado no puede ser negativo.");
         }
 
+        CentroCostoId = centroCostoId;
         FechaInicio = fechaInicio;
         FechaFin = fechaFin;
         PresupuestoEstimado = presupuestoEstimado;
@@ -39,6 +49,7 @@ public sealed class ProyectoSocial : BaseEntity
     }
 
     public void Actualizar(
+        Guid centroCostoId,
         string nombre,
         string descripcion,
         DateTime fechaInicio,
@@ -46,6 +57,11 @@ public sealed class ProyectoSocial : BaseEntity
         decimal presupuestoEstimado,
         EstadoProyectoSocial estado)
     {
+        if (centroCostoId == Guid.Empty)
+        {
+            throw new ArgumentException("CentroCostoId es obligatorio.", nameof(centroCostoId));
+        }
+
         Nombre = ValidarRequerido(nombre, nameof(nombre), 200);
         Descripcion = ValidarRequerido(descripcion, nameof(descripcion), 1000);
 
@@ -54,6 +70,7 @@ public sealed class ProyectoSocial : BaseEntity
             throw new ArgumentOutOfRangeException(nameof(presupuestoEstimado), "PresupuestoEstimado no puede ser negativo.");
         }
 
+        CentroCostoId = centroCostoId;
         FechaInicio = fechaInicio;
         FechaFin = fechaFin;
         PresupuestoEstimado = presupuestoEstimado;

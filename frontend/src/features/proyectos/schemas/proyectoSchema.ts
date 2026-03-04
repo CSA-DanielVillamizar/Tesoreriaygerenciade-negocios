@@ -10,6 +10,7 @@ const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 export const proyectoSchema = z
     .object({
+        CentroCostoId: z.string().uuid('Selecciona un centro de costo válido.'),
         Nombre: z.string().trim().min(1, 'El nombre es obligatorio.').max(200, 'Máximo 200 caracteres.'),
         Descripcion: z.string().trim().min(1, 'La descripción es obligatoria.').max(1000, 'Máximo 1000 caracteres.'),
         FechaInicio: z.string().regex(fechaRegex, 'Fecha de inicio inválida.'),

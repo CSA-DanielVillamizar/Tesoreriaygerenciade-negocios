@@ -43,6 +43,7 @@ public sealed class ProyectosController(ISender sender) : ControllerBase
     {
         var id = await sender.Send(
             new CreateProyectoSocialCommand(
+                request.CentroCostoId,
                 request.Nombre,
                 request.Descripcion,
                 request.FechaInicio,
@@ -61,6 +62,7 @@ public sealed class ProyectosController(ISender sender) : ControllerBase
         await sender.Send(
             new UpdateProyectoSocialCommand(
                 id,
+                request.CentroCostoId,
                 request.Nombre,
                 request.Descripcion,
                 request.FechaInicio,
@@ -81,6 +83,7 @@ public sealed class ProyectosController(ISender sender) : ControllerBase
     }
 
     public sealed record UpsertProyectoRequest(
+        Guid CentroCostoId,
         string Nombre,
         string Descripcion,
         DateTime FechaInicio,

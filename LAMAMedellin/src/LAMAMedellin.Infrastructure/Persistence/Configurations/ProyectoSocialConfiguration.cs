@@ -16,6 +16,9 @@ public sealed class ProyectoSocialConfiguration : IEntityTypeConfiguration<Proye
             .HasMaxLength(200)
             .IsRequired();
 
+        builder.Property(p => p.CentroCostoId)
+            .IsRequired();
+
         builder.Property(p => p.Descripcion)
             .HasMaxLength(1000)
             .IsRequired();
@@ -33,6 +36,11 @@ public sealed class ProyectoSocialConfiguration : IEntityTypeConfiguration<Proye
 
         builder.Property(p => p.FechaFin)
             .IsRequired(false);
+
+        builder.HasOne(p => p.CentroCosto)
+            .WithMany()
+            .HasForeignKey(p => p.CentroCostoId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(p => !p.IsDeleted);
     }

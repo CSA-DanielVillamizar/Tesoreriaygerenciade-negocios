@@ -8,6 +8,7 @@ namespace LAMAMedellin.Application.Features.Proyectos.Commands.UpdateProyectoSoc
 
 public sealed record UpdateProyectoSocialCommand(
     Guid Id,
+    Guid CentroCostoId,
     string Nombre,
     string Descripcion,
     DateTime FechaInicio,
@@ -20,6 +21,7 @@ public sealed class UpdateProyectoSocialCommandValidator : AbstractValidator<Upd
     public UpdateProyectoSocialCommandValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.CentroCostoId).NotEmpty();
         RuleFor(x => x.Nombre).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Descripcion).NotEmpty().MaximumLength(1000);
         RuleFor(x => x.PresupuestoEstimado).GreaterThanOrEqualTo(0);
@@ -30,15 +32,24 @@ public sealed class UpdateProyectoSocialCommandValidator : AbstractValidator<Upd
     }
 }
 
-public sealed class UpdateProyectoSocialCommandHandler(IProyectoSocialRepository proyectoSocialRepository)
+public sealed class UpdateProyectoSocialCommandHandler(
+    IProyectoSocialRepository proyectoSocialRepository,
+    ICentroCostoRepository centroCostoRepository)
     : IRequestHandler<UpdateProyectoSocialCommand>
 {
     public async Task Handle(UpdateProyectoSocialCommand request, CancellationToken cancellationToken)
     {
+        var centroCosto = await centroCostoRepository.GetByIdAsync(request.CentroCostoId, cancellationToken);
+        if (centroCosto is null)
+        {
+            throw new ExcepcionNegocio("El centro de costo indicado no existe.");
+        }
+
         var proyecto = await proyectoSocialRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new ExcepcionNegocio("Proyecto social no encontrado.");
 
         proyecto.Actualizar(
+            request.CentroCostoId,
             request.Nombre,
             request.Descripcion,
             request.FechaInicio,
