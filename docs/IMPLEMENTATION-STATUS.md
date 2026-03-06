@@ -29,12 +29,18 @@
 
 **Estado Épica Fase 4:** `COMPLETADA`.
 
-### ▶️ Inicio de Fase 5 — Tributario avanzado
+### ✅ Cierre de Fase 5 — Tributario avanzado
 
-- Se inicia la fase de reportes tributarios avanzados para cumplimiento y salida estructurada.
-- Objetivo inicial: consolidar base para exógena y reportes tributarios exportables.
+- Implementación completada del reporte de Exógena (exportable CSV).
+- Implementación completada del reporte de Beneficiarios Finales (RUB) (exportable CSV).
+- Implementación completada del reporte de Auditoría de Calidad de Datos tributarios.
+- Todos los reportes tributarios quedaron protegidos por rol `Contador/Admin` y publicados en dashboard.
 
-**Estado Épica Fase 5:** `EN INICIO`.
+**Estado Épica Fase 5:** `COMPLETADA`.
+
+### ✅ Nota final de cierre del proyecto
+
+- El núcleo contable y tributario de la Fundación L.A.M.A. Medellín se encuentra **100% operativo** conforme a los requerimientos del BRD vigente.
 
 **Fecha:** 21 de Febrero 2026
 **Branch:** `docs/spec-v1`

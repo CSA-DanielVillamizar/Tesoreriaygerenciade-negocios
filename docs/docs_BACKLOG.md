@@ -29,7 +29,7 @@ priority:high|medium|low
 9. [Epic][Phase 2] Donaciones + campañas + certificados obligatorios
 10. [Epic][Phase 3][Done] Proyectos sociales + beneficiarios + consentimiento + rendición
 11. [Epic][Phase 4][Done] Negocios (inventario simple, compras/ventas, comprobante interno)
-12. [Epic][Phase 5][In Progress] Reportes tributarios base (exógena, beneficiarios finales)
+12. [Epic][Phase 5][Done] Reportes tributarios avanzados (exógena, beneficiarios finales, auditoría de calidad)
 13. [Epic][Phase X] Preparación para facturación electrónica (estructura/adapter) — NO implementar
 
 ## Historias (mínimo para iniciar)
