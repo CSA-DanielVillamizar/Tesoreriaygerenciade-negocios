@@ -13,8 +13,22 @@ public static class MiembroSeeder
             return;
         }
 
+        // Miembro genérico con GUID fijo para operaciones sin tercero específico
+        var miembroGenerico = new Miembro(
+            "Tercero",
+            "Genérico",
+            "999999999",
+            "generico@lama.local",
+            "0000000000",
+            TipoAfiliacion.FullColor,
+            EstadoMiembro.Activo)
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000001")
+        };
+
         var miembros = new List<Miembro>
         {
+            miembroGenerico,
             CrearMiembro("Héctor Mario", "González Henao", "8336963", "hecmarg@yahoo.com", "3104363831", TipoAfiliacion.FullColor),
             CrearMiembro("Ramón Antonio", "González Castaño", "15432593", "raangoca@gmail.com", "3137672573", TipoAfiliacion.FullColor),
             CrearMiembro("Jhon Harvey", "Gómez Patiño", "9528949", "jhongo01@hotmail.com", "3006155416", TipoAfiliacion.FullColor),

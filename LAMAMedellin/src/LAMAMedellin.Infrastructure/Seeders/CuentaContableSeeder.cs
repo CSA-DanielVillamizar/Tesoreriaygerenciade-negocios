@@ -94,11 +94,19 @@ public static class CuentaContableSeeder
     {
         return
         [
+            new("1", "ACTIVO", NaturalezaCuenta.Debito, false, false),
+            new("11", "Disponible", NaturalezaCuenta.Debito, false, false),
+            new("1105", "Caja", NaturalezaCuenta.Debito, false, false),
+            new("110505", "Caja General", NaturalezaCuenta.Debito, true, true),
+
             new("3", "PATRIMONIO INSTITUCIONAL", NaturalezaCuenta.Credito, false, false),
             new("31", "Fondo Social", NaturalezaCuenta.Credito, false, false),
             new("3105", "Aportes de Fundadores", NaturalezaCuenta.Credito, false, false),
             new("310505", "Aportes en Dinero", NaturalezaCuenta.Credito, true, true),
             new("310510", "Aportes en Especie", NaturalezaCuenta.Credito, true, true),
+            new("37", "Resultados de Ejercicios Anteriores", NaturalezaCuenta.Credito, false, false),
+            new("3705", "Saldos Iniciales", NaturalezaCuenta.Credito, false, false),
+            new("370505", "Aportes Iniciales", NaturalezaCuenta.Credito, true, true),
             new("3115", "Fondo de Destinación Específica", NaturalezaCuenta.Credito, false, false),
             new("311505", "Reserva para proyectos misionales", NaturalezaCuenta.Credito, true, false),
             new("32", "Resultados del Ejercicio (No Utilidades)", NaturalezaCuenta.Credito, false, false),
@@ -107,9 +115,14 @@ public static class CuentaContableSeeder
 
             new("4", "INGRESOS", NaturalezaCuenta.Credito, false, false),
             new("41", "Ingresos de Actividades Ordinarias", NaturalezaCuenta.Credito, false, false),
+            new("4130", "Ventas", NaturalezaCuenta.Credito, false, false),
+            new("413005", "Ventas de Mercancia", NaturalezaCuenta.Credito, true, true),
             new("4105", "Aportes y Cuotas de Sostenimiento", NaturalezaCuenta.Credito, false, false),
             new("410505", "Cuotas de Afiliación (Nuevos)", NaturalezaCuenta.Credito, true, true),
             new("410510", "Cuotas de Sostenimiento (Mensualidad)", NaturalezaCuenta.Credito, true, true),
+            new("42", "Otros Ingresos", NaturalezaCuenta.Credito, false, false),
+            new("4210", "Cuotas o Partes de Interes Social", NaturalezaCuenta.Credito, false, false),
+            new("421005", "Cuotas Ordinarias", NaturalezaCuenta.Credito, true, true),
             new("4110", "Ingresos por Eventos y Actividades", NaturalezaCuenta.Credito, false, false),
             new("411005", "Inscripciones a Rodadas y Eventos", NaturalezaCuenta.Credito, true, true),
             new("411010", "Venta de Merchandising (Parches, etc.)", NaturalezaCuenta.Credito, true, false),
@@ -119,6 +132,11 @@ public static class CuentaContableSeeder
 
             new("5", "GASTOS ADMINISTRATIVOS", NaturalezaCuenta.Debito, false, false),
             new("51", "Operación y Administración", NaturalezaCuenta.Debito, false, false),
+            new("5130", "Servicios", NaturalezaCuenta.Debito, false, false),
+            new("513015", "Transportes, Fletes y Acarreos", NaturalezaCuenta.Debito, true, true),
+            new("5195", "Diversos", NaturalezaCuenta.Debito, false, false),
+            new("519520", "Actividades Deportivas", NaturalezaCuenta.Debito, true, false),
+            new("519595", "Otros Gastos", NaturalezaCuenta.Debito, true, false),
             new("5105", "Gastos de Representación", NaturalezaCuenta.Debito, false, false),
             new("510505", "Reuniones de Junta Directiva", NaturalezaCuenta.Debito, true, false),
             new("5110", "Honorarios y Servicios", NaturalezaCuenta.Debito, false, false),
