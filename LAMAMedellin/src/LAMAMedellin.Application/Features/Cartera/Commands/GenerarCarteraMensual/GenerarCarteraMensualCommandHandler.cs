@@ -7,26 +7,36 @@ namespace LAMAMedellin.Application.Features.Cartera.Commands.GenerarCarteraMensu
 
 public sealed class GenerarCarteraMensualCommandHandler(
     IMiembroRepository miembroRepository,
-    ICuotaAsambleaRepository cuotaAsambleaRepository,
+    ITarifaCuotaRepository tarifaCuotaRepository,
     ICuentaPorCobrarRepository cuentaPorCobrarRepository)
     : IRequestHandler<GenerarCarteraMensualCommand, int>
 {
     public async Task<int> Handle(GenerarCarteraMensualCommand request, CancellationToken cancellationToken)
     {
-        var anio = int.Parse(request.Periodo.AsSpan(0, 4));
-        var mes = int.Parse(request.Periodo.AsSpan(5, 2));
-
-        var cuotaAsamblea = await cuotaAsambleaRepository.GetVigentePorPeriodoAsync(anio, mes, cancellationToken);
-        if (cuotaAsamblea is null)
+        var tarifas = await tarifaCuotaRepository.GetAllAsync(cancellationToken);
+        if (tarifas.Count == 0)
         {
-            throw new ExcepcionNegocio($"No existe CuotaAsamblea vigente para el periodo {request.Periodo}.");
+            throw new ExcepcionNegocio("No existen tarifas de cuota configuradas.");
         }
+
+        var tarifasPorTipo = tarifas.ToDictionary(x => x.TipoAfiliacion, x => x.ValorMensualCOP);
 
         var miembrosActivos = await miembroRepository.GetActivosAsync(cancellationToken);
         var cuentasNuevas = new List<CuentaPorCobrar>();
 
         foreach (var miembro in miembrosActivos)
         {
+            if (!tarifasPorTipo.TryGetValue(miembro.TipoAfiliacion, out var valorMensual))
+            {
+                throw new ExcepcionNegocio($"No existe tarifa configurada para el tipo de afiliación {miembro.TipoAfiliacion}.");
+            }
+
+            // Regla contable: si la tarifa es 0 (ej. Esposa), no se genera CxC para evitar saldos artificiales.
+            if (valorMensual == 0)
+            {
+                continue;
+            }
+
             var existeCuenta = await cuentaPorCobrarRepository.ExistePorMiembroYPeriodoAsync(
                 miembro.Id,
                 request.Periodo,
@@ -40,7 +50,7 @@ public sealed class GenerarCarteraMensualCommandHandler(
             cuentasNuevas.Add(new CuentaPorCobrar(
                 miembro.Id,
                 request.Periodo,
-                cuotaAsamblea.ValorMensualCOP));
+                valorMensual));
         }
 
         if (cuentasNuevas.Count == 0)

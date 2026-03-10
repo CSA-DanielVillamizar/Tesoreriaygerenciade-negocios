@@ -13,6 +13,7 @@ public sealed class LamaDbContext(DbContextOptions<LamaDbContext> options) : DbC
     public DbSet<AsientoContable> AsientosContables => Set<AsientoContable>();
     public DbSet<CuentaPorCobrar> CuentasPorCobrar => Set<CuentaPorCobrar>();
     public DbSet<CuotaAsamblea> CuotasAsamblea => Set<CuotaAsamblea>();
+    public DbSet<TarifaCuota> TarifasCuota => Set<TarifaCuota>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
     public DbSet<Donante> Donantes => Set<Donante>();
     public DbSet<ProyectoSocial> ProyectosSociales => Set<ProyectoSocial>();
