@@ -164,7 +164,7 @@ Que el sistema disponga de un Catálogo de Cuentas (PUC) propio, jerárquico y p
 | 3 | El código es único en BD | ✅ |
 | 4 | Solo acepta códigos numéricos con longitudes 1, 2, 4, 6 u 8+ | ✅ |
 | 5 | Cada cuenta tiene referencia correcta a su cuenta padre | ✅ |
-| 6 | Las 34 cuentas están disponibles desde el primer arranque (seed idempotente) | ✅ |
+| 6 | Las 33 cuentas están disponibles desde el primer arranque (seed idempotente) | ✅ |
 | 7 | `GET /api/cuentas-contables` retorna el catálogo completo | ✅ |
 | 8 | `GET /api/cuentas-contables/asentables` retorna solo nodos hoja | ✅ |
 | 9 | Ambos endpoints requieren autenticación JWT | ✅ |
@@ -358,7 +358,7 @@ CREATE INDEX IX_CuentasContables_CuentaPadreId ON CuentasContables (CuentaPadreI
 | Query `GetCatalogoCuentas` | `Application/Features/Contabilidad/Queries/…` | ✅ |
 | Config EF Core | `Infrastructure/Configurations/CuentaContableConfiguration.cs` | ✅ |
 | Repositorio concreto | `Infrastructure/Repositories/CuentaContableRepository.cs` | ✅ |
-| Seeder (34 cuentas) | `Infrastructure/Seeders/CuentaContableSeeder.cs` | ✅ |
+| Seeder (33 cuentas) | `Infrastructure/Seeders/CuentaContableSeeder.cs` | ✅ |
 | Migración BD | `Migrations/20260224181213_AddCuentasContables.cs` | ✅ |
 | Controller API | `API/Controllers/CuentasContablesController.cs` | ✅ |
 | Hook React Query | `frontend/src/features/contabilidad/hooks/useCuentasContables.ts` | ✅ |
@@ -380,7 +380,7 @@ O directamente: `/contabilidad/cuentas`
 **Desde el API:**
 
 ```
-GET /api/cuentas-contables            → Catálogo completo (34 cuentas)
+GET /api/cuentas-contables            → Catálogo completo (33 cuentas)
 GET /api/cuentas-contables/asentables → Solo nodos hoja (14 cuentas asentables)
 ```
 

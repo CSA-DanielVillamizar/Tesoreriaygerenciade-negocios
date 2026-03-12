@@ -29,6 +29,520 @@
 				"--oneline"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "git-commit-push-azure-devops",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				".github/workflows/deploy-backend.yml",
+				"docs/DESPLIEGUE_AZURE.md",
+				"scripts/provisionar-backend.ps1",
+				";",
+				"git",
+				"commit",
+				"-m",
+				"ci(azure): agregar scripts de aprovisionamiento y pipeline CI/CD para backend",
+				";",
+				"git",
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-git-log-latest",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"-C",
+				"c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin",
+				"log",
+				"-1",
+				"--pretty=format:%h %s"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-git-status-short",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"-C",
+				"c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin",
+				"status",
+				"--short"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-echo-check",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Output \"TASK_OK\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step2-create-webapp-and-check-placeholders",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$repo='c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin'; Set-Location $repo; $script='scripts/provisionar-backend.ps1'; $content=Get-Content $script -Raw; $user=[regex]::Match($content,'\\$SqlUser\\s*=\\s*\"([^\"]+)\"').Groups[1].Value; $pass=[regex]::Match($content,'\\$SqlPassword\\s*=\\s*\"([^\"]+)\"').Groups[1].Value; Write-Output \"STEP2_PLACEHOLDERS SqlUser=$user SqlPassword=$pass\"; Write-Output 'STEP2_CREATE_WEBAPP'; az webapp create --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --plan plan-lamamedellin-prod --runtime \"DOTNETCORE|8.0\" --https-only true -o json 2>&1; Write-Output \"CREATE_EXIT=$LASTEXITCODE\"; Write-Output 'STEP2_VERIFY_WEBAPP'; az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query \"{name:name,location:location,state:state,kind:kind,linuxFxVersion:siteConfig.linuxFxVersion,reserved:reserved}\" -o json 2>&1; Write-Output \"VERIFY_EXIT=$LASTEXITCODE\"; if($user -eq '<SQL_USER>' -or $pass -eq '<SQL_PASSWORD>'){ Write-Output 'STEP2_CONNSTRING_BLOCKED=placeholders_not_replaced' } else { $cs=\"Server=tcp:lamaregionnorte-sql-a90e.database.windows.net,1433;Initial Catalog=LAMAMedellinContable;Persist Security Info=False;User ID=$user;Password=$pass;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;\"; az webapp config connection-string set --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --connection-string-type SQLAzure --settings DefaultConnection=\"$cs\" -o json 2>&1; Write-Output \"CONNSTRING_EXIT=$LASTEXITCODE\" }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step2-ping",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Output \"STEP2_PING\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step2-create-webapp-script",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\tmp_step2_create_webapp.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step2-create-webapp-colon",
+			"type": "shell",
+			"command": "az",
+			"args": [
+				"webapp",
+				"create",
+				"--name",
+				"app-lamamedellin-backend-prod",
+				"--resource-group",
+				"rg-lamaregionnorte-prod",
+				"--plan",
+				"plan-lamamedellin-prod",
+				"--runtime",
+				"DOTNETCORE:8.0",
+				"--https-only",
+				"true",
+				"-o",
+				"json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step3-set-gh-secret",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Location \"c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin\"; Write-Output \"STEP3_FETCH_PROFILE\"; $perfilXml = az webapp deployment list-publishing-profiles --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --xml 2>&1 | Out-String; $fetchExit = $LASTEXITCODE; Write-Output \"PROFILE_FETCH_EXIT=$fetchExit\"; if ($fetchExit -ne 0 -or [string]::IsNullOrWhiteSpace($perfilXml)) { Write-Output \"STEP3_ABORT=no_profile\"; exit 1 }; Write-Output \"PROFILE_LENGTH=$($perfilXml.Length)\"; Write-Output \"STEP3_SET_SECRET\"; gh secret set AZURE_WEBAPP_PUBLISH_PROFILE --body \"$perfilXml\" 2>&1; Write-Output \"SECRET_SET_EXIT=$LASTEXITCODE\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step3-set-secret-script",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\tmp_step3_set_secret.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step4-trigger-workflow",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Location -Path 'c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin'; Write-Output 'STEP4_TRIGGER'; gh workflow run deploy-backend.yml 2>&1; Write-Output \"WORKFLOW_RUN_EXIT=$LASTEXITCODE\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step4-trigger-workflow-repo",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"workflow",
+				"run",
+				"deploy-backend.yml",
+				"--repo",
+				"CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin",
+				"--ref",
+				"main"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step5-list-latest-run",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"list",
+				"--workflow",
+				"deploy-backend.yml",
+				"--repo",
+				"CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin",
+				"--limit",
+				"1",
+				"--json",
+				"databaseId,status,conclusion,createdAt,headBranch,displayTitle,url,event"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step45-gh-workflow-script",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\tmp_step45_gh_workflow.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-step1-verify-script",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\tmp_step1_verify.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-user-exact-workflow-run",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"workflow",
+				"run",
+				"deploy-backend.yml",
+				"--ref",
+				"main"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-user-exact-run-list",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"list",
+				"--workflow",
+				"deploy-backend.yml",
+				"--limit",
+				"1",
+				"--json",
+				"databaseId,status,conclusion,workflowName,url,createdAt"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-userreq-deploy-backend-check-trigger",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Continue'; Write-Output 'STEP1_CHECK_WORKFLOW_FILE'; $p='.github/workflows/deploy-backend.yml'; Write-Output ('FILE=' + $p); Write-Output ('FILE_EXISTS=' + (Test-Path $p)); $m1 = Select-String -Path $p -Pattern 'workflow_dispatch' -SimpleMatch; Write-Output ('HAS_WORKFLOW_DISPATCH=' + [bool]$m1); $m2 = Select-String -Path $p -Pattern 'AZURE_WEBAPP_NAME' -SimpleMatch; Write-Output ('HAS_AZURE_WEBAPP_NAME=' + [bool]$m2); $m3 = Select-String -Path $p -Pattern 'app-lamamedellin-backend-prod' -SimpleMatch; Write-Output ('HAS_TARGET_APP_NAME=' + [bool]$m3); Write-Output 'STEP2_ENSURE_PUSH_MAIN'; git fetch origin; Write-Output ('FETCH_EXIT=' + $LASTEXITCODE); $branch = git rev-parse --abbrev-ref HEAD; Write-Output ('CURRENT_BRANCH=' + $branch); $localChanges = git status --porcelain -- .github/workflows/deploy-backend.yml; if ([string]::IsNullOrWhiteSpace($localChanges)) { Write-Output 'FILE_LOCAL_CHANGES=none' } else { Write-Output 'FILE_LOCAL_CHANGES=present'; Write-Output $localChanges }; $ahead = git log --oneline origin/main..main -- .github/workflows/deploy-backend.yml; if ([string]::IsNullOrWhiteSpace(($ahead | Out-String))) { Write-Output 'AHEAD_COMMITS_FOR_FILE=none' } else { Write-Output 'AHEAD_COMMITS_FOR_FILE=present'; $ahead | ForEach-Object { Write-Output $_ } }; $didCommit=$false; if (-not [string]::IsNullOrWhiteSpace($localChanges)) { git add .github/workflows/deploy-backend.yml; Write-Output ('GIT_ADD_EXIT=' + $LASTEXITCODE); git commit -m 'ci(azure): habilitar workflow_dispatch y apuntar deploy a lamamedellin'; Write-Output ('GIT_COMMIT_EXIT=' + $LASTEXITCODE); $didCommit=$true }; $needPush=$didCommit; if (-not $needPush) { if (-not [string]::IsNullOrWhiteSpace(($ahead | Out-String))) { $needPush=$true } }; if ($needPush) { git push origin main; Write-Output ('GIT_PUSH_EXIT=' + $LASTEXITCODE) } else { Write-Output 'GIT_PUSH_SKIPPED=already_synced_for_file' }; Write-Output 'STEP3_TRIGGER_WORKFLOW'; gh workflow run deploy-backend.yml --ref main; Write-Output ('GH_WORKFLOW_RUN_EXIT=' + $LASTEXITCODE); Write-Output 'STEP4_QUERY_LATEST_RUN'; gh run list --workflow deploy-backend.yml --limit 1 --json databaseId,status,conclusion,workflowName,url,createdAt; Write-Output ('GH_RUN_LIST_EXIT=' + $LASTEXITCODE)\"",
+			"isBackground": false
+		},
+		{
+			"label": "tmp-exact-step1-git-add",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				".github/workflows/deploy-backend.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-exact-step2-git-commit",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"ci(azure): habilitar workflow_dispatch y apuntar deploy a lamamedellin"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-exact-step3-git-push-main",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push",
+				"origin",
+				"main"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-exact-step4-gh-workflow-run",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"workflow",
+				"run",
+				"deploy-backend.yml",
+				"--ref",
+				"main"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-exact-step5-gh-run-list",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"list",
+				"--workflow",
+				"deploy-backend.yml",
+				"--limit",
+				"1",
+				"--json",
+				"databaseId,status,conclusion,workflowName,url,createdAt,event,headBranch"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-userreq-fix-publish-profile-invalid-appname",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$ErrorActionPreference='Continue'; Set-Location \"c:\\Users\\DanielVillamizar\\Sistema Contable L.A.M.A. Medellin\"; Write-Output 'STEP2_FETCH_PUBLISH_PROFILE_START'; $profilePath = Join-Path $PWD 'scripts\\tmp_publish_profile_lamamedellin.xml'; $xml = az webapp deployment list-publishing-profiles --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --xml 2>&1; $azExit = $LASTEXITCODE; Write-Output ('STEP2_AZ_EXIT=' + $azExit); if ($azExit -eq 0) { $xml | Out-File -FilePath $profilePath -Encoding utf8; Write-Output ('STEP2_PROFILE_PATH=' + $profilePath); Write-Output ('STEP2_PROFILE_BYTES=' + (Get-Item $profilePath).Length); $line = Get-Content $profilePath -TotalCount 1; Write-Output ('STEP2_PROFILE_LINE1=' + $line) } else { $xml | ForEach-Object { Write-Output ('STEP2_AZ_ERR=' + $_) } }; Write-Output 'STEP3_SET_GH_SECRET_START'; if (Test-Path $profilePath) { Get-Content $profilePath -Raw | gh secret set AZURE_WEBAPP_PUBLISH_PROFILE; Write-Output ('STEP3_GH_SECRET_EXIT=' + $LASTEXITCODE) } else { Write-Output 'STEP3_GH_SECRET_SKIPPED=no_profile_file' }; Write-Output 'STEP4_TRIGGER_WORKFLOW_START'; gh workflow run deploy-backend.yml --ref main; Write-Output ('STEP4_GH_WORKFLOW_RUN_EXIT=' + $LASTEXITCODE); Write-Output 'STEP5_LATEST_RUN_START'; $runJson = gh run list --workflow deploy-backend.yml --limit 1 --json databaseId,status,conclusion,url,createdAt,headBranch,event,displayTitle; $runExit = $LASTEXITCODE; Write-Output ('STEP5_GH_RUN_LIST_EXIT=' + $runExit); Write-Output ('STEP5_RUN_JSON=' + $runJson); if ($runExit -eq 0 -and -not [string]::IsNullOrWhiteSpace($runJson)) { try { $runs = $runJson | ConvertFrom-Json; if ($runs.Count -gt 0) { $run = $runs[0]; if ($run.status -eq 'completed' -and $run.conclusion -eq 'failure') { Write-Output 'STEP6_FAILED_RUN_FETCH_REASON_START'; gh run view $run.databaseId --log-failed; $logExit = $LASTEXITCODE; Write-Output ('STEP6_GH_RUN_VIEW_LOG_FAILED_EXIT=' + $logExit); if ($logExit -ne 0) { Write-Output 'STEP6_LOG_FAILED_UNAVAILABLE_FETCH_SUMMARY'; gh run view $run.databaseId; Write-Output ('STEP6_GH_RUN_VIEW_SUMMARY_EXIT=' + $LASTEXITCODE) } } else { Write-Output ('STEP6_SKIPPED_STATUS=' + $run.status + ';CONCLUSION=' + $run.conclusion) } } else { Write-Output 'STEP6_SKIPPED_NO_RUNS' } } catch { Write-Output ('STEP6_PARSE_ERROR=' + $_.Exception.Message) } }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-userreq-exact-step5-with-displayTitle",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"list",
+				"--workflow",
+				"deploy-backend.yml",
+				"--limit",
+				"1",
+				"--json",
+				"databaseId,status,conclusion,url,createdAt,headBranch,event,displayTitle"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-userreq-step6-run-view-log-failed",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"view",
+				"22490226153",
+				"--log-failed"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-userreq-step6-run-view-summary",
+			"type": "shell",
+			"command": "gh",
+			"args": [
+				"run",
+				"view",
+				"22490226153"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-20260227-fix-publish-profile",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$ErrorActionPreference='Continue'; Set-Location \"c:\\Users\\DanielVillamizar\\Sistema Contable L.A.M.A. Medellin\"; $rg='rg-lamaregionnorte-prod'; $app='app-lamamedellin-backend-prod'; $repo='CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin'; $workflow='deploy-backend.yml'; $profilePath = Join-Path $PWD 'scripts\\tmp_publish_profile_app-lamamedellin-backend-prod.xml'; Write-Output 'STEP1_SHOW_CURRENT_BASIC_AUTH_FLAGS'; Write-Output '$ az resource show --resource-group rg-lamaregionnorte-prod --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name app-lamamedellin-backend-prod/scm --query \"{name:name,allow:properties.allow}\" -o json'; az resource show --resource-group $rg --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name \"$app/scm\" --query \"{name:name,allow:properties.allow}\" -o json; Write-Output ('EXIT=' + $LASTEXITCODE); Write-Output '$ az resource show --resource-group rg-lamaregionnorte-prod --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name app-lamamedellin-backend-prod/ftp --query \"{name:name,allow:properties.allow}\" -o json'; az resource show --resource-group $rg --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name \"$app/ftp\" --query \"{name:name,allow:properties.allow}\" -o json; Write-Output ('EXIT=' + $LASTEXITCODE); Write-Output '$ az webapp config show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query \"{scmType:scmType,ftpsState:ftpsState,minTlsVersion:minTlsVersion}\" -o json'; az webapp config show --name $app --resource-group $rg --query \"{scmType:scmType,ftpsState:ftpsState,minTlsVersion:minTlsVersion}\" -o json; Write-Output ('EXIT=' + $LASTEXITCODE); Write-Output 'STEP2_ENABLE_REQUIRED_BASIC_AUTH_FOR_PUBLISH_PROFILE_ON_THIS_APP_ONLY'; Write-Output '$ az resource update --resource-group rg-lamaregionnorte-prod --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name app-lamamedellin-backend-prod/scm --set properties.allow=true -o json'; az resource update --resource-group $rg --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name \"$app/scm\" --set properties.allow=true -o json; Write-Output ('EXIT=' + $LASTEXITCODE); Write-Output '$ az resource show --resource-group rg-lamaregionnorte-prod --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name app-lamamedellin-backend-prod/scm --query \"{name:name,allow:properties.allow}\" -o json'; az resource show --resource-group $rg --resource-type Microsoft.Web/sites/basicPublishingCredentialsPolicies --name \"$app/scm\" --query \"{name:name,allow:properties.allow}\" -o json; Write-Output ('EXIT=' + $LASTEXITCODE); Write-Output 'STEP3_RETRIEVE_PUBLISH_PROFILE_XML'; Write-Output '$ az webapp deployment list-publishing-profiles --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --xml'; $xml = az webapp deployment list-publishing-profiles --name $app --resource-group $rg --xml 2>&1; $step3Exit = $LASTEXITCODE; if ($step3Exit -eq 0) { $xml | Out-File -FilePath $profilePath -Encoding utf8; Write-Output ('PROFILE_PATH=' + $profilePath); Write-Output ('PROFILE_BYTES=' + (Get-Item $profilePath).Length); $line = Get-Content $profilePath -TotalCount 1; Write-Output ('PROFILE_LINE1=' + $line) } else { $xml | ForEach-Object { Write-Output $_ } }; Write-Output ('EXIT=' + $step3Exit); Write-Output 'STEP4_UPDATE_GITHUB_SECRET_AZURE_WEBAPP_PUBLISH_PROFILE'; Write-Output '$ Get-Content scripts/tmp_publish_profile_app-lamamedellin-backend-prod.xml -Raw | gh secret set AZURE_WEBAPP_PUBLISH_PROFILE --repo CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin'; if (Test-Path $profilePath) { Get-Content $profilePath -Raw | gh secret set AZURE_WEBAPP_PUBLISH_PROFILE --repo $repo; Write-Output ('EXIT=' + $LASTEXITCODE) } else { Write-Output 'SKIPPED_NO_PROFILE_FILE'; Write-Output 'EXIT=1' }; Write-Output 'STEP5_TRIGGER_WORKFLOW_MAIN'; Write-Output '$ gh workflow run deploy-backend.yml --ref main --repo CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin'; gh workflow run $workflow --ref main --repo $repo; Write-Output ('EXIT=' + $LASTEXITCODE); Start-Sleep -Seconds 5; Write-Output 'STEP6_CHECK_LATEST_WORKFLOW_RUN_STATUS_URL'; Write-Output '$ gh run list --workflow deploy-backend.yml --limit 1 --repo CSA-DanielVillamizar/Sistema-Contable-L.A.M.A.-Medellin --json databaseId,status,conclusion,url,createdAt,event,headBranch,workflowName,displayTitle'; gh run list --workflow $workflow --limit 1 --repo $repo --json databaseId,status,conclusion,url,createdAt,event,headBranch,workflowName,displayTitle; Write-Output ('EXIT=' + $LASTEXITCODE)"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-flag-scm-current",
+			"type": "shell",
+			"command": "az",
+			"args": [
+				"resource",
+				"show",
+				"--resource-group",
+				"rg-lamaregionnorte-prod",
+				"--resource-type",
+				"Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+				"--name",
+				"app-lamamedellin-backend-prod/scm",
+				"--query",
+				"properties.allow",
+				"-o",
+				"tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-flag-ftp-current",
+			"type": "shell",
+			"command": "az",
+			"args": [
+				"resource",
+				"show",
+				"--resource-group",
+				"rg-lamaregionnorte-prod",
+				"--resource-type",
+				"Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+				"--name",
+				"app-lamamedellin-backend-prod/ftp",
+				"--query",
+				"properties.allow",
+				"-o",
+				"tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-webapp-config-scmtype",
+			"type": "shell",
+			"command": "az",
+			"args": [
+				"webapp",
+				"config",
+				"show",
+				"--name",
+				"app-lamamedellin-backend-prod",
+				"--resource-group",
+				"rg-lamaregionnorte-prod",
+				"--query",
+				"[scmType,ftpsState,minTlsVersion]",
+				"-o",
+				"tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-show-scm-flag-by-id",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$appId = az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query id -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/scm\" --query properties.allow -o tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-show-ftp-flag-by-id",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$appId = az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query id -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/ftp\" --query properties.allow -o tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-show-scm-basic-field",
+			"type": "shell",
+			"command": "az",
+			"args": [
+				"webapp",
+				"config",
+				"show",
+				"--name",
+				"app-lamamedellin-backend-prod",
+				"--resource-group",
+				"rg-lamaregionnorte-prod",
+				"--query",
+				"[scmBasicAuthEnabled,ftpBasicAuthEnabled,scmType,ftpsState]",
+				"-o",
+				"tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-enable-scm-basic-auth-and-verify",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$appId = az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query id -o tsv; az resource update --ids \"$appId/basicPublishingCredentialsPolicies/scm\" --set properties.allow=true --query properties.allow -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/scm\" --query properties.allow -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/ftp\" --query properties.allow -o tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-verify-scm-after-enable",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$appId = az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query id -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/scm\" --query properties.allow -o tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-verify-ftp-after-enable",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$appId = az webapp show --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --query id -o tsv; az resource show --ids \"$appId/basicPublishingCredentialsPolicies/ftp\" --query properties.allow -o tsv"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tmp-fetch-publish-profile-xml",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Location \"c:/Users/DanielVillamizar/Sistema Contable L.A.M.A. Medellin\"; $out='scripts/tmp_publish_profile_app-lamamedellin-backend-prod.xml'; az webapp deployment list-publishing-profiles --name app-lamamedellin-backend-prod --resource-group rg-lamaregionnorte-prod --xml > $out; Write-Output \"PROFILE_PATH=$out\"; Write-Output \"PROFILE_BYTES=$((Get-Item $out).Length)\"; Get-Content $out -TotalCount 1"
+			],
+			"isBackground": false
 		}
 	]
 }

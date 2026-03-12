@@ -2,6 +2,17 @@
 
 ## Actualización Ejecutiva — 04 de Marzo 2026
 
+### Matriz de Definition of Done (Fase 0 a Fase 5)
+
+| Fase | Alcance | Estado | Evidencia de cierre |
+|------|---------|--------|---------------------|
+| Fase 0 | Fundaciones e IAM (Entra ID + Azure) | COMPLETADA | Autenticación y autorización productiva operativa con Entra ID y despliegue en Azure App Service. |
+| Fase 1 | MVP Contabilidad, Tesorería y Cuotas de Miembros | COMPLETADA | Base contable y de tesorería en operación como fundamento de fases posteriores. |
+| Fase 2 | Donaciones y Certificados | COMPLETADA | Commit `0622aa9` (`release(phase2): donaciones con asiento contable automatico y PDF DIAN`). |
+| Fase 3 | Proyectos Sociales y Beneficiarios | COMPLETADA | Cierre documental + commits de cierre de fase y estabilización funcional (`b59d1c7`, `b66a843`). |
+| Fase 4 | Negocios (Inventario, POS de Merchandising) | COMPLETADA | Cierre documental oficial (`d81327f`) y entregables funcionales de inventario/POS/reportes (`8a62acd`, `ae37d65`, `dd0731f`). |
+| Fase 5 | Tributario Avanzado (Exógena, RUB, Auditoría de datos) | COMPLETADA | Entregables tributarios en producción (`aa5c267`, `25c74a0`, `2cf5216`) y smoke test productivo con rol `Contador` (`HTTP_STATUS=200`). |
+
 ### ✅ Cierre de Fase 3 — Proyectos y Donaciones
 
 - Migración productiva aplicada: `20260304200521_AddProyectoSocialIdToBeneficiario`.

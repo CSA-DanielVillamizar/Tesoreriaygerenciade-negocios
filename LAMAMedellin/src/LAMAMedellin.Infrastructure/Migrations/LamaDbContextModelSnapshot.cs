@@ -571,6 +571,29 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.ToTable("ProyectosSociales", (string)null);
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.TarifaCuota", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TipoAfiliacion")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ValorMensualCOP")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TipoAfiliacion")
+                        .IsUnique();
+
+                    b.ToTable("TarifasCuota", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Transaccion", b =>
                 {
                     b.Property<Guid>("Id")
