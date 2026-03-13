@@ -6,6 +6,8 @@ namespace LAMAMedellin.Infrastructure.Persistence;
 
 public sealed class LamaDbContext(DbContextOptions<LamaDbContext> options) : DbContext(options)
 {
+    public DbSet<Caja> Cajas => Set<Caja>();
+    public DbSet<Egreso> Egresos => Set<Egreso>();
     public DbSet<Banco> Bancos => Set<Banco>();
     public DbSet<CentroCosto> CentrosCosto => Set<CentroCosto>();
     public DbSet<CuentaContable> CuentasContables => Set<CuentaContable>();

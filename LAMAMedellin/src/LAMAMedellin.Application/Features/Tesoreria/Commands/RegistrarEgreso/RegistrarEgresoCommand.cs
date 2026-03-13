@@ -1,0 +1,12 @@
+using MediatR;
+
+namespace LAMAMedellin.Application.Features.Tesoreria.Commands.RegistrarEgreso;
+
+public sealed record RegistrarEgresoCommand(
+    DateTime Fecha,
+    decimal Monto,
+    string Concepto,
+    Guid? TerceroId,
+    Guid CuentaContableId,
+    Guid CajaId,
+    Guid CentroCostoId) : IRequest<Guid>;

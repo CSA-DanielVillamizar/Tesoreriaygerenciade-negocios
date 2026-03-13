@@ -98,6 +98,8 @@ public static class CuentaContableSeeder
             new("11", "Disponible", NaturalezaCuenta.Debito, false, false),
             new("1105", "Caja", NaturalezaCuenta.Debito, false, false),
             new("110505", "Caja General", NaturalezaCuenta.Debito, true, true),
+            new("1110", "Bancos", NaturalezaCuenta.Debito, false, false),
+            new("111005", "Moneda Nacional", NaturalezaCuenta.Debito, true, false),
 
             new("3", "PATRIMONIO INSTITUCIONAL", NaturalezaCuenta.Credito, false, false),
             new("31", "Fondo Social", NaturalezaCuenta.Credito, false, false),

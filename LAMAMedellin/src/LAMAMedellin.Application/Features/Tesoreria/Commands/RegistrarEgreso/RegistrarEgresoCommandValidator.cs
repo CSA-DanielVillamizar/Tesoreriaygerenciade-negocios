@@ -1,0 +1,28 @@
+using FluentValidation;
+
+namespace LAMAMedellin.Application.Features.Tesoreria.Commands.RegistrarEgreso;
+
+public sealed class RegistrarEgresoCommandValidator : AbstractValidator<RegistrarEgresoCommand>
+{
+    public RegistrarEgresoCommandValidator()
+    {
+        RuleFor(x => x.Fecha)
+            .NotEmpty();
+
+        RuleFor(x => x.Concepto)
+            .NotEmpty()
+            .MaximumLength(500);
+
+        RuleFor(x => x.Monto)
+            .GreaterThan(0);
+
+        RuleFor(x => x.CajaId)
+            .NotEmpty();
+
+        RuleFor(x => x.CuentaContableId)
+            .NotEmpty();
+
+        RuleFor(x => x.CentroCostoId)
+            .NotEmpty();
+    }
+}

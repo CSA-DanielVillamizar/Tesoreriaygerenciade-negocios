@@ -32,4 +32,10 @@ public sealed class CuentaContableRepository(LamaDbContext context) : ICuentaCon
         return context.CuentasContables
             .FirstOrDefaultAsync(x => x.Codigo == codigo, cancellationToken);
     }
+
+    public Task<CuentaContable?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return context.CuentasContables
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 }

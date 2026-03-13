@@ -118,6 +118,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<ITransaccionRepository, TransaccionRepository>();
+        services.AddScoped<ICajaRepository, CajaRepository>();
+        services.AddScoped<IEgresoRepository, EgresoRepository>();
         services.AddScoped<IBancoRepository, BancoRepository>();
         services.AddScoped<ICentroCostoRepository, CentroCostoRepository>();
         services.AddScoped<IMiembroRepository, MiembroRepository>();
@@ -128,6 +130,7 @@ public static class DependencyInjection
         services.AddScoped<IDonanteRepository, DonanteRepository>();
         services.AddScoped<IDonacionRepository, DonacionRepository>();
         services.AddScoped<ICertificadoDonacionService, CertificadoDonacionService>();
+        services.AddScoped<ITransactionManager, TransactionManager>();
         services.AddScoped<IComprobanteRepository, ComprobanteRepository>();
         services.AddScoped<IProyectoSocialRepository, ProyectoSocialRepository>();
         services.AddScoped<IBeneficiarioRepository, BeneficiarioRepository>();
