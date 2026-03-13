@@ -1,4 +1,5 @@
 using LAMAMedellin.Application.Common.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LAMAMedellin.Infrastructure.Persistence;
@@ -9,19 +10,24 @@ public sealed class TransactionManager(LamaDbContext context) : ITransactionMana
         Func<CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken = default)
     {
-        await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var executionStrategy = context.Database.CreateExecutionStrategy();
 
-        try
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            var result = await operation(cancellationToken);
-            await context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+            await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                var result = await operation(cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 }
