@@ -37,6 +37,7 @@ public sealed class CrearProductoCommandHandler(
             cuentaContableIngresoId: request.CuentaContableIngresoId);
 
         await productoRepository.AddAsync(producto, cancellationToken);
+        await productoRepository.SaveChangesAsync(cancellationToken);
 
         return producto.Id;
     }
