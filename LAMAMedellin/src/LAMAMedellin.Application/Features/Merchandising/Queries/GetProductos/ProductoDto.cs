@@ -8,4 +8,5 @@ public sealed record ProductoDto(
     int CantidadStock,
     Guid CuentaContableIngresoId,
     string CuentaContableIngresoCodigo,
-    string CuentaContableIngresoDescripcion);
+    string CuentaContableIngresoDescripcion,
+    string? ImageUrl);

@@ -1,3 +1,4 @@
+using LAMAMedellin.Application.Features.Merchandising.Commands.ActualizarImagenProducto;
 using LAMAMedellin.Application.Features.Merchandising.Commands.CrearProducto;
 using LAMAMedellin.Application.Features.Merchandising.Commands.RegistrarEntradaInventario;
 using LAMAMedellin.Application.Features.Merchandising.Commands.RegistrarVentaProducto;
@@ -71,5 +72,47 @@ public sealed class MerchandisingController(ISender sender) : ControllerBase
         var commandConProductoId = command with { ProductoId = productoId };
         var comprobanteId = await sender.Send(commandConProductoId, cancellationToken);
         return Created($"/api/merchandising/productos/{productoId}/ventas/{comprobanteId}", new { id = comprobanteId });
+    }
+
+    /// <summary>
+    /// Sube o reemplaza la imagen de un producto.
+    /// Acepta multipart/form-data con un campo "imagen" (jpg, jpeg, png o webp, máx 5 MB).
+    /// La imagen se almacena en Azure Blob Storage y la URL pública se persiste en la entidad.
+    /// </summary>
+    /// <param name="productoId">Id del producto</param>
+    /// <param name="imagen">Archivo de imagen</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>URL pública del blob</returns>
+    [HttpPost("productos/{productoId}/imagen")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ActualizarImagen(
+        Guid productoId,
+        IFormFile imagen,
+        CancellationToken cancellationToken)
+    {
+        if (imagen is null || imagen.Length == 0)
+        {
+            return BadRequest(new { title = "Archivo requerido.", detail = "El campo 'imagen' es obligatorio y no puede estar vacío." });
+        }
+
+        const long MaxBytes = 5 * 1024 * 1024; // 5 MB
+        if (imagen.Length > MaxBytes)
+        {
+            return BadRequest(new { title = "Archivo demasiado grande.", detail = "El tamaño máximo permitido es 5 MB." });
+        }
+
+        await using var stream = imagen.OpenReadStream();
+
+        var command = new ActualizarImagenProductoCommand(
+            ProductoId: productoId,
+            Imagen: stream,
+            NombreArchivo: imagen.FileName,
+            ContentType: imagen.ContentType);
+
+        var imageUrl = await sender.Send(command, cancellationToken);
+
+        return Ok(new { imageUrl });
     }
 }

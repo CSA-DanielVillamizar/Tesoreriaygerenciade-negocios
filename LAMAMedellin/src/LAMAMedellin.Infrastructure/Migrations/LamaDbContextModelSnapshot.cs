@@ -661,6 +661,10 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Property<Guid>("CuentaContableIngresoId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")

@@ -25,6 +25,9 @@ public sealed class Producto : BaseEntity
     /// <summary>Navegación a la cuenta contable</summary>
     public CuentaContable? CuentaContableIngreso { get; private set; }
 
+    /// <summary>URL de la imagen del producto almacenada en Azure Blob Storage</summary>
+    public string? ImageUrl { get; private set; }
+
     /// <summary>Colección de movimientos de inventario relacionados</summary>
     public List<MovimientoInventario> Movimientos { get; private set; } = [];
 
@@ -109,5 +112,14 @@ public sealed class Producto : BaseEntity
         }
 
         PrecioVentaCOP = nuevoPrecio;
+    }
+
+    /// <summary>
+    /// Actualiza la URL de la imagen del producto.
+    /// </summary>
+    /// <param name="url">URL pública del archivo en Azure Blob Storage</param>
+    public void ActualizarImagen(string? url)
+    {
+        ImageUrl = url;
     }
 }

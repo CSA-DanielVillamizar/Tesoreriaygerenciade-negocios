@@ -19,7 +19,8 @@ public sealed class GetProductosQueryHandler(IProductoRepository productoReposit
                 producto.CantidadStock,
                 producto.CuentaContableIngresoId,
                 producto.CuentaContableIngreso?.Codigo ?? string.Empty,
-                producto.CuentaContableIngreso?.Descripcion ?? string.Empty))
+                producto.CuentaContableIngreso?.Descripcion ?? string.Empty,
+                producto.ImageUrl))
             .ToList();
     }
 }

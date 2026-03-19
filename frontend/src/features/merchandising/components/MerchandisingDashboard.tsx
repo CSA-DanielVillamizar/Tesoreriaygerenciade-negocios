@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import ModalEntradaInventario, { type EntradaInventarioFormValues } from '@/features/merchandising/components/ModalEntradaInventario';
 import ModalNuevoProducto, {
     type CatalogItem,
@@ -11,6 +12,7 @@ import {
     getProductos,
     registrarEntrada,
     registrarVenta,
+    subirImagenProducto,
     type CrearProductoPayload,
     type ProductoMerchandising,
     type RegistrarEntradaPayload,
@@ -114,6 +116,8 @@ export default function MerchandisingDashboard() {
     const [productoEntradaId, setProductoEntradaId] = useState<string | null>(null);
     const [productoVentaId, setProductoVentaId] = useState<string | null>(null);
     const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+    // id del producto cuya imagen está siendo procesada (para spinner por fila)
+    const [uploadingImageId, setUploadingImageId] = useState<string | null>(null);
 
     const productosQuery = useQuery({
         queryKey: ['merchandising', 'productos'],
@@ -194,6 +198,19 @@ export default function MerchandisingDashboard() {
         },
     });
 
+    const subirImagenMutation = useMutation({
+        mutationFn: (params: { productoId: string; file: File }) =>
+            subirImagenProducto(params.productoId, params.file),
+        onSuccess: async () => {
+            setMensajeExito('Imagen actualizada correctamente.');
+            setUploadingImageId(null);
+            await queryClient.invalidateQueries({ queryKey: ['merchandising', 'productos'] });
+        },
+        onError: () => {
+            setUploadingImageId(null);
+        },
+    });
+
     const productoEntrada = useMemo<ProductoMerchandising | null>(() => {
         return (productosQuery.data ?? []).find((item) => item.id === productoEntradaId) ?? null;
     }, [productoEntradaId, productosQuery.data]);
@@ -228,6 +245,16 @@ export default function MerchandisingDashboard() {
         });
     };
 
+    const onSeleccionarImagen = (productoId: string, file: File | undefined) => {
+        if (!file) {
+            return;
+        }
+
+        setMensajeExito(null);
+        setUploadingImageId(productoId);
+        subirImagenMutation.mutate({ productoId, file });
+    };
+
     return (
         <main className="min-h-screen bg-slate-50 px-6 py-10">
             <div className="mx-auto w-full max-w-6xl">
@@ -260,6 +287,7 @@ export default function MerchandisingDashboard() {
                         <table className="min-w-full divide-y divide-slate-200 text-sm">
                             <thead>
                                 <tr className="text-left text-slate-500">
+                                    <th className="px-3 py-3 font-semibold">Foto</th>
                                     <th className="px-3 py-3 font-semibold">Nombre</th>
                                     <th className="px-3 py-3 font-semibold">SKU</th>
                                     <th className="px-3 py-3 font-semibold">Precio</th>
@@ -270,6 +298,24 @@ export default function MerchandisingDashboard() {
                             <tbody className="divide-y divide-slate-100">
                                 {(productosQuery.data ?? []).map((producto) => (
                                     <tr key={producto.id} className="align-top">
+                                        {/* Columna thumbnail */}
+                                        <td className="px-3 py-4">
+                                            {producto.imageUrl ? (
+                                                <Image
+                                                    src={producto.imageUrl}
+                                                    alt={producto.nombre}
+                                                    width={56}
+                                                    height={56}
+                                                    className="h-14 w-14 rounded-lg object-cover shadow-sm"
+                                                />
+                                            ) : (
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+                                                        <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.83.83a.75.75 0 1 1-1.06 1.06l-5-5a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-3 py-4 text-slate-900">
                                             <p className="font-semibold">{producto.nombre}</p>
                                             <p className="mt-1 text-xs text-slate-500">
@@ -290,6 +336,23 @@ export default function MerchandisingDashboard() {
                                         </td>
                                         <td className="px-3 py-4">
                                             <div className="flex flex-wrap gap-2">
+                                                {/* Botón de cámara — dispara input file oculto */}
+                                                <label
+                                                    htmlFor={`img-upload-${producto.id}`}
+                                                    className="cursor-pointer rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                                                    title="Subir foto del producto"
+                                                >
+                                                    {uploadingImageId === producto.id ? '⏳' : '📷'}
+                                                </label>
+                                                <input
+                                                    id={`img-upload-${producto.id}`}
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    className="sr-only"
+                                                    disabled={uploadingImageId === producto.id}
+                                                    onChange={(e) => onSeleccionarImagen(producto.id, e.target.files?.[0])}
+                                                />
+
                                                 <button
                                                     type="button"
                                                     onClick={() => {

@@ -5,6 +5,7 @@ using LAMAMedellin.Application.Common.Interfaces.Repositories;
 using LAMAMedellin.Infrastructure.Documents;
 using LAMAMedellin.Infrastructure.Persistence;
 using LAMAMedellin.Infrastructure.Persistence.Repositories;
+using LAMAMedellin.Infrastructure.Storage;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -139,6 +140,7 @@ public static class DependencyInjection
         services.AddScoped<ITributarioRepository, TributarioRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
+        services.AddSingleton<IFileStorageService, AzureBlobStorageService>();
 
         return services;
     }

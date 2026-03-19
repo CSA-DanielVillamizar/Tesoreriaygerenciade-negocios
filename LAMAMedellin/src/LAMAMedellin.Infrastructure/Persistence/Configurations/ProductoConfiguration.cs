@@ -36,6 +36,10 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
         builder.Property(p => p.CuentaContableIngresoId)
             .IsRequired();
 
+        builder.Property(p => p.ImageUrl)
+            .HasMaxLength(2048)
+            .IsRequired(false);
+
         builder.HasOne(p => p.CuentaContableIngreso)
             .WithMany()
             .HasForeignKey(p => p.CuentaContableIngresoId)

@@ -9,6 +9,7 @@ export type ProductoMerchandising = {
     cuentaContableIngresoId: string;
     cuentaContableIngresoCodigo: string;
     cuentaContableIngresoDescripcion: string;
+    imageUrl: string | null;
 };
 
 export type CrearProductoPayload = {
@@ -54,6 +55,8 @@ type ProductoDto = {
     CuentaContableIngresoCodigo?: string;
     cuentaContableIngresoDescripcion?: string;
     CuentaContableIngresoDescripcion?: string;
+    imageUrl?: string | null;
+    ImageUrl?: string | null;
 };
 
 function toId(response: IdResponseDto | undefined): string {
@@ -72,6 +75,7 @@ export async function getProductos(): Promise<ProductoMerchandising[]> {
         cuentaContableIngresoId: String(item?.cuentaContableIngresoId ?? item?.CuentaContableIngresoId ?? ''),
         cuentaContableIngresoCodigo: String(item?.cuentaContableIngresoCodigo ?? item?.CuentaContableIngresoCodigo ?? ''),
         cuentaContableIngresoDescripcion: String(item?.cuentaContableIngresoDescripcion ?? item?.CuentaContableIngresoDescripcion ?? ''),
+        imageUrl: item?.imageUrl ?? item?.ImageUrl ?? null,
     }));
 }
 
@@ -88,4 +92,17 @@ export async function registrarEntrada(productoId: string, payload: RegistrarEnt
 export async function registrarVenta(productoId: string, payload: RegistrarVentaPayload): Promise<{ id: string }> {
     const response = await apiClient.post<IdResponseDto>(`/api/merchandising/productos/${productoId}/ventas`, payload);
     return { id: toId(response.data) };
+}
+
+export async function subirImagenProducto(productoId: string, file: File): Promise<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('imagen', file);
+
+    const response = await apiClient.post<{ imageUrl?: string; ImageUrl?: string }>(
+        `/api/merchandising/productos/${productoId}/imagen`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+
+    return { imageUrl: String(response.data?.imageUrl ?? response.data?.ImageUrl ?? '') };
 }
