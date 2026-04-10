@@ -16,16 +16,16 @@ public sealed class GetCarteraPendienteQueryHandler(
             .GetByEstadoAsync(EstadoCuentaPorCobrar.Pendiente, cancellationToken);
 
         return cuentasPendientes
-            .OrderByDescending(c => c.Periodo)
-            .ThenBy(c => c.Miembro!.Nombre)
+            .OrderByDescending(c => c.FechaVencimiento)
+            .ThenBy(c => c.Miembro!.Nombres)
             .ThenBy(c => c.Miembro!.Apellidos)
             .Select(c => new CarteraPendienteDto(
                 c.Id,
                 c.MiembroId,
-                $"{c.Miembro!.Nombre} {c.Miembro!.Apellidos}".Trim(),
-                c.Periodo,
-                c.ValorEsperadoCOP,
-                c.SaldoPendienteCOP))
+                $"{c.Miembro!.Nombres} {c.Miembro!.Apellidos}".Trim(),
+                c.FechaEmision,
+                c.ValorTotal,
+                c.SaldoPendiente))
             .ToList();
     }
 }

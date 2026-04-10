@@ -15,16 +15,28 @@ public sealed class CuentaPorCobrarConfiguration : IEntityTypeConfiguration<Cuen
         builder.Property(c => c.MiembroId)
             .IsRequired();
 
-        builder.Property(c => c.Periodo)
-            .HasMaxLength(7)
+        builder.Property(c => c.ConceptoCobroId)
+            .HasDefaultValue(Guid.Empty)
             .IsRequired();
 
-        builder.Property(c => c.ValorEsperadoCOP)
-            .HasColumnType("decimal(18,2)")
+        builder.Property(c => c.FechaEmision)
+            .HasColumnType("date")
+            .HasDefaultValueSql("GETDATE()")
             .IsRequired();
 
-        builder.Property(c => c.SaldoPendienteCOP)
+        builder.Property(c => c.FechaVencimiento)
+            .HasColumnType("date")
+            .HasDefaultValueSql("GETDATE()")
+            .IsRequired();
+
+        builder.Property(c => c.ValorTotal)
             .HasColumnType("decimal(18,2)")
+            .HasDefaultValue(0m)
+            .IsRequired();
+
+        builder.Property(c => c.SaldoPendiente)
+            .HasColumnType("decimal(18,2)")
+            .HasDefaultValue(0m)
             .IsRequired();
 
         builder.Property(c => c.Estado)
@@ -37,8 +49,9 @@ public sealed class CuentaPorCobrarConfiguration : IEntityTypeConfiguration<Cuen
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
-        builder.HasIndex(c => new { c.MiembroId, c.Periodo })
-            .IsUnique();
+        builder.HasIndex(c => new { c.MiembroId, c.ConceptoCobroId, c.FechaEmision })
+            .IsUnique()
+            .HasName("IX_CuentasPorCobrar_MiembroConceptoFecha");
 
         builder.HasQueryFilter(c => !c.IsDeleted);
     }

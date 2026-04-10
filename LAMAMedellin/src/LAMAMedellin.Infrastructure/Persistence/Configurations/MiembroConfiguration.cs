@@ -24,6 +24,31 @@ public sealed class MiembroConfiguration : IEntityTypeConfiguration<Miembro>
             .HasMaxLength(30)
             .IsRequired();
 
+        builder.Property(m => m.DocumentoIdentidad)
+            .HasMaxLength(30)
+            .HasDefaultValue(string.Empty)
+            .IsRequired();
+
+        builder.Property(m => m.Nombres)
+            .HasMaxLength(100)
+            .HasDefaultValue(string.Empty)
+            .IsRequired();
+
+        builder.Property(m => m.Apodo)
+            .HasMaxLength(120)
+            .HasDefaultValue(string.Empty)
+            .IsRequired();
+
+        builder.Property(m => m.FechaIngreso)
+            .HasColumnType("date")
+            .HasDefaultValueSql("GETDATE()")
+            .IsRequired();
+
+        builder.Property(m => m.TipoMiembro)
+            .HasConversion<int>()
+            .HasDefaultValue(Domain.Enums.TipoMiembro.Prospecto)
+            .IsRequired();
+
         builder.Property(m => m.Email)
             .HasMaxLength(200)
             .IsRequired();

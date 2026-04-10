@@ -283,6 +283,39 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.ToTable("Comprobantes", (string)null);
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.ConceptoCobro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CuentaContableIngresoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("PeriodicidadMensual")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ValorCOP")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CuentaContableIngresoId");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("ConceptosCobro", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaContable", b =>
                 {
                     b.Property<Guid>("Id")
@@ -330,8 +363,23 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("ConceptoCobroId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("00000000-0000-0000-0000-000000000000"));
+
                     b.Property<int>("Estado")
                         .HasColumnType("int");
+
+                    b.Property<DateOnly>("FechaEmision")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("date")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<DateOnly>("FechaVencimiento")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("date")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -339,21 +387,21 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Property<Guid>("MiembroId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Periodo")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("nvarchar(7)");
+                    b.Property<decimal>("SaldoPendiente")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
-                    b.Property<decimal>("SaldoPendienteCOP")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ValorEsperadoCOP")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<decimal>("ValorTotal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MiembroId", "Periodo")
-                        .IsUnique();
+                    b.HasIndex("MiembroId", "ConceptoCobroId", "FechaEmision")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CuentasPorCobrar_MiembroConceptoFecha");
 
                     b.ToTable("CuentasPorCobrar", (string)null);
                 });
@@ -576,10 +624,24 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<string>("Apodo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)")
+                        .HasDefaultValue("");
+
                     b.Property<string>("Documento")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("DocumentoIdentidad")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -589,6 +651,11 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Property<int>("Estado")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly>("FechaIngreso")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("date")
+                        .HasDefaultValueSql("GETDATE()");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -597,6 +664,13 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasDefaultValue("");
+
                     b.Property<string>("Telefono")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -604,6 +678,11 @@ namespace LAMAMedellin.Infrastructure.Migrations
 
                     b.Property<int>("TipoAfiliacion")
                         .HasColumnType("int");
+
+                    b.Property<int>("TipoMiembro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.HasKey("Id");
 
@@ -899,6 +978,15 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("CuentaContable");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.ConceptoCobro", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.CuentaContable", null)
+                        .WithMany()
+                        .HasForeignKey("CuentaContableIngresoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaContable", b =>

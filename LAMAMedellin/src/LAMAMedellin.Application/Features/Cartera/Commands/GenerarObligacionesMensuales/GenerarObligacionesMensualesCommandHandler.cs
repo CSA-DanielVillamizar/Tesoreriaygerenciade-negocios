@@ -13,6 +13,9 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
 {
     public async Task<int> Handle(GenerarObligacionesMensualesCommand request, CancellationToken cancellationToken)
     {
+        // TODO: Refactorizar este comando para usar ConceptoCobro como fuente de verdad
+        // en lugar de TarifaCuota. Por ahora, mantiene compatibilidad legacy.
+
         var tarifas = await tarifaCuotaRepository.GetAllAsync(cancellationToken);
         if (tarifas.Count == 0)
         {
@@ -46,9 +49,15 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
                 continue;
             }
 
+            var periodo = request.Periodo;
+            var inicio = ParsearFechaPeriodoInicio(periodo);
+            var fin = ParsearFechaPeriodoFin(periodo);
+
             cuentasNuevas.Add(new CuentaPorCobrar(
                 miembro.Id,
-                request.Periodo,
+                Guid.NewGuid(), // Placeholder: será migrado a ConceptoCobro real
+                inicio,
+                fin,
                 valorMensual));
         }
 
@@ -61,5 +70,19 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
         await cuentaPorCobrarRepository.SaveChangesAsync(cancellationToken);
 
         return cuentasNuevas.Count;
+    }
+
+    private static DateOnly ParsearFechaPeriodoInicio(string periodo)
+    {
+        var anio = int.Parse(periodo[..4]);
+        var mes = int.Parse(periodo[5..]);
+        return new DateOnly(anio, mes, 1);
+    }
+
+    private static DateOnly ParsearFechaPeriodoFin(string periodo)
+    {
+        var inicio = ParsearFechaPeriodoInicio(periodo);
+        var fin = inicio.AddMonths(1).AddDays(-1);
+        return fin;
     }
 }

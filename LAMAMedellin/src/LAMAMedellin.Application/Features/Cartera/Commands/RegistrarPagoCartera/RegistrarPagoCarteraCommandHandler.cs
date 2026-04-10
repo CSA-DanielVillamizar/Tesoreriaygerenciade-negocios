@@ -33,11 +33,11 @@ public sealed class RegistrarPagoCarteraCommandHandler(
             throw new ExcepcionNegocio("El centro de costo indicado no existe.");
         }
 
-        cartera.AplicarAbono(request.MontoPagadoCOP);
+        cartera.AplicarPago(request.MontoPagadoCOP);
         banco.AplicarIngreso(request.MontoPagadoCOP);
 
         var descripcion = string.IsNullOrWhiteSpace(request.Descripcion)
-            ? $"Pago cartera periodo {cartera.Periodo}"
+            ? $"Pago recibido - Cuota {cartera.Id}"
             : request.Descripcion.Trim();
 
         var transaccion = new Transaccion(

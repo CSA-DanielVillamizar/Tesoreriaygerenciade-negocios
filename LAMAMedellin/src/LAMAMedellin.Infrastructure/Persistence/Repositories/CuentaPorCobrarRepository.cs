@@ -10,7 +10,7 @@ public sealed class CuentaPorCobrarRepository(LamaDbContext dbContext) : ICuenta
     public Task<bool> ExistePorMiembroYPeriodoAsync(Guid miembroId, string periodo, CancellationToken cancellationToken = default)
     {
         return dbContext.CuentasPorCobrar
-            .AnyAsync(c => c.MiembroId == miembroId && c.Periodo == periodo, cancellationToken);
+            .AnyAsync(c => c.MiembroId == miembroId, cancellationToken);
     }
 
     public async Task<List<CuentaPorCobrar>> GetByEstadoAsync(EstadoCuentaPorCobrar estado, CancellationToken cancellationToken = default)
@@ -26,6 +26,11 @@ public sealed class CuentaPorCobrarRepository(LamaDbContext dbContext) : ICuenta
     {
         return dbContext.CuentasPorCobrar
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
+    public async Task AddAsync(CuentaPorCobrar cuentaPorCobrar, CancellationToken cancellationToken = default)
+    {
+        await dbContext.CuentasPorCobrar.AddAsync(cuentaPorCobrar, cancellationToken);
     }
 
     public Task AddRangeAsync(IEnumerable<CuentaPorCobrar> cuentasPorCobrar, CancellationToken cancellationToken = default)

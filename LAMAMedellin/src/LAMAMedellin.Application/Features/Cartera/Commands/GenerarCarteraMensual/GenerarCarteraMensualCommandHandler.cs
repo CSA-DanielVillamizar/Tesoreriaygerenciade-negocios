@@ -13,6 +13,9 @@ public sealed class GenerarCarteraMensualCommandHandler(
 {
     public async Task<int> Handle(GenerarCarteraMensualCommand request, CancellationToken cancellationToken)
     {
+        // TODO: Refactorizar este comando para usar ConceptoCobro como fuente de verdad
+        // en lugar de TarifaCuota. Por ahora, mantiene compatibilidad legacy.
+
         var tarifas = await tarifaCuotaRepository.GetAllAsync(cancellationToken);
         if (tarifas.Count == 0)
         {
@@ -37,6 +40,7 @@ public sealed class GenerarCarteraMensualCommandHandler(
                 continue;
             }
 
+            // TODO: Cambiar lógica para verificar por ConceptoCobro, no por Periodo
             var existeCuenta = await cuentaPorCobrarRepository.ExistePorMiembroYPeriodoAsync(
                 miembro.Id,
                 request.Periodo,
@@ -47,9 +51,20 @@ public sealed class GenerarCarteraMensualCommandHandler(
                 continue;
             }
 
+            // TODO: Obtener un ConceptoCobro predeterminado o configurado para este tipo de miembro
+            // Por ahora, crear con placeholder (Guid.Empty será reemplazado)
+            var periodo = request.Periodo;
+            var inicio = ParsearFechaPeriodoInicio(periodo);
+            var fin = ParsearFechaPeriodoFin(periodo);
+
+            // Generar CxC con modelo nuevo (requiere ConceptoCobroId real)
+            // NOTA: Este código fallará hasta que exista ConceptoCobro para mapping de TarifaCuota
+            // Temporalmente, se mantiene la generación con valores calculados
             cuentasNuevas.Add(new CuentaPorCobrar(
                 miembro.Id,
-                request.Periodo,
+                Guid.NewGuid(), // Placeholder: será migrado a ConceptoCobro real
+                inicio,
+                fin,
                 valorMensual));
         }
 
@@ -62,5 +77,19 @@ public sealed class GenerarCarteraMensualCommandHandler(
         await cuentaPorCobrarRepository.SaveChangesAsync(cancellationToken);
 
         return cuentasNuevas.Count;
+    }
+
+    private static DateOnly ParsearFechaPeriodoInicio(string periodo)
+    {
+        var anio = int.Parse(periodo[..4]);
+        var mes = int.Parse(periodo[5..]);
+        return new DateOnly(anio, mes, 1);
+    }
+
+    private static DateOnly ParsearFechaPeriodoFin(string periodo)
+    {
+        var inicio = ParsearFechaPeriodoInicio(periodo);
+        var fin = inicio.AddMonths(1).AddDays(-1);
+        return fin;
     }
 }

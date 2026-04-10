@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import ModalEntradaInventario, { type EntradaInventarioFormValues } from '@/features/merchandising/components/ModalEntradaInventario';
 import ModalNuevoProducto, {
     type CatalogItem,
@@ -21,6 +20,7 @@ import {
 import apiClient from '@/lib/apiClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
 type CuentaContableApiDto = {
@@ -327,8 +327,8 @@ export default function MerchandisingDashboard() {
                                         <td className="px-3 py-4">
                                             <span
                                                 className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${producto.cantidadStock === 0
-                                                        ? 'bg-rose-100 text-rose-700'
-                                                        : 'bg-emerald-100 text-emerald-700'
+                                                    ? 'bg-rose-100 text-rose-700'
+                                                    : 'bg-emerald-100 text-emerald-700'
                                                     }`}
                                             >
                                                 {producto.cantidadStock === 0 ? 'Sin stock' : `${producto.cantidadStock} unidades`}

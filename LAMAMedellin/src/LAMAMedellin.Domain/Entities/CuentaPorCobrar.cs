@@ -1,15 +1,16 @@
-using System.Text.RegularExpressions;
 using LAMAMedellin.Domain.Common;
 using LAMAMedellin.Domain.Enums;
 
 namespace LAMAMedellin.Domain.Entities;
 
-public sealed partial class CuentaPorCobrar : BaseEntity
+public sealed class CuentaPorCobrar : BaseEntity
 {
     public Guid MiembroId { get; private set; }
-    public string Periodo { get; private set; }
-    public decimal ValorEsperadoCOP { get; private set; }
-    public decimal SaldoPendienteCOP { get; private set; }
+    public Guid ConceptoCobroId { get; private set; }
+    public DateOnly FechaEmision { get; private set; }
+    public DateOnly FechaVencimiento { get; private set; }
+    public decimal ValorTotal { get; private set; }
+    public decimal SaldoPendiente { get; private set; }
     public EstadoCuentaPorCobrar Estado { get; private set; }
 
     public Miembro? Miembro { get; private set; }
@@ -19,50 +20,116 @@ public sealed partial class CuentaPorCobrar : BaseEntity
     private CuentaPorCobrar() { }
 #pragma warning restore CS8618
 
-    public CuentaPorCobrar(Guid miembroId, string periodo, decimal valorEsperadoCop)
+    public CuentaPorCobrar(
+        Guid miembroId,
+        Guid conceptoCobroId,
+        DateOnly fechaEmision,
+        DateOnly fechaVencimiento,
+        decimal valorTotal)
     {
         if (miembroId == Guid.Empty)
         {
             throw new ArgumentException("MiembroId es obligatorio.", nameof(miembroId));
         }
 
-        if (string.IsNullOrWhiteSpace(periodo) || !PeriodoRegex().IsMatch(periodo))
+        if (conceptoCobroId == Guid.Empty)
         {
-            throw new ArgumentException("Periodo debe tener formato YYYY-MM.", nameof(periodo));
+            throw new ArgumentException("ConceptoCobroId es obligatorio.", nameof(conceptoCobroId));
         }
 
-        if (valorEsperadoCop <= 0)
+        if (fechaEmision == default)
         {
-            throw new ArgumentOutOfRangeException(nameof(valorEsperadoCop), "ValorEsperadoCOP debe ser mayor a cero.");
+            throw new ArgumentException("FechaEmision es obligatoria.", nameof(fechaEmision));
+        }
+
+        if (fechaVencimiento == default)
+        {
+            throw new ArgumentException("FechaVencimiento es obligatoria.", nameof(fechaVencimiento));
+        }
+
+        if (fechaVencimiento < fechaEmision)
+        {
+            throw new ArgumentException("FechaVencimiento no puede ser anterior a FechaEmision.", nameof(fechaVencimiento));
+        }
+
+        if (valorTotal <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(valorTotal), "ValorTotal debe ser mayor a cero.");
         }
 
         MiembroId = miembroId;
-        Periodo = periodo.Trim();
-        ValorEsperadoCOP = valorEsperadoCop;
-        SaldoPendienteCOP = valorEsperadoCop;
+        ConceptoCobroId = conceptoCobroId;
+        FechaEmision = fechaEmision;
+        FechaVencimiento = fechaVencimiento;
+        ValorTotal = valorTotal;
+        SaldoPendiente = valorTotal;
         Estado = EstadoCuentaPorCobrar.Pendiente;
     }
 
-    public void AplicarAbono(decimal monto)
+    public void AplicarPago(decimal monto)
     {
+        if (Estado == EstadoCuentaPorCobrar.Anulada)
+        {
+            throw new InvalidOperationException("No se pueden aplicar pagos a una cuenta anulada.");
+        }
+
         if (monto <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(monto), "El monto debe ser mayor a cero.");
         }
 
-        if (monto > SaldoPendienteCOP)
+        if (monto > SaldoPendiente)
         {
-            throw new InvalidOperationException("El abono no puede ser mayor al saldo pendiente.");
+            throw new InvalidOperationException("El pago no puede ser mayor al saldo pendiente.");
         }
 
-        SaldoPendienteCOP -= monto;
+        SaldoPendiente -= monto;
 
-        if (SaldoPendienteCOP == 0)
+        if (SaldoPendiente == 0)
         {
-            Estado = EstadoCuentaPorCobrar.Pagado;
+            Estado = EstadoCuentaPorCobrar.Pagada;
+            return;
         }
+
+        Estado = EstadoCuentaPorCobrar.PagadaParcial;
     }
 
-    [GeneratedRegex(@"^\d{4}-(0[1-9]|1[0-2])$")]
-    private static partial Regex PeriodoRegex();
+    private static bool EsPeriodoValido(string? periodo)
+    {
+        if (string.IsNullOrWhiteSpace(periodo) || periodo.Length != 7)
+        {
+            return false;
+        }
+
+        if (periodo[4] != '-')
+        {
+            return false;
+        }
+
+        if (!int.TryParse(periodo[..4], out var anio))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(periodo[5..], out var mes))
+        {
+            return false;
+        }
+
+        return anio >= 1900 && mes is >= 1 and <= 12;
+    }
+
+    private static DateOnly ParsearFechaPeriodoInicio(string periodo)
+    {
+        var anio = int.Parse(periodo[..4]);
+        var mes = int.Parse(periodo[5..]);
+        return new DateOnly(anio, mes, 1);
+    }
+
+    private static DateOnly ParsearFechaPeriodoFin(string periodo)
+    {
+        var inicio = ParsearFechaPeriodoInicio(periodo);
+        var fin = inicio.AddMonths(1).AddDays(-1);
+        return fin;
+    }
 }

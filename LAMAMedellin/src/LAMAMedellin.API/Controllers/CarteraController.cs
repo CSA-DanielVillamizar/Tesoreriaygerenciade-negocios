@@ -1,6 +1,12 @@
 using LAMAMedellin.Application.Features.Cartera.Commands.GenerarCarteraMensual;
+using LAMAMedellin.Application.Features.Cartera.Commands.CrearConceptoCobro;
+using LAMAMedellin.Application.Features.Cartera.Commands.CrearCuentaPorCobrar;
+using LAMAMedellin.Application.Features.Cartera.Commands.CrearMiembro;
 using LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPagoCartera;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
+using LAMAMedellin.Application.Features.Cartera.Queries.GetConceptosCobroLookup;
+using LAMAMedellin.Application.Features.Cartera.Queries.GetMiembrosLookup;
+using LAMAMedellin.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +18,57 @@ namespace LAMAMedellin.API.Controllers;
 [Authorize]
 public sealed class CarteraController(ISender sender) : ControllerBase
 {
+    [HttpPost("miembros")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CrearMiembro(
+        [FromBody] CrearMiembroRequest request,
+        CancellationToken cancellationToken)
+    {
+        var id = await sender.Send(new CrearMiembroCommand(
+            request.DocumentoIdentidad,
+            request.Nombres,
+            request.Apellidos,
+            request.Apodo,
+            request.FechaIngreso,
+            request.TipoMiembro), cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, new { id });
+    }
+
+    [HttpPost("conceptos-cobro")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CrearConceptoCobro(
+        [FromBody] CrearConceptoCobroRequest request,
+        CancellationToken cancellationToken)
+    {
+        var id = await sender.Send(new CrearConceptoCobroCommand(
+            request.Nombre,
+            request.ValorCOP,
+            request.PeriodicidadMensual,
+            request.CuentaContableIngresoId), cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, new { id });
+    }
+
+    [HttpPost("cuentas-por-cobrar")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CrearCuentaPorCobrar(
+        [FromBody] CrearCuentaPorCobrarRequest request,
+        CancellationToken cancellationToken)
+    {
+        var id = await sender.Send(new CrearCuentaPorCobrarCommand(
+            request.MiembroId,
+            request.ConceptoCobroId,
+            request.FechaEmision,
+            request.FechaVencimiento,
+            request.ValorTotal), cancellationToken);
+
+        return StatusCode(StatusCodes.Status201Created, new { id });
+    }
+
     [HttpPost("generar-mensual")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GenerarCarteraMensual(
@@ -32,6 +89,22 @@ public sealed class CarteraController(ISender sender) : ControllerBase
     {
         var cartera = await sender.Send(new GetCarteraPendienteQuery(), cancellationToken);
         return Ok(cartera);
+    }
+
+    [HttpGet("miembros/lookup")]
+    [ProducesResponseType(typeof(List<MiembroLookupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMiembrosLookup(CancellationToken cancellationToken)
+    {
+        var miembros = await sender.Send(new GetMiembrosLookupQuery(), cancellationToken);
+        return Ok(miembros);
+    }
+
+    [HttpGet("conceptos-cobro/lookup")]
+    [ProducesResponseType(typeof(List<ConceptoCobroLookupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetConceptosCobroLookup(CancellationToken cancellationToken)
+    {
+        var conceptos = await sender.Send(new GetConceptosCobroLookupQuery(), cancellationToken);
+        return Ok(conceptos);
     }
 
     [HttpPost("{id:guid}/pago")]
@@ -57,3 +130,23 @@ public sealed class CarteraController(ISender sender) : ControllerBase
 
 public sealed record GenerarCarteraMensualRequest(string Periodo);
 public sealed record RegistrarPagoRequest(decimal MontoPagadoCOP, Guid BancoId, Guid CentroCostoId, string? Descripcion);
+public sealed record CrearMiembroRequest(
+    string DocumentoIdentidad,
+    string Nombres,
+    string Apellidos,
+    string Apodo,
+    DateOnly FechaIngreso,
+    TipoMiembro TipoMiembro);
+
+public sealed record CrearConceptoCobroRequest(
+    string Nombre,
+    decimal ValorCOP,
+    int PeriodicidadMensual,
+    Guid CuentaContableIngresoId);
+
+public sealed record CrearCuentaPorCobrarRequest(
+    Guid MiembroId,
+    Guid ConceptoCobroId,
+    DateOnly FechaEmision,
+    DateOnly FechaVencimiento,
+    decimal ValorTotal);

@@ -16,7 +16,7 @@ public sealed class RegistrarPagoCuotaCommandHandler(
             throw new ExcepcionNegocio("La cuenta por cobrar indicada no existe.");
         }
 
-        cxc.AplicarAbono(request.MontoCOP);
+        cxc.AplicarPago(request.MontoCOP);
 
         var banco = await bancoRepository.GetDefaultAsync(cancellationToken);
         if (banco is null)

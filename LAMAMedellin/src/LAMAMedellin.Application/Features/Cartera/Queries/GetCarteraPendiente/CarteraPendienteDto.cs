@@ -4,6 +4,6 @@ public sealed record CarteraPendienteDto(
     Guid Id,
     Guid MiembroId,
     string NombreMiembro,
-    string Periodo,
-    decimal ValorEsperadoCOP,
-    decimal SaldoPendienteCOP);
+    DateOnly FechaEmision,
+    decimal ValorTotal,
+    decimal SaldoPendiente);

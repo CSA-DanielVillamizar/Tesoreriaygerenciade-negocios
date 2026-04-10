@@ -15,7 +15,7 @@ public sealed class GetResumenCarteraQueryHandler(
         var cuentasPendientes = await cuentaPorCobrarRepository
             .GetByEstadoAsync(EstadoCuentaPorCobrar.Pendiente, cancellationToken);
 
-        var totalPendiente = cuentasPendientes.Sum(cuenta => cuenta.SaldoPendienteCOP);
+        var totalPendiente = cuentasPendientes.Sum(cuenta => cuenta.SaldoPendiente);
 
         return new ResumenCarteraDto(totalPendiente);
     }
