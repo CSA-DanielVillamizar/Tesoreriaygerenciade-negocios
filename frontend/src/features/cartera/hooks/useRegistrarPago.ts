@@ -1,0 +1,47 @@
+'use client';
+
+import {
+    registrarPagoCartera,
+    type RegistrarPagoCarteraPayload,
+} from '@/features/cartera/services/carteraService';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+
+type ProblemDetails = {
+    title?: string;
+    detail?: string;
+    errors?: Record<string, string[]>;
+};
+
+function getErrorMessage(error: unknown): string {
+    if (!axios.isAxiosError<ProblemDetails>(error)) {
+        return 'No fue posible registrar el pago.';
+    }
+
+    const validationErrors = error.response?.data?.errors;
+    const firstValidationError = validationErrors
+        ? Object.values(validationErrors).flat().find((message) => message)
+        : undefined;
+
+    return firstValidationError
+        ?? error.response?.data?.detail
+        ?? error.response?.data?.title
+        ?? 'No fue posible registrar el pago.';
+}
+
+export function useRegistrarPago() {
+    const queryClient = useQueryClient();
+
+    return useMutation<void, Error, RegistrarPagoCarteraPayload>({
+        mutationFn: async (payload) => {
+            try {
+                await registrarPagoCartera(payload);
+            } catch (error) {
+                throw new Error(getErrorMessage(error));
+            }
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['cartera', 'cuentas-por-cobrar'] });
+        },
+    });
+}

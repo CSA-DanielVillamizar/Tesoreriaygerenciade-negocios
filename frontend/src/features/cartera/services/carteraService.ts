@@ -34,6 +34,27 @@ export type ConceptoCobroLookupItem = {
     nombre: string;
 };
 
+export type CuentaPorCobrarItem = {
+    id: string;
+    nombreCompletoMiembro: string;
+    nombreConcepto: string;
+    fechaEmision: string;
+    fechaVencimiento: string;
+    valorTotal: number;
+    saldoPendiente: number;
+    estado: number;
+};
+
+export type GetCuentasPorCobrarParams = {
+    estado?: number;
+    miembroId?: string;
+};
+
+export type RegistrarPagoCarteraPayload = {
+    cuentaPorCobrarId: string;
+    monto: number;
+};
+
 type IdResponseDto = {
     id?: string;
     Id?: string;
@@ -74,4 +95,30 @@ export async function getConceptosCobroLookup(): Promise<ConceptoCobroLookupItem
         id: String(item?.id ?? item?.Id ?? ''),
         nombre: String(item?.nombre ?? item?.Nombre ?? ''),
     }));
+}
+
+export async function getCuentasPorCobrar(params?: GetCuentasPorCobrarParams): Promise<CuentaPorCobrarItem[]> {
+    const response = await apiClient.get<any[]>('/api/cartera/cuentas-por-cobrar', {
+        params: {
+            estado: params?.estado,
+            miembroId: params?.miembroId,
+        },
+    });
+
+    return (response.data ?? []).map((item) => ({
+        id: String(item?.id ?? item?.Id ?? ''),
+        nombreCompletoMiembro: String(item?.nombreCompletoMiembro ?? item?.NombreCompletoMiembro ?? ''),
+        nombreConcepto: String(item?.nombreConcepto ?? item?.NombreConcepto ?? ''),
+        fechaEmision: String(item?.fechaEmision ?? item?.FechaEmision ?? ''),
+        fechaVencimiento: String(item?.fechaVencimiento ?? item?.FechaVencimiento ?? ''),
+        valorTotal: Number(item?.valorTotal ?? item?.ValorTotal ?? 0),
+        saldoPendiente: Number(item?.saldoPendiente ?? item?.SaldoPendiente ?? 0),
+        estado: Number(item?.estado ?? item?.Estado ?? 0),
+    }));
+}
+
+export async function registrarPagoCartera(payload: RegistrarPagoCarteraPayload): Promise<void> {
+    await apiClient.post(`/api/cartera/cuentas-por-cobrar/${payload.cuentaPorCobrarId}/pagos`, {
+        monto: payload.monto,
+    });
 }

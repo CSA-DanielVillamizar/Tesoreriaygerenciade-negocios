@@ -5,6 +5,7 @@ using LAMAMedellin.Application.Features.Cartera.Commands.CrearMiembro;
 using LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPagoCartera;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetCarteraPendiente;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetConceptosCobroLookup;
+using LAMAMedellin.Application.Features.Cartera.Queries.GetCuentasPorCobrar;
 using LAMAMedellin.Application.Features.Cartera.Queries.GetMiembrosLookup;
 using LAMAMedellin.Domain.Enums;
 using MediatR;
@@ -91,6 +92,20 @@ public sealed class CarteraController(ISender sender) : ControllerBase
         return Ok(cartera);
     }
 
+    [HttpGet("cuentas-por-cobrar")]
+    [ProducesResponseType(typeof(List<CuentaPorCobrarDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCuentasPorCobrar(
+        [FromQuery] EstadoCuentaPorCobrar? estado,
+        [FromQuery] Guid? miembroId,
+        CancellationToken cancellationToken)
+    {
+        var cuentas = await sender.Send(
+            new GetCuentasPorCobrarQuery(estado, miembroId),
+            cancellationToken);
+
+        return Ok(cuentas);
+    }
+
     [HttpGet("miembros/lookup")]
     [ProducesResponseType(typeof(List<MiembroLookupDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMiembrosLookup(CancellationToken cancellationToken)
@@ -107,7 +122,7 @@ public sealed class CarteraController(ISender sender) : ControllerBase
         return Ok(conceptos);
     }
 
-    [HttpPost("{id:guid}/pago")]
+    [HttpPost("cuentas-por-cobrar/{id:guid}/pagos")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> RegistrarPago(
         Guid id,
@@ -116,10 +131,7 @@ public sealed class CarteraController(ISender sender) : ControllerBase
     {
         await sender.Send(new RegistrarPagoCarteraCommand(
             id,
-            request.MontoPagadoCOP,
-            request.BancoId,
-            request.CentroCostoId,
-            request.Descripcion), cancellationToken);
+            request.Monto), cancellationToken);
 
         return Ok(new
         {
@@ -129,7 +141,7 @@ public sealed class CarteraController(ISender sender) : ControllerBase
 }
 
 public sealed record GenerarCarteraMensualRequest(string Periodo);
-public sealed record RegistrarPagoRequest(decimal MontoPagadoCOP, Guid BancoId, Guid CentroCostoId, string? Descripcion);
+public sealed record RegistrarPagoRequest(decimal Monto);
 public sealed record CrearMiembroRequest(
     string DocumentoIdentidad,
     string Nombres,

@@ -28,6 +28,30 @@ public sealed class CuentaPorCobrarRepository(LamaDbContext dbContext) : ICuenta
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
+    public async Task<List<CuentaPorCobrar>> GetListadoAsync(
+        EstadoCuentaPorCobrar? estado = null,
+        Guid? miembroId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.CuentasPorCobrar
+            .Include(c => c.Miembro)
+            .Include(c => c.ConceptoCobro)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (estado.HasValue)
+        {
+            query = query.Where(c => c.Estado == estado.Value);
+        }
+
+        if (miembroId.HasValue)
+        {
+            query = query.Where(c => c.MiembroId == miembroId.Value);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(CuentaPorCobrar cuentaPorCobrar, CancellationToken cancellationToken = default)
     {
         await dbContext.CuentasPorCobrar.AddAsync(cuentaPorCobrar, cancellationToken);

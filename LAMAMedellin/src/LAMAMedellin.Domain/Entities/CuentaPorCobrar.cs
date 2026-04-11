@@ -14,6 +14,7 @@ public sealed class CuentaPorCobrar : BaseEntity
     public EstadoCuentaPorCobrar Estado { get; private set; }
 
     public Miembro? Miembro { get; private set; }
+    public ConceptoCobro? ConceptoCobro { get; private set; }
 
     // Constructor privado para EF Core
 #pragma warning disable CS8618

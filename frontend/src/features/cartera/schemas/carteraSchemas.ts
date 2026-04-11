@@ -123,3 +123,17 @@ export const crearCuentaPorCobrarSchema = z
 
 export type CrearCuentaPorCobrarFormInput = z.input<typeof crearCuentaPorCobrarSchema>;
 export type CrearCuentaPorCobrarFormValues = z.output<typeof crearCuentaPorCobrarSchema>;
+
+// ---------------------------------------------------------------------------
+// Registrar Pago Cartera
+// Mirrors: RegistrarPagoCarteraCommandValidator.cs
+// ---------------------------------------------------------------------------
+export const registrarPagoCarteraSchema = z.object({
+    monto: z
+        .coerce
+        .number({ error: 'Monto debe ser un número.' })
+        .gt(0, 'Monto debe ser mayor a cero.'),
+});
+
+export type RegistrarPagoCarteraFormInput = z.input<typeof registrarPagoCarteraSchema>;
+export type RegistrarPagoCarteraFormValues = z.output<typeof registrarPagoCarteraSchema>;

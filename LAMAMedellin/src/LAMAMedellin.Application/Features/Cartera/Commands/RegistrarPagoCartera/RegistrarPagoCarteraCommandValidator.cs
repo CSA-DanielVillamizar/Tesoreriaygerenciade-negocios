@@ -6,19 +6,10 @@ public sealed class RegistrarPagoCarteraCommandValidator : AbstractValidator<Reg
 {
     public RegistrarPagoCarteraCommandValidator()
     {
-        RuleFor(x => x.CarteraId)
+        RuleFor(x => x.CuentaPorCobrarId)
             .NotEmpty();
 
-        RuleFor(x => x.MontoPagadoCOP)
+        RuleFor(x => x.Monto)
             .GreaterThan(0);
-
-        RuleFor(x => x.BancoId)
-            .NotEmpty();
-
-        RuleFor(x => x.CentroCostoId)
-            .NotEmpty();
-
-        RuleFor(x => x.Descripcion)
-            .MaximumLength(500);
     }
 }

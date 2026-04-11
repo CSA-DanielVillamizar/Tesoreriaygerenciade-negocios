@@ -49,6 +49,12 @@ public sealed class CuentaPorCobrarConfiguration : IEntityTypeConfiguration<Cuen
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired();
 
+        builder.HasOne(c => c.ConceptoCobro)
+            .WithMany()
+            .HasForeignKey(c => c.ConceptoCobroId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
+
         builder.HasIndex(c => new { c.MiembroId, c.ConceptoCobroId, c.FechaEmision })
             .IsUnique()
             .HasName("IX_CuentasPorCobrar_MiembroConceptoFecha");

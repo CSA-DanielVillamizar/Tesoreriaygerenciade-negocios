@@ -1,8 +1,8 @@
 'use client';
 
-import axios from 'axios';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/apiClient';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 
 export type CarteraPendienteItem = {
     id: string;
@@ -84,7 +84,9 @@ export function useRegistrarPagoCartera() {
     return useMutation({
         mutationFn: async ({ id, ...payload }: RegistrarPagoPayload) => {
             try {
-                await apiClient.post(`/api/cartera/${id}/pago`, payload);
+                await apiClient.post(`/api/cartera/cuentas-por-cobrar/${id}/pagos`, {
+                    monto: payload.MontoPagadoCOP,
+                });
             } catch (error) {
                 throw new Error(getErrorMessage(error, 'No fue posible registrar el pago.'));
             }
