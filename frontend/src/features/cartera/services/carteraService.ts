@@ -53,6 +53,7 @@ export type GetCuentasPorCobrarParams = {
 export type RegistrarPagoCarteraPayload = {
     cuentaPorCobrarId: string;
     monto: number;
+    cajaId: string;
 };
 
 type IdResponseDto = {
@@ -120,5 +121,6 @@ export async function getCuentasPorCobrar(params?: GetCuentasPorCobrarParams): P
 export async function registrarPagoCartera(payload: RegistrarPagoCarteraPayload): Promise<void> {
     await apiClient.post(`/api/cartera/cuentas-por-cobrar/${payload.cuentaPorCobrarId}/pagos`, {
         monto: payload.monto,
+        cajaId: payload.cajaId,
     });
 }

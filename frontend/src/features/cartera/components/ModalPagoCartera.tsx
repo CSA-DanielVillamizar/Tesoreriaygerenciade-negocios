@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import apiClient from '@/lib/apiClient';
 import { useRegistrarPagoCartera } from '@/features/cartera/hooks/useCartera';
+import { useGetCajas } from '@/features/tesoreria/hooks/useGetCajas';
+import apiClient from '@/lib/apiClient';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 type BancoCatalogo = {
     id: string;
@@ -22,6 +23,7 @@ const schema = z.object({
     MontoPagadoCOP: z.number().gt(0, 'El monto debe ser mayor a 0.'),
     BancoId: z.string().uuid('Selecciona un banco válido.'),
     CentroCostoId: z.string().uuid('Selecciona un centro de costo válido.'),
+    CajaId: z.string().uuid('Selecciona una caja destino válida.'),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -35,6 +37,7 @@ type ModalPagoCarteraProps = {
 
 export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClose }: ModalPagoCarteraProps) {
     const registrarPagoMutation = useRegistrarPagoCartera();
+    const cajasQuery = useGetCajas();
 
     const bancosQuery = useQuery({
         queryKey: ['transacciones', 'catalogo', 'bancos'],
@@ -74,6 +77,7 @@ export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClo
             MontoPagadoCOP: montoSugerido,
             BancoId: '',
             CentroCostoId: '',
+            CajaId: '',
         },
     });
 
@@ -86,8 +90,9 @@ export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClo
             MontoPagadoCOP: montoSugerido,
             BancoId: bancosQuery.data?.[0]?.id ?? '',
             CentroCostoId: centrosQuery.data?.[0]?.id ?? '',
+            CajaId: cajasQuery.data?.[0]?.id ?? '',
         });
-    }, [open, montoSugerido, bancosQuery.data, centrosQuery.data, reset]);
+    }, [open, montoSugerido, bancosQuery.data, centrosQuery.data, cajasQuery.data, reset]);
 
     useEffect(() => {
         if (open && bancosQuery.data?.[0]?.id) {
@@ -101,6 +106,12 @@ export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClo
         }
     }, [open, centrosQuery.data, setValue]);
 
+    useEffect(() => {
+        if (open && cajasQuery.data?.[0]?.id) {
+            setValue('CajaId', cajasQuery.data[0].id, { shouldValidate: true });
+        }
+    }, [open, cajasQuery.data, setValue]);
+
     const onSubmit = async (values: FormValues) => {
         if (!carteraId) {
             return;
@@ -111,6 +122,7 @@ export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClo
             MontoPagadoCOP: values.MontoPagadoCOP,
             BancoId: values.BancoId,
             CentroCostoId: values.CentroCostoId,
+            CajaId: values.CajaId,
         });
 
         onClose();
@@ -152,6 +164,23 @@ export default function ModalPagoCartera({ open, carteraId, montoSugerido, onClo
                             ))}
                         </select>
                         {errors.BancoId ? <p className="mt-1 text-xs text-red-600">{errors.BancoId.message}</p> : null}
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Caja Destino</label>
+                        <select
+                            {...register('CajaId')}
+                            disabled={cajasQuery.isLoading || (cajasQuery.data?.length ?? 0) === 0}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                        >
+                            <option value="">Seleccione...</option>
+                            {(cajasQuery.data ?? []).map((caja) => (
+                                <option key={caja.id} value={caja.id}>
+                                    {caja.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.CajaId ? <p className="mt-1 text-xs text-red-600">{errors.CajaId.message}</p> : null}
                     </div>
 
                     <div>

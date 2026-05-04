@@ -100,11 +100,11 @@ function Invoke-ApiJson {
         }
 
         return [PSCustomObject]@{
-            Success = $true
+            Success    = $true
             StatusCode = [int]$response.StatusCode
-            Body = $parsed
-            Raw = $response.Content
-            Error = $null
+            Body       = $parsed
+            Raw        = $response.Content
+            Error      = $null
         }
     }
     catch {
@@ -130,11 +130,11 @@ function Invoke-ApiJson {
         }
 
         return [PSCustomObject]@{
-            Success = $false
+            Success    = $false
             StatusCode = $statusCode
-            Body = $parsed
-            Raw = $raw
-            Error = $_.Exception.Message
+            Body       = $parsed
+            Raw        = $raw
+            Error      = $_.Exception.Message
         }
     }
 }
@@ -320,12 +320,12 @@ try {
     Write-Step 'Prueba 1: Ingreso +50000'
     $ingresoMonto = [decimal]50000
     $ingresoPayload = @{
-        Monto = $ingresoMonto
-        Concepto = 'QA Tesoreria - Ingreso 50000'
-        TerceroId = $null
+        Monto            = $ingresoMonto
+        Concepto         = 'QA Tesoreria - Ingreso 50000'
+        TerceroId        = $null
         CuentaContableId = $cuentaIngresoId
-        CajaId = $cajaId
-        CentroCostoId = $centroCostoId
+        CajaId           = $cajaId
+        CentroCostoId    = $centroCostoId
     }
 
     $ingresoResult = Invoke-ApiJson -Method POST -Uri "$BaseUrl/api/tesoreria/ingresos" -Token $token -Body $ingresoPayload
@@ -359,12 +359,12 @@ try {
     Write-Step 'Prueba 2: Egreso -20000'
     $egresoMonto = [decimal]20000
     $egresoPayload = @{
-        Monto = $egresoMonto
-        Concepto = 'QA Tesoreria - Egreso 20000'
-        TerceroId = $null
+        Monto            = $egresoMonto
+        Concepto         = 'QA Tesoreria - Egreso 20000'
+        TerceroId        = $null
         CuentaContableId = $cuentaEgresoId
-        CajaId = $cajaId
-        CentroCostoId = $centroCostoId
+        CajaId           = $cajaId
+        CentroCostoId    = $centroCostoId
     }
 
     $egresoResult = Invoke-ApiJson -Method POST -Uri "$BaseUrl/api/tesoreria/egresos" -Token $token -Body $egresoPayload
@@ -398,12 +398,12 @@ try {
     Write-Step 'Prueba 3: Egreso con fondos insuficientes'
     $montoAbsurdamenteAlto = [decimal]999999999
     $egresoInsuficientePayload = @{
-        Monto = $montoAbsurdamenteAlto
-        Concepto = 'QA Tesoreria - Egreso insuficiente'
-        TerceroId = $null
+        Monto            = $montoAbsurdamenteAlto
+        Concepto         = 'QA Tesoreria - Egreso insuficiente'
+        TerceroId        = $null
         CuentaContableId = $cuentaEgresoId
-        CajaId = $cajaId
-        CentroCostoId = $centroCostoId
+        CajaId           = $cajaId
+        CentroCostoId    = $centroCostoId
     }
 
     $egresoInsuficienteResult = Invoke-ApiJson -Method POST -Uri "$BaseUrl/api/tesoreria/egresos" -Token $token -Body $egresoInsuficientePayload

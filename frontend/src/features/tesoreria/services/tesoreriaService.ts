@@ -4,17 +4,18 @@ export type CajaTesoreria = {
     id: string;
     nombre: string;
     tipoCaja: number;
+    cuentaContable: string;
     saldoActual: number;
 };
 
 export type RegistrarMovimientoTesoreriaPayload = {
-    fecha: string;
     monto: number;
     concepto: string;
-    terceroId?: string | null;
     cuentaContableId: string;
     cajaId: string;
     centroCostoId: string;
+    fecha?: string;
+    terceroId?: string | null;
 };
 
 type RegistrarMovimientoTesoreriaResponse = {
@@ -28,6 +29,8 @@ type CajaApiDto = {
     Nombre?: string;
     tipoCaja?: number;
     TipoCaja?: number;
+    cuentaContable?: string;
+    CuentaContable?: string;
     saldoActual?: number;
     SaldoActual?: number;
 };
@@ -44,6 +47,7 @@ export async function getCajas(): Promise<CajaTesoreria[]> {
         id: String(item?.id ?? item?.Id ?? ''),
         nombre: String(item?.nombre ?? item?.Nombre ?? ''),
         tipoCaja: Number(item?.tipoCaja ?? item?.TipoCaja ?? 0),
+        cuentaContable: String(item?.cuentaContable ?? item?.CuentaContable ?? ''),
         saldoActual: Number(item?.saldoActual ?? item?.SaldoActual ?? 0),
     }));
 }

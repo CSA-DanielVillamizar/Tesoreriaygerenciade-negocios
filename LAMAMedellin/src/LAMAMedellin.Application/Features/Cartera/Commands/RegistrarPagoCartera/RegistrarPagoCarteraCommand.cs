@@ -4,4 +4,5 @@ namespace LAMAMedellin.Application.Features.Cartera.Commands.RegistrarPagoCarter
 
 public sealed record RegistrarPagoCarteraCommand(
     Guid CuentaPorCobrarId,
-    decimal Monto) : IRequest<Unit>;
+    decimal Monto,
+    Guid CajaId) : IRequest<Unit>;

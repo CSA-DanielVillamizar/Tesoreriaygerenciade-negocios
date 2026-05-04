@@ -3,6 +3,7 @@
 import { useRegistrarPago } from '@/features/cartera/hooks/useRegistrarPago';
 import { registrarPagoCarteraSchema } from '@/features/cartera/schemas/carteraSchemas';
 import type { CuentaPorCobrarItem } from '@/features/cartera/services/carteraService';
+import { useGetCajas } from '@/features/tesoreria/hooks/useGetCajas';
 import { useState } from 'react';
 
 type ListaCuentasPorCobrarProps = {
@@ -50,19 +51,23 @@ function estadoLabel(estado: number): string {
 
 export default function ListaCuentasPorCobrar({ cuentas, isLoading, error }: ListaCuentasPorCobrarProps) {
     const registrarPagoMutation = useRegistrarPago();
+    const cajasQuery = useGetCajas();
     const [cuentaActiva, setCuentaActiva] = useState<CuentaPorCobrarItem | null>(null);
     const [montoPago, setMontoPago] = useState<string>('');
+    const [cajaId, setCajaId] = useState<string>('');
     const [errorMonto, setErrorMonto] = useState<string | null>(null);
 
     const abrirPago = (cuenta: CuentaPorCobrarItem) => {
         setCuentaActiva(cuenta);
         setMontoPago(String(cuenta.saldoPendiente));
+        setCajaId(cajasQuery.data?.[0]?.id ?? '');
         setErrorMonto(null);
     };
 
     const cerrarPago = () => {
         setCuentaActiva(null);
         setMontoPago('');
+        setCajaId('');
         setErrorMonto(null);
     };
 
@@ -73,7 +78,7 @@ export default function ListaCuentasPorCobrar({ cuentas, isLoading, error }: Lis
             return;
         }
 
-        const parsed = registrarPagoCarteraSchema.safeParse({ monto: montoPago });
+        const parsed = registrarPagoCarteraSchema.safeParse({ monto: montoPago, cajaId });
         if (!parsed.success) {
             setErrorMonto(parsed.error.issues[0]?.message ?? 'Monto invalido.');
             return;
@@ -84,6 +89,7 @@ export default function ListaCuentasPorCobrar({ cuentas, isLoading, error }: Lis
         await registrarPagoMutation.mutateAsync({
             cuentaPorCobrarId: cuentaActiva.id,
             monto: parsed.data.monto,
+            cajaId: parsed.data.cajaId,
         });
 
         cerrarPago();
@@ -163,6 +169,26 @@ export default function ListaCuentasPorCobrar({ cuentas, isLoading, error }: Lis
                         </p>
 
                         <form className="mt-4 space-y-3" onSubmit={onSubmitPago}>
+                            <div>
+                                <label htmlFor="caja-destino" className="mb-1 block text-sm font-medium text-slate-700">
+                                    Caja Destino
+                                </label>
+                                <select
+                                    id="caja-destino"
+                                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                                    value={cajaId}
+                                    onChange={(e) => setCajaId(e.target.value)}
+                                    disabled={cajasQuery.isLoading || (cajasQuery.data?.length ?? 0) === 0}
+                                >
+                                    <option value="">Seleccione...</option>
+                                    {(cajasQuery.data ?? []).map((caja) => (
+                                        <option key={caja.id} value={caja.id}>
+                                            {caja.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div>
                                 <label htmlFor="monto-pago" className="mb-1 block text-sm font-medium text-slate-700">
                                     Monto
