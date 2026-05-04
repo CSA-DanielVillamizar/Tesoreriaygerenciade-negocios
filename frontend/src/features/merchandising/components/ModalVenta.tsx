@@ -1,6 +1,7 @@
 'use client';
 
 import { useRegistrarVenta } from '@/features/merchandising/hooks/useRegistrarVenta';
+import { useGetCajas } from '@/features/tesoreria/hooks/useGetCajas';
 import { useState } from 'react';
 
 type ModalVentaProps = {
@@ -13,8 +14,10 @@ export default function ModalVenta({
     onCerrar,
 }: ModalVentaProps) {
     const registrarVentaMutation = useRegistrarVenta();
+    const cajasQuery = useGetCajas();
     const [values, setValues] = useState({
         cantidad: '',
+        cajaId: '',
         concepto: '',
     });
     const [validationError, setValidationError] = useState<string | null>(null);
@@ -23,15 +26,15 @@ export default function ModalVenta({
         return null;
     }
 
-    const onChange = (field: 'cantidad' | 'concepto', value: string) => {
+    const onChange = (field: 'cantidad' | 'cajaId' | 'concepto', value: string) => {
         setValues((previous) => ({ ...previous, [field]: value }));
     };
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!values.cantidad || !values.concepto.trim()) {
-            setValidationError('Cantidad y concepto son obligatorios.');
+        if (!values.cantidad || !values.cajaId || !values.concepto.trim()) {
+            setValidationError('Cantidad, caja destino y concepto son obligatorios.');
             return;
         }
 
@@ -46,11 +49,12 @@ export default function ModalVenta({
             productoId,
             payload: {
                 cantidad,
+                cajaId: values.cajaId,
                 concepto: values.concepto.trim(),
             },
         });
 
-        setValues({ cantidad: '', concepto: '' });
+        setValues({ cantidad: '', cajaId: '', concepto: '' });
         onCerrar();
     };
 
@@ -87,6 +91,25 @@ export default function ModalVenta({
                     </div>
 
                     <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Caja Destino</label>
+                        <select
+                            value={values.cajaId}
+                            onChange={(event) => onChange('cajaId', event.target.value)}
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                        >
+                            <option value="">Seleccione una caja...</option>
+                            {(cajasQuery.data ?? []).map((caja) => (
+                                <option key={caja.id} value={caja.id}>
+                                    {caja.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {cajasQuery.isLoading ? (
+                            <p className="mt-1 text-xs text-slate-500">Cargando cajas...</p>
+                        ) : null}
+                    </div>
+
+                    <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">Concepto</label>
                         <textarea
                             rows={2}
@@ -114,7 +137,7 @@ export default function ModalVenta({
 
                         <button
                             type="submit"
-                            disabled={registrarVentaMutation.isPending}
+                            disabled={registrarVentaMutation.isPending || cajasQuery.isLoading}
                             className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {registrarVentaMutation.isPending ? 'Guardando...' : 'Registrar venta'}

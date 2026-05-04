@@ -27,6 +27,7 @@ export type RegistrarEntradaPayload = {
 
 export type RegistrarVentaPayload = {
     cantidad: number;
+    cajaId: string;
     concepto: string;
     observaciones?: string | null;
 };

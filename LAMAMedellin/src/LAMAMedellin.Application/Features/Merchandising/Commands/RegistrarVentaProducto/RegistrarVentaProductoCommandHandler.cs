@@ -1,6 +1,6 @@
 using LAMAMedellin.Application.Common.Exceptions;
 using LAMAMedellin.Application.Common.Interfaces.Repositories;
-using LAMAMedellin.Application.Common.Interfaces.Services;
+using LAMAMedellin.Application.Features.Tesoreria.Commands.RegistrarIngreso;
 using LAMAMedellin.Domain.Entities;
 using LAMAMedellin.Domain.Enums;
 using MediatR;
@@ -10,107 +10,52 @@ namespace LAMAMedellin.Application.Features.Merchandising.Commands.RegistrarVent
 public sealed class RegistrarVentaProductoCommandHandler(
     IProductoRepository productoRepository,
     IMovimientoInventarioRepository movimientoInventarioRepository,
-    ICajaRepository cajaRepository,
     ICentroCostoRepository centroCostoRepository,
-    ICuentaContableRepository cuentaContableRepository,
-    IComprobanteRepository comprobanteRepository,
-    ITransactionManager transactionManager)
+    ISender sender)
     : IRequestHandler<RegistrarVentaProductoCommand, Guid>
 {
     public async Task<Guid> Handle(RegistrarVentaProductoCommand request, CancellationToken cancellationToken)
     {
-        return await transactionManager.ExecuteInTransactionAsync(async ct =>
+        var producto = await productoRepository.GetByIdAsync(request.ProductoId, cancellationToken);
+        if (producto is null)
         {
-            var producto = await productoRepository.GetByIdAsync(request.ProductoId, ct);
-            if (producto is null)
-            {
-                throw new ExcepcionNegocio("El producto indicado no existe.");
-            }
+            throw new ExcepcionNegocio("El producto indicado no existe.");
+        }
 
-            var caja = await cajaRepository.GetByIdAsync(request.CajaId, ct);
-            if (caja is null)
-            {
-                throw new ExcepcionNegocio("La caja indicada no existe.");
-            }
+        var centroCosto = (await centroCostoRepository.GetAllAsync(cancellationToken))
+            .FirstOrDefault(x => !x.IsDeleted);
 
-            var centroCosto = await centroCostoRepository.GetByIdAsync(request.CentroCostoId, ct);
-            if (centroCosto is null)
-            {
-                throw new ExcepcionNegocio("El centro de costo indicado no existe.");
-            }
+        if (centroCosto is null)
+        {
+            throw new ExcepcionNegocio("No existe un centro de costo activo para registrar la venta en tesorería.");
+        }
 
-            var cuentaIngresoProducto = await cuentaContableRepository.GetByIdAsync(producto.CuentaContableIngresoId, ct);
-            if (cuentaIngresoProducto is null)
-            {
-                throw new ExcepcionNegocio("La cuenta contable de ingreso del producto no existe.");
-            }
+        // 1) Registrar salida de inventario
+        producto.AjustarStock(-request.Cantidad);
 
-            if (!cuentaIngresoProducto.PermiteMovimiento)
-            {
-                throw new ExcepcionNegocio("La cuenta contable de ingreso del producto no permite movimiento.");
-            }
+        var conceptoVenta = request.Concepto.Trim();
+        var movimiento = new MovimientoInventario(
+            productoId: request.ProductoId,
+            tipoMovimiento: TipoMovimientoInventario.Salida,
+            cantidad: request.Cantidad,
+            fecha: DateTime.UtcNow,
+            concepto: $"Salida por venta: {conceptoVenta}",
+            observaciones: null);
 
-            var cuentaCaja = await cuentaContableRepository.GetByIdAsync(caja.CuentaContableId, ct);
-            if (cuentaCaja is null)
-            {
-                throw new ExcepcionNegocio("La cuenta contable asociada a la caja no existe.");
-            }
+        await movimientoInventarioRepository.AddAsync(movimiento, cancellationToken);
 
-            if (!cuentaCaja.PermiteMovimiento)
-            {
-                throw new ExcepcionNegocio("La cuenta contable asociada a la caja no permite movimiento.");
-            }
+        // 2) Calcular monto total de la venta
+        var montoVenta = request.Cantidad * producto.PrecioVenta;
 
-            producto.AjustarStock(-request.Cantidad);
+        // 3) Registrar ingreso en tesorería para conciliar automáticamente la venta
+        await sender.Send(new RegistrarIngresoCommand(
+            Monto: montoVenta,
+            Concepto: $"Venta: {conceptoVenta}",
+            TerceroId: null,
+            CuentaContableId: producto.CuentaContableIngresoId,
+            CajaId: request.CajaId,
+            CentroCostoId: centroCosto.Id), cancellationToken);
 
-            var fechaMovimiento = request.Fecha.Kind == DateTimeKind.Utc
-                ? request.Fecha
-                : request.Fecha.ToUniversalTime();
-
-            var movimiento = new MovimientoInventario(
-                productoId: request.ProductoId,
-                tipoMovimiento: TipoMovimientoInventario.Salida,
-                cantidad: request.Cantidad,
-                fecha: fechaMovimiento,
-                concepto: "Salida por venta",
-                observaciones: request.Observaciones);
-
-            await movimientoInventarioRepository.AddAsync(movimiento, ct);
-
-            var valorTotalVenta = request.Cantidad * producto.PrecioVenta;
-            caja.AplicarIngreso(valorTotalVenta);
-
-            var comprobante = new Comprobante(
-                GenerarNumeroConsecutivo(),
-                request.Fecha,
-                TipoComprobante.Ingreso,
-                $"Venta producto {producto.CodigoSKU} - {producto.Nombre}",
-                EstadoComprobante.Asentado);
-
-            comprobante.AgregarAsiento(AsientoContable.Crear(
-                comprobante.Id,
-                caja.CuentaContableId,
-                null,
-                request.CentroCostoId,
-                valorTotalVenta,
-                0m,
-                "Venta merchandising - debito caja"));
-
-            comprobante.AgregarAsiento(AsientoContable.Crear(
-                comprobante.Id,
-                producto.CuentaContableIngresoId,
-                null,
-                request.CentroCostoId,
-                0m,
-                valorTotalVenta,
-                "Venta merchandising - credito ingreso"));
-
-            await comprobanteRepository.AddAsync(comprobante, ct);
-
-            return comprobante.Id;
-        }, cancellationToken);
+        return movimiento.Id;
     }
-
-    private static string GenerarNumeroConsecutivo() =>
-        $"VTA-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
 }

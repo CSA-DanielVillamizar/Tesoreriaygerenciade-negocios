@@ -6,6 +6,4 @@ public sealed record RegistrarVentaProductoCommand(
     Guid ProductoId,
     int Cantidad,
     Guid CajaId,
-    Guid CentroCostoId,
-    DateTime Fecha,
-    string? Observaciones = null) : IRequest<Guid>;
+    string Concepto) : IRequest<Guid>;

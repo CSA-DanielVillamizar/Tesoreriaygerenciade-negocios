@@ -15,13 +15,8 @@ public sealed class RegistrarVentaProductoCommandValidator : AbstractValidator<R
         RuleFor(x => x.CajaId)
             .NotEmpty();
 
-        RuleFor(x => x.CentroCostoId)
-            .NotEmpty();
-
-        RuleFor(x => x.Fecha)
-            .NotEmpty();
-
-        RuleFor(x => x.Observaciones)
-            .MaximumLength(500);
+        RuleFor(x => x.Concepto)
+            .NotEmpty()
+            .MaximumLength(200);
     }
 }
