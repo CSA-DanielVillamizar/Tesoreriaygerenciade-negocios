@@ -31,9 +31,10 @@ public sealed class CrearProductoCommandHandler(
         // Crear producto con cantidad inicial 0
         var producto = new Producto(
             nombre: request.Nombre,
-            sku: request.SKU,
-            precioVentaCOP: request.PrecioVentaCOP,
-            cantidadStock: 0,
+            codigoSku: request.SKU,
+            precioVenta: request.PrecioVentaCOP,
+            cantidadEnStock: 0,
+            cantidadMinima: 0,
             cuentaContableIngresoId: request.CuentaContableIngresoId);
 
         await productoRepository.AddAsync(producto, cancellationToken);

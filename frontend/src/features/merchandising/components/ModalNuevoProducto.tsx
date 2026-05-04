@@ -1,40 +1,27 @@
 'use client';
 
+import { useCrearProducto } from '@/features/merchandising/hooks/useCrearProducto';
 import { useState } from 'react';
-
-export type CatalogItem = {
-    id: string;
-    nombre: string;
-};
-
-export type NuevoProductoFormValues = {
-    nombre: string;
-    sku: string;
-    precioVentaCOP: string;
-    cuentaContableIngresoId: string;
-};
 
 type ModalNuevoProductoProps = {
     abierto: boolean;
-    cuentasIngreso: CatalogItem[];
-    enviando: boolean;
-    error: string | null;
     onCerrar: () => void;
-    onEnviar: (values: NuevoProductoFormValues) => Promise<void>;
 };
+
+const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function ModalNuevoProducto({
     abierto,
-    cuentasIngreso,
-    enviando,
-    error,
     onCerrar,
-    onEnviar,
 }: ModalNuevoProductoProps) {
-    const [values, setValues] = useState<NuevoProductoFormValues>({
+    const crearProductoMutation = useCrearProducto();
+    const [values, setValues] = useState({
         nombre: '',
-        sku: '',
-        precioVentaCOP: '',
+        codigoSKU: '',
+        precioVenta: '',
+        cantidadEnStock: '',
+        cantidadMinima: '',
         cuentaContableIngresoId: '',
     });
     const [validationError, setValidationError] = useState<string | null>(null);
@@ -43,26 +30,71 @@ export default function ModalNuevoProducto({
         return null;
     }
 
-    const onChange = (field: keyof NuevoProductoFormValues, value: string) => {
+    const onChange = (
+        field: 'nombre' | 'codigoSKU' | 'precioVenta' | 'cantidadEnStock' | 'cantidadMinima' | 'cuentaContableIngresoId',
+        value: string,
+    ) => {
         setValues((previous) => ({ ...previous, [field]: value }));
     };
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!values.nombre.trim() || !values.sku.trim() || !values.precioVentaCOP || !values.cuentaContableIngresoId) {
-            setValidationError('Nombre, SKU, precio y cuenta contable son obligatorios.');
+        if (
+            !values.nombre.trim() ||
+            !values.codigoSKU.trim() ||
+            !values.precioVenta ||
+            !values.cantidadEnStock ||
+            !values.cantidadMinima ||
+            !values.cuentaContableIngresoId.trim()
+        ) {
+            setValidationError('Todos los campos son obligatorios.');
             return;
         }
 
-        const precio = Number(values.precioVentaCOP);
+        const precio = Number(values.precioVenta);
+        const cantidadEnStock = Number(values.cantidadEnStock);
+        const cantidadMinima = Number(values.cantidadMinima);
+
         if (!Number.isFinite(precio) || precio <= 0) {
-            setValidationError('El precio debe ser numerico y mayor a cero.');
+            setValidationError('PrecioVenta debe ser numerico y mayor a cero.');
+            return;
+        }
+
+        if (!Number.isInteger(cantidadEnStock) || cantidadEnStock < 0) {
+            setValidationError('CantidadEnStock debe ser un numero entero mayor o igual a cero.');
+            return;
+        }
+
+        if (!Number.isInteger(cantidadMinima) || cantidadMinima < 0) {
+            setValidationError('CantidadMinima debe ser un numero entero mayor o igual a cero.');
+            return;
+        }
+
+        if (!UUID_REGEX.test(values.cuentaContableIngresoId.trim())) {
+            setValidationError('CuentaContableIngresoId debe tener formato UUID valido.');
             return;
         }
 
         setValidationError(null);
-        await onEnviar(values);
+        await crearProductoMutation.mutateAsync({
+            nombre: values.nombre.trim(),
+            codigoSKU: values.codigoSKU.trim().toUpperCase(),
+            precioVenta: precio,
+            cantidadEnStock,
+            cantidadMinima,
+            cuentaContableIngresoId: values.cuentaContableIngresoId.trim(),
+        });
+
+        setValues({
+            nombre: '',
+            codigoSKU: '',
+            precioVenta: '',
+            cantidadEnStock: '',
+            cantidadMinima: '',
+            cuentaContableIngresoId: '',
+        });
+        onCerrar();
     };
 
     return (
@@ -99,45 +131,66 @@ export default function ModalNuevoProducto({
                         <label className="mb-1 block text-sm font-medium text-slate-700">SKU</label>
                         <input
                             type="text"
-                            value={values.sku}
-                            onChange={(event) => onChange('sku', event.target.value)}
+                            value={values.codigoSKU}
+                            onChange={(event) => onChange('codigoSKU', event.target.value)}
                             placeholder="P-OFC-01"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Precio venta (COP)</label>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">PrecioVenta (COP)</label>
                         <input
                             type="number"
                             min="0"
                             step="0.01"
-                            value={values.precioVentaCOP}
-                            onChange={(event) => onChange('precioVentaCOP', event.target.value)}
+                            value={values.precioVenta}
+                            onChange={(event) => onChange('precioVenta', event.target.value)}
                             placeholder="35000"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Cuenta contable ingreso</label>
-                        <select
-                            value={values.cuentaContableIngresoId}
-                            onChange={(event) => onChange('cuentaContableIngresoId', event.target.value)}
+                        <label className="mb-1 block text-sm font-medium text-slate-700">CantidadEnStock (inicial)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={values.cantidadEnStock}
+                            onChange={(event) => onChange('cantidadEnStock', event.target.value)}
+                            placeholder="25"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
-                        >
-                            <option value="">Seleccione...</option>
-                            {cuentasIngreso.map((cuenta) => (
-                                <option key={cuenta.id} value={cuenta.id}>
-                                    {cuenta.nombre}
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
-                    {(validationError || error) ? (
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">CantidadMinima</label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={values.cantidadMinima}
+                            onChange={(event) => onChange('cantidadMinima', event.target.value)}
+                            placeholder="5"
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">CuentaContableIngresoId</label>
+                        <input
+                            type="text"
+                            value={values.cuentaContableIngresoId}
+                            onChange={(event) => onChange('cuentaContableIngresoId', event.target.value)}
+                            placeholder="00000000-0000-0000-0000-000000000000"
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+                        />
+                    </div>
+
+                    {(validationError || crearProductoMutation.isError) ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                            {validationError ?? error}
+                            {validationError ?? 'No fue posible crear el producto.'}
                         </div>
                     ) : null}
 
@@ -152,10 +205,10 @@ export default function ModalNuevoProducto({
 
                         <button
                             type="submit"
-                            disabled={enviando}
+                            disabled={crearProductoMutation.isPending}
                             className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {enviando ? 'Guardando...' : 'Crear producto'}
+                            {crearProductoMutation.isPending ? 'Guardando...' : 'Crear producto'}
                         </button>
                     </div>
                 </form>

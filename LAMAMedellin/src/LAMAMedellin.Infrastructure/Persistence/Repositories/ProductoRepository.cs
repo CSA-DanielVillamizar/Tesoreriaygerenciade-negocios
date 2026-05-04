@@ -27,7 +27,7 @@ public sealed class ProductoRepository(LamaDbContext context) : IProductoReposit
     public Task<Producto?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
         return context.Productos
-            .FirstOrDefaultAsync(x => x.SKU == sku.ToUpper(), cancellationToken);
+            .FirstOrDefaultAsync(x => x.CodigoSKU == sku.ToUpper(), cancellationToken);
     }
 
     public async Task AddAsync(Producto producto, CancellationToken cancellationToken = default)

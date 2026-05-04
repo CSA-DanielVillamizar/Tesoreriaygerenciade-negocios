@@ -26,6 +26,10 @@ public sealed class MovimientoInventarioConfiguration : IEntityTypeConfiguration
         builder.Property(m => m.Fecha)
             .IsRequired();
 
+        builder.Property(m => m.Concepto)
+            .IsRequired()
+            .HasMaxLength(200);
+
         builder.HasIndex(m => m.Fecha)
             .HasDatabaseName("IX_MovimientoInventario_Fecha");
 

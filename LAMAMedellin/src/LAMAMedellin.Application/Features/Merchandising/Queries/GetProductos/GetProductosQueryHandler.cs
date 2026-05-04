@@ -14,9 +14,10 @@ public sealed class GetProductosQueryHandler(IProductoRepository productoReposit
             .Select(producto => new ProductoDto(
                 producto.Id,
                 producto.Nombre,
-                producto.SKU,
-                producto.PrecioVentaCOP,
-                producto.CantidadStock,
+                producto.CodigoSKU,
+                producto.PrecioVenta,
+                producto.CantidadEnStock,
+                producto.CantidadMinima,
                 producto.CuentaContableIngresoId,
                 producto.CuentaContableIngreso?.Codigo ?? string.Empty,
                 producto.CuentaContableIngreso?.Descripcion ?? string.Empty,

@@ -3,33 +3,31 @@ import apiClient from '@/lib/apiClient';
 export type ProductoMerchandising = {
     id: string;
     nombre: string;
-    sku: string;
-    precioVentaCOP: number;
-    cantidadStock: number;
-    cuentaContableIngresoId: string;
-    cuentaContableIngresoCodigo: string;
-    cuentaContableIngresoDescripcion: string;
+    codigoSKU: string;
+    precioVenta: number;
+    cantidadEnStock: number;
+    cantidadMinima: number;
     imageUrl: string | null;
 };
 
 export type CrearProductoPayload = {
     nombre: string;
-    sku: string;
-    precioVentaCOP: number;
+    codigoSKU: string;
+    precioVenta: number;
+    cantidadEnStock: number;
+    cantidadMinima: number;
     cuentaContableIngresoId: string;
 };
 
 export type RegistrarEntradaPayload = {
     cantidad: number;
-    fecha: string;
+    concepto: string;
     observaciones?: string | null;
 };
 
 export type RegistrarVentaPayload = {
     cantidad: number;
-    cajaId: string;
-    centroCostoId: string;
-    fecha: string;
+    concepto: string;
     observaciones?: string | null;
 };
 
@@ -43,18 +41,20 @@ type ProductoDto = {
     Id?: string;
     nombre?: string;
     Nombre?: string;
+    codigoSKU?: string;
+    CodigoSKU?: string;
     sku?: string;
     SKU?: string;
+    precioVenta?: number;
+    PrecioVenta?: number;
     precioVentaCOP?: number;
     PrecioVentaCOP?: number;
+    cantidadEnStock?: number;
+    CantidadEnStock?: number;
+    cantidadMinima?: number;
+    CantidadMinima?: number;
     cantidadStock?: number;
     CantidadStock?: number;
-    cuentaContableIngresoId?: string;
-    CuentaContableIngresoId?: string;
-    cuentaContableIngresoCodigo?: string;
-    CuentaContableIngresoCodigo?: string;
-    cuentaContableIngresoDescripcion?: string;
-    CuentaContableIngresoDescripcion?: string;
     imageUrl?: string | null;
     ImageUrl?: string | null;
 };
@@ -69,12 +69,10 @@ export async function getProductos(): Promise<ProductoMerchandising[]> {
     return (response.data ?? []).map((item) => ({
         id: String(item?.id ?? item?.Id ?? ''),
         nombre: String(item?.nombre ?? item?.Nombre ?? ''),
-        sku: String(item?.sku ?? item?.SKU ?? ''),
-        precioVentaCOP: Number(item?.precioVentaCOP ?? item?.PrecioVentaCOP ?? 0),
-        cantidadStock: Number(item?.cantidadStock ?? item?.CantidadStock ?? 0),
-        cuentaContableIngresoId: String(item?.cuentaContableIngresoId ?? item?.CuentaContableIngresoId ?? ''),
-        cuentaContableIngresoCodigo: String(item?.cuentaContableIngresoCodigo ?? item?.CuentaContableIngresoCodigo ?? ''),
-        cuentaContableIngresoDescripcion: String(item?.cuentaContableIngresoDescripcion ?? item?.CuentaContableIngresoDescripcion ?? ''),
+        codigoSKU: String(item?.codigoSKU ?? item?.CodigoSKU ?? item?.sku ?? item?.SKU ?? ''),
+        precioVenta: Number(item?.precioVenta ?? item?.PrecioVenta ?? item?.precioVentaCOP ?? item?.PrecioVentaCOP ?? 0),
+        cantidadEnStock: Number(item?.cantidadEnStock ?? item?.CantidadEnStock ?? item?.cantidadStock ?? item?.CantidadStock ?? 0),
+        cantidadMinima: Number(item?.cantidadMinima ?? item?.CantidadMinima ?? 0),
         imageUrl: item?.imageUrl ?? item?.ImageUrl ?? null,
     }));
 }

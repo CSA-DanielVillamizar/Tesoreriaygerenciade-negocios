@@ -32,11 +32,16 @@ public sealed class RegistrarEntradaInventarioCommandHandler(
             producto.AjustarStock(request.Cantidad);
 
             // Registrar movimiento de inventario
+            var fechaMovimiento = request.Fecha.Kind == DateTimeKind.Utc
+                ? request.Fecha
+                : request.Fecha.ToUniversalTime();
+
             var movimiento = new MovimientoInventario(
                 productoId: request.ProductoId,
-                cantidad: request.Cantidad,
                 tipoMovimiento: TipoMovimientoInventario.Entrada,
-                fecha: request.Fecha,
+                cantidad: request.Cantidad,
+                fecha: fechaMovimiento,
+                concepto: "Entrada de inventario",
                 observaciones: request.Observaciones);
 
             await movimientoInventarioRepository.AddAsync(movimiento, ct);

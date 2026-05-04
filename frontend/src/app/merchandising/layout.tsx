@@ -5,9 +5,6 @@ import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
     { href: '/merchandising', label: 'Catálogo & Ventas', exact: true },
-    { href: '/merchandising/inventario', label: 'Inventario', exact: false },
-    { href: '/merchandising/ventas', label: 'Historial Ventas', exact: false },
-    { href: '/merchandising/reportes', label: 'Reportes', exact: false },
 ] as const;
 
 export default function MerchandisingLayout({ children }: { children: React.ReactNode }) {

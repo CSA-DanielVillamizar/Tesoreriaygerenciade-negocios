@@ -17,19 +17,23 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.Property(p => p.SKU)
+        builder.Property(p => p.CodigoSKU)
             .IsRequired()
             .HasMaxLength(50);
 
-        builder.HasIndex(p => p.SKU)
+        builder.HasIndex(p => p.CodigoSKU)
             .IsUnique()
-            .HasDatabaseName("IX_Producto_SKU_Unique");
+            .HasDatabaseName("IX_Producto_CodigoSKU_Unique");
 
-        builder.Property(p => p.PrecioVentaCOP)
+        builder.Property(p => p.PrecioVenta)
             .IsRequired()
             .HasPrecision(18, 2);
 
-        builder.Property(p => p.CantidadStock)
+        builder.Property(p => p.CantidadEnStock)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.Property(p => p.CantidadMinima)
             .IsRequired()
             .HasDefaultValue(0);
 

@@ -63,23 +63,28 @@ public sealed class RegistrarVentaProductoCommandHandler(
 
             producto.AjustarStock(-request.Cantidad);
 
+            var fechaMovimiento = request.Fecha.Kind == DateTimeKind.Utc
+                ? request.Fecha
+                : request.Fecha.ToUniversalTime();
+
             var movimiento = new MovimientoInventario(
-                request.ProductoId,
-                -request.Cantidad,
-                TipoMovimientoInventario.Salida,
-                request.Fecha,
-                request.Observaciones);
+                productoId: request.ProductoId,
+                tipoMovimiento: TipoMovimientoInventario.Salida,
+                cantidad: request.Cantidad,
+                fecha: fechaMovimiento,
+                concepto: "Salida por venta",
+                observaciones: request.Observaciones);
 
             await movimientoInventarioRepository.AddAsync(movimiento, ct);
 
-            var valorTotalVenta = request.Cantidad * producto.PrecioVentaCOP;
+            var valorTotalVenta = request.Cantidad * producto.PrecioVenta;
             caja.AplicarIngreso(valorTotalVenta);
 
             var comprobante = new Comprobante(
                 GenerarNumeroConsecutivo(),
                 request.Fecha,
                 TipoComprobante.Ingreso,
-                $"Venta producto {producto.SKU} - {producto.Nombre}",
+                $"Venta producto {producto.CodigoSKU} - {producto.Nombre}",
                 EstadoComprobante.Asentado);
 
             comprobante.AgregarAsiento(AsientoContable.Crear(

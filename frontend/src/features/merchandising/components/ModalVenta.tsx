@@ -1,63 +1,37 @@
 'use client';
 
-import type { CatalogItem } from '@/features/merchandising/components/ModalNuevoProducto';
+import { useRegistrarVenta } from '@/features/merchandising/hooks/useRegistrarVenta';
 import { useState } from 'react';
 
-export type VentaFormValues = {
-    cantidad: string;
-    cajaId: string;
-    centroCostoId: string;
-    fecha: string;
-    observaciones: string;
-};
-
 type ModalVentaProps = {
-    abierto: boolean;
-    productoNombre: string;
-    cajas: CatalogItem[];
-    centrosCosto: CatalogItem[];
-    enviando: boolean;
-    error: string | null;
+    productoId: string | null;
     onCerrar: () => void;
-    onEnviar: (values: VentaFormValues) => Promise<void>;
 };
-
-function getFechaActual(): string {
-    return new Date().toISOString().slice(0, 10);
-}
 
 export default function ModalVenta({
-    abierto,
-    productoNombre,
-    cajas,
-    centrosCosto,
-    enviando,
-    error,
+    productoId,
     onCerrar,
-    onEnviar,
 }: ModalVentaProps) {
-    const [values, setValues] = useState<VentaFormValues>({
+    const registrarVentaMutation = useRegistrarVenta();
+    const [values, setValues] = useState({
         cantidad: '',
-        cajaId: '',
-        centroCostoId: '',
-        fecha: getFechaActual(),
-        observaciones: '',
+        concepto: '',
     });
     const [validationError, setValidationError] = useState<string | null>(null);
 
-    if (!abierto) {
+    if (!productoId) {
         return null;
     }
 
-    const onChange = (field: keyof VentaFormValues, value: string) => {
+    const onChange = (field: 'cantidad' | 'concepto', value: string) => {
         setValues((previous) => ({ ...previous, [field]: value }));
     };
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!values.cantidad || !values.cajaId || !values.centroCostoId || !values.fecha) {
-            setValidationError('Cantidad, caja, centro de costo y fecha son obligatorios.');
+        if (!values.cantidad || !values.concepto.trim()) {
+            setValidationError('Cantidad y concepto son obligatorios.');
             return;
         }
 
@@ -68,7 +42,16 @@ export default function ModalVenta({
         }
 
         setValidationError(null);
-        await onEnviar(values);
+        await registrarVentaMutation.mutateAsync({
+            productoId,
+            payload: {
+                cantidad,
+                concepto: values.concepto.trim(),
+            },
+        });
+
+        setValues({ cantidad: '', concepto: '' });
+        onCerrar();
     };
 
     return (
@@ -77,7 +60,7 @@ export default function ModalVenta({
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900">Vender producto</h2>
-                        <p className="mt-1 text-sm text-slate-600">Producto: {productoNombre}</p>
+                        <p className="mt-1 text-sm text-slate-600">Producto: {productoId}</p>
                     </div>
 
                     <button
@@ -104,61 +87,19 @@ export default function ModalVenta({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Caja destino</label>
-                        <select
-                            value={values.cajaId}
-                            onChange={(event) => onChange('cajaId', event.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
-                        >
-                            <option value="">Seleccione...</option>
-                            {cajas.map((caja) => (
-                                <option key={caja.id} value={caja.id}>
-                                    {caja.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Centro de costo</label>
-                        <select
-                            value={values.centroCostoId}
-                            onChange={(event) => onChange('centroCostoId', event.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
-                        >
-                            <option value="">Seleccione...</option>
-                            {centrosCosto.map((centro) => (
-                                <option key={centro.id} value={centro.id}>
-                                    {centro.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Fecha</label>
-                        <input
-                            type="date"
-                            value={values.fecha}
-                            onChange={(event) => onChange('fecha', event.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Observaciones</label>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Concepto</label>
                         <textarea
                             rows={2}
-                            value={values.observaciones}
-                            onChange={(event) => onChange('observaciones', event.target.value)}
-                            placeholder="Venta en evento del capitulo"
+                            value={values.concepto}
+                            onChange={(event) => onChange('concepto', event.target.value)}
+                            placeholder="Venta en evento mensual"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
                         />
                     </div>
 
-                    {(validationError || error) ? (
+                    {(validationError || registrarVentaMutation.isError) ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                            {validationError ?? error}
+                            {validationError ?? 'No fue posible registrar la venta.'}
                         </div>
                     ) : null}
 
@@ -173,10 +114,10 @@ export default function ModalVenta({
 
                         <button
                             type="submit"
-                            disabled={enviando}
+                            disabled={registrarVentaMutation.isPending}
                             className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {enviando ? 'Guardando...' : 'Registrar venta'}
+                            {registrarVentaMutation.isPending ? 'Guardando...' : 'Registrar venta'}
                         </button>
                     </div>
                 </form>

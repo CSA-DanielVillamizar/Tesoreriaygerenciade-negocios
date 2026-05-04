@@ -1,54 +1,37 @@
 'use client';
 
+import { useRegistrarEntrada } from '@/features/merchandising/hooks/useRegistrarEntrada';
 import { useState } from 'react';
 
-export type EntradaInventarioFormValues = {
-    cantidad: string;
-    fecha: string;
-    observaciones: string;
-};
-
 type ModalEntradaInventarioProps = {
-    abierto: boolean;
-    productoNombre: string;
-    enviando: boolean;
-    error: string | null;
+    productoId: string | null;
     onCerrar: () => void;
-    onEnviar: (values: EntradaInventarioFormValues) => Promise<void>;
 };
-
-function getFechaActual(): string {
-    return new Date().toISOString().slice(0, 10);
-}
 
 export default function ModalEntradaInventario({
-    abierto,
-    productoNombre,
-    enviando,
-    error,
+    productoId,
     onCerrar,
-    onEnviar,
 }: ModalEntradaInventarioProps) {
-    const [values, setValues] = useState<EntradaInventarioFormValues>({
+    const registrarEntradaMutation = useRegistrarEntrada();
+    const [values, setValues] = useState({
         cantidad: '',
-        fecha: getFechaActual(),
-        observaciones: '',
+        concepto: '',
     });
     const [validationError, setValidationError] = useState<string | null>(null);
 
-    if (!abierto) {
+    if (!productoId) {
         return null;
     }
 
-    const onChange = (field: keyof EntradaInventarioFormValues, value: string) => {
+    const onChange = (field: 'cantidad' | 'concepto', value: string) => {
         setValues((previous) => ({ ...previous, [field]: value }));
     };
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!values.cantidad || !values.fecha) {
-            setValidationError('Cantidad y fecha son obligatorias.');
+        if (!values.cantidad || !values.concepto.trim()) {
+            setValidationError('Cantidad y concepto son obligatorios.');
             return;
         }
 
@@ -59,7 +42,16 @@ export default function ModalEntradaInventario({
         }
 
         setValidationError(null);
-        await onEnviar(values);
+        await registrarEntradaMutation.mutateAsync({
+            productoId,
+            payload: {
+                cantidad,
+                concepto: values.concepto.trim(),
+            },
+        });
+
+        setValues({ cantidad: '', concepto: '' });
+        onCerrar();
     };
 
     return (
@@ -67,8 +59,8 @@ export default function ModalEntradaInventario({
             <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Anadir stock</h2>
-                        <p className="mt-1 text-sm text-slate-600">Producto: {productoNombre}</p>
+                        <h2 className="text-xl font-bold text-slate-900">Registrar entrada de inventario</h2>
+                        <p className="mt-1 text-sm text-slate-600">Producto: {productoId}</p>
                     </div>
 
                     <button
@@ -95,29 +87,19 @@ export default function ModalEntradaInventario({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Fecha</label>
-                        <input
-                            type="date"
-                            value={values.fecha}
-                            onChange={(event) => onChange('fecha', event.target.value)}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">Observaciones</label>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Concepto</label>
                         <textarea
                             rows={2}
-                            value={values.observaciones}
-                            onChange={(event) => onChange('observaciones', event.target.value)}
-                            placeholder="Fondeo inicial de inventario"
+                            value={values.concepto}
+                            onChange={(event) => onChange('concepto', event.target.value)}
+                            placeholder="Compra proveedor abril"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
                         />
                     </div>
 
-                    {(validationError || error) ? (
+                    {(validationError || registrarEntradaMutation.isError) ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                            {validationError ?? error}
+                            {validationError ?? 'No fue posible registrar la entrada.'}
                         </div>
                     ) : null}
 
@@ -132,10 +114,10 @@ export default function ModalEntradaInventario({
 
                         <button
                             type="submit"
-                            disabled={enviando}
+                            disabled={registrarEntradaMutation.isPending}
                             className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {enviando ? 'Guardando...' : 'Registrar entrada'}
+                            {registrarEntradaMutation.isPending ? 'Guardando...' : 'Registrar entrada'}
                         </button>
                     </div>
                 </form>
