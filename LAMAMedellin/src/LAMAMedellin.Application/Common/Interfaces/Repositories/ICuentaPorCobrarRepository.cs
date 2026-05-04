@@ -7,6 +7,9 @@ public interface ICuentaPorCobrarRepository
 {
     Task<bool> ExistePorMiembroYPeriodoAsync(Guid miembroId, string periodo, CancellationToken cancellationToken = default);
     Task<List<CuentaPorCobrar>> GetByEstadoAsync(EstadoCuentaPorCobrar estado, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CuentaPorCobrar>> GetCarteraEnMoraAsync(
+        DateOnly fechaCorte,
+        CancellationToken cancellationToken = default);
     Task<List<CuentaPorCobrar>> GetListadoAsync(
         EstadoCuentaPorCobrar? estado = null,
         Guid? miembroId = null,

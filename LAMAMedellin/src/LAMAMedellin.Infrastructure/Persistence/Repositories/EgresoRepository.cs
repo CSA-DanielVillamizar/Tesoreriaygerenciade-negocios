@@ -16,6 +16,17 @@ public sealed class EgresoRepository(LamaDbContext context) : IEgresoRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Egreso>> GetByFechaRangoAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.Egresos
+            .AsNoTracking()
+            .Where(x => x.Fecha >= fechaInicio && x.Fecha <= fechaFin)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Egreso egreso, CancellationToken cancellationToken = default)
     {
         await context.Egresos.AddAsync(egreso, cancellationToken);

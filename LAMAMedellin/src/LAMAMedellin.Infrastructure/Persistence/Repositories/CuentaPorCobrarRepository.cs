@@ -28,6 +28,21 @@ public sealed class CuentaPorCobrarRepository(LamaDbContext dbContext) : ICuenta
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CuentaPorCobrar>> GetCarteraEnMoraAsync(
+        DateOnly fechaCorte,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.CuentasPorCobrar
+            .AsNoTracking()
+            .Include(c => c.Miembro)
+            .Include(c => c.ConceptoCobro)
+            .Where(c => c.SaldoPendiente > 0 && c.FechaVencimiento < fechaCorte)
+            .OrderBy(c => c.FechaVencimiento)
+            .ThenBy(c => c.Miembro!.Nombres)
+            .ThenBy(c => c.Miembro!.Apellidos)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<CuentaPorCobrar>> GetListadoAsync(
         EstadoCuentaPorCobrar? estado = null,
         Guid? miembroId = null,

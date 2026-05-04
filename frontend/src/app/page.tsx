@@ -218,6 +218,13 @@ export default function Home() {
                     </Link>
 
                     <Link
+                        href="/reportes"
+                        className="rounded-xl border border-cyan-300 bg-cyan-50 px-6 py-8 text-center text-lg font-semibold text-cyan-700"
+                    >
+                        Reportes
+                    </Link>
+
+                    <Link
                         href="/miembros"
                         className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
                     >

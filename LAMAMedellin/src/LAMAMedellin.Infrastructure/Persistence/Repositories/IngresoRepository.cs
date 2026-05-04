@@ -12,6 +12,17 @@ public sealed class IngresoRepository(LamaDbContext context) : IIngresoRepositor
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Ingreso>> GetByFechaRangoAsync(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        CancellationToken cancellationToken = default)
+    {
+        return await context.Ingresos
+            .AsNoTracking()
+            .Where(x => x.Fecha >= fechaInicio && x.Fecha <= fechaFin)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Ingreso ingreso, CancellationToken cancellationToken = default)
     {
         await context.Ingresos.AddAsync(ingreso, cancellationToken);

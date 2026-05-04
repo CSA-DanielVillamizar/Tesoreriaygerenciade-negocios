@@ -283,9 +283,9 @@ try {
         $cuentaIngresoId = [string](Get-PropValue -Object $cuentaIngreso -Primary 'Id' -Fallback 'id')
 
         $nuevoConceptoPayload = @{
-            Nombre = "QA Conciliacion $(Get-Date -Format 'yyyyMMddHHmmss')"
-            ValorCOP = 100000
-            PeriodicidadMensual = 1
+            Nombre                  = "QA Conciliacion $(Get-Date -Format 'yyyyMMddHHmmss')"
+            ValorCOP                = 100000
+            PeriodicidadMensual     = 1
             CuentaContableIngresoId = $cuentaIngresoId
         }
 
@@ -310,11 +310,11 @@ try {
     $fechaVencimiento = (Get-Date).AddDays(30).ToString('yyyy-MM-dd')
 
     $crearCuentaPayload = @{
-        MiembroId = $miembroId
-        ConceptoCobroId = $conceptoId
-        FechaEmision = $fechaEmision
+        MiembroId        = $miembroId
+        ConceptoCobroId  = $conceptoId
+        FechaEmision     = $fechaEmision
         FechaVencimiento = $fechaVencimiento
-        ValorTotal = 100000
+        ValorTotal       = 100000
     }
 
     $crearCuentaResult = Invoke-ApiJson -Method POST -Uri "$BaseUrl/api/cartera/cuentas-por-cobrar" -Token $token -Body $crearCuentaPayload
@@ -344,7 +344,7 @@ try {
     Write-Step 'Ejecutando pago de cartera por 40000 COP con caja destino...'
     $montoPago = [decimal]40000
     $pagoResult = Invoke-ApiJson -Method POST -Uri "$BaseUrl/api/cartera/cuentas-por-cobrar/$cuentaId/pagos" -Token $token -Body @{
-        Monto = $montoPago
+        Monto  = $montoPago
         CajaId = $cajaId
     }
 
