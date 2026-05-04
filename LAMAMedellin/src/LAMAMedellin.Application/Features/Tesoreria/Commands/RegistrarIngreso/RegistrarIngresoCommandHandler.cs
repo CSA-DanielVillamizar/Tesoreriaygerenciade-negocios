@@ -9,6 +9,7 @@ namespace LAMAMedellin.Application.Features.Tesoreria.Commands.RegistrarIngreso;
 
 public sealed class RegistrarIngresoCommandHandler(
     ICajaRepository cajaRepository,
+    IIngresoRepository ingresoRepository,
     IComprobanteRepository comprobanteRepository,
     ICentroCostoRepository centroCostoRepository,
     ICuentaContableRepository cuentaContableRepository,
@@ -53,11 +54,20 @@ public sealed class RegistrarIngresoCommandHandler(
                 throw new ExcepcionNegocio("La cuenta contable asociada a la caja no permite movimiento.");
             }
 
+            var ingreso = new Ingreso(
+                DateTime.UtcNow,
+                request.Monto,
+                request.Concepto,
+                request.TerceroId,
+                request.CuentaContableId,
+                request.CajaId,
+                request.CentroCostoId);
+
             caja.AplicarIngreso(request.Monto);
 
             var comprobante = new Comprobante(
                 GenerarNumeroConsecutivo(),
-                request.Fecha,
+                DateTime.UtcNow,
                 TipoComprobante.Ingreso,
                 $"Ingreso - {request.Concepto.Trim()}",
                 EstadoComprobante.Asentado);
@@ -80,9 +90,13 @@ public sealed class RegistrarIngresoCommandHandler(
                 request.Monto,
                 "Registro ingreso - credito"));
 
-            await comprobanteRepository.AddAsync(comprobante, ct);
+            ingreso.AsignarComprobanteContable(comprobante.Id);
 
-            return comprobante.Id;
+            await ingresoRepository.AddAsync(ingreso, ct);
+            await comprobanteRepository.AddAsync(comprobante, ct);
+            await ingresoRepository.SaveChangesAsync(ct);
+
+            return ingreso.Id;
         }, cancellationToken);
     }
 

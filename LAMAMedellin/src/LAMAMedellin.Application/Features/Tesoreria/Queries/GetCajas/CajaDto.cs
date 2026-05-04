@@ -6,4 +6,5 @@ public sealed record CajaDto(
     Guid Id,
     string Nombre,
     TipoCaja TipoCaja,
+    string CuentaContable,
     decimal SaldoActual);

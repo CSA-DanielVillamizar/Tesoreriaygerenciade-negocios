@@ -55,7 +55,7 @@ public sealed class RegistrarEgresoCommandHandler(
             }
 
             var egreso = new Egreso(
-                request.Fecha,
+                DateTime.UtcNow,
                 request.Monto,
                 request.Concepto,
                 request.TerceroId,
@@ -67,7 +67,7 @@ public sealed class RegistrarEgresoCommandHandler(
 
             var comprobante = new Comprobante(
                 GenerarNumeroConsecutivo(),
-                request.Fecha,
+                DateTime.UtcNow,
                 TipoComprobante.Egreso,
                 $"Egreso - {request.Concepto.Trim()}",
                 EstadoComprobante.Asentado);
@@ -94,6 +94,7 @@ public sealed class RegistrarEgresoCommandHandler(
 
             await comprobanteRepository.AddAsync(comprobante, ct);
             await egresoRepository.AddAsync(egreso, ct);
+            await egresoRepository.SaveChangesAsync(ct);
 
             return egreso.Id;
         }, cancellationToken);

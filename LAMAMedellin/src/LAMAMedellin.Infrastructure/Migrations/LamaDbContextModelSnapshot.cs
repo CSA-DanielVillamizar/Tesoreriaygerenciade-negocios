@@ -399,6 +399,8 @@ namespace LAMAMedellin.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ConceptoCobroId");
+
                     b.HasIndex("MiembroId", "ConceptoCobroId", "FechaEmision")
                         .IsUnique()
                         .HasDatabaseName("IX_CuentasPorCobrar_MiembroConceptoFecha");
@@ -611,6 +613,55 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.HasIndex("CuentaContableId");
 
                     b.ToTable("Egresos", (string)null);
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Ingreso", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CajaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CentroCostoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ComprobanteContableId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Concepto")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("CuentaContableId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("Monto")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("TerceroId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CajaId");
+
+                    b.HasIndex("CentroCostoId");
+
+                    b.HasIndex("ComprobanteContableId");
+
+                    b.HasIndex("CuentaContableId");
+
+                    b.ToTable("Ingresos", (string)null);
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Miembro", b =>
@@ -1001,11 +1052,19 @@ namespace LAMAMedellin.Infrastructure.Migrations
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.CuentaPorCobrar", b =>
                 {
+                    b.HasOne("LAMAMedellin.Domain.Entities.ConceptoCobro", "ConceptoCobro")
+                        .WithMany()
+                        .HasForeignKey("ConceptoCobroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("LAMAMedellin.Domain.Entities.Miembro", "Miembro")
                         .WithMany()
                         .HasForeignKey("MiembroId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("ConceptoCobro");
 
                     b.Navigation("Miembro");
                 });
@@ -1088,6 +1147,32 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("ComprobanteContable");
 
                     b.Navigation("CuentaContable");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Ingreso", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.Caja", null)
+                        .WithMany()
+                        .HasForeignKey("CajaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LAMAMedellin.Domain.Entities.CentroCosto", null)
+                        .WithMany()
+                        .HasForeignKey("CentroCostoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LAMAMedellin.Domain.Entities.Comprobante", null)
+                        .WithMany()
+                        .HasForeignKey("ComprobanteContableId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("LAMAMedellin.Domain.Entities.CuentaContable", null)
+                        .WithMany()
+                        .HasForeignKey("CuentaContableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.MovimientoInventario", b =>

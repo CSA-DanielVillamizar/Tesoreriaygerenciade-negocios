@@ -15,6 +15,9 @@ public sealed class GetCajasQueryHandler(ICajaRepository cajaRepository)
                 caja.Id,
                 caja.Nombre,
                 caja.TipoCaja,
+                caja.CuentaContable is null
+                    ? string.Empty
+                    : $"{caja.CuentaContable.Codigo} - {caja.CuentaContable.Descripcion}",
                 caja.SaldoActual))
             .ToList();
     }

@@ -6,9 +6,6 @@ public sealed class RegistrarEgresoCommandValidator : AbstractValidator<Registra
 {
     public RegistrarEgresoCommandValidator()
     {
-        RuleFor(x => x.Fecha)
-            .NotEmpty();
-
         RuleFor(x => x.Concepto)
             .NotEmpty()
             .MaximumLength(500);

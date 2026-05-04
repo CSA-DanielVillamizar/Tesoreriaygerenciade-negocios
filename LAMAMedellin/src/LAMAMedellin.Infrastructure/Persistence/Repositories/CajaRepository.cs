@@ -9,6 +9,7 @@ public sealed class CajaRepository(LamaDbContext context) : ICajaRepository
     public async Task<IReadOnlyList<Caja>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await context.Cajas
+            .Include(x => x.CuentaContable)
             .AsNoTracking()
             .OrderBy(x => x.Nombre)
             .ToListAsync(cancellationToken);

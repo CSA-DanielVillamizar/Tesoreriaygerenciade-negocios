@@ -6,9 +6,6 @@ public sealed class RegistrarIngresoCommandValidator : AbstractValidator<Registr
 {
     public RegistrarIngresoCommandValidator()
     {
-        RuleFor(x => x.Fecha)
-            .NotEmpty();
-
         RuleFor(x => x.Concepto)
             .NotEmpty()
             .MaximumLength(500);

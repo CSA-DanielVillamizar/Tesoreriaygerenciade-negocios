@@ -41,7 +41,7 @@ public sealed class TesoreriaController(ISender sender) : ControllerBase
     [ProducesResponseType(typeof(object), StatusCodes.Status201Created)]
     public async Task<IActionResult> RegistrarIngreso([FromBody] RegistrarIngresoCommand command, CancellationToken cancellationToken)
     {
-        var comprobanteId = await sender.Send(command, cancellationToken);
-        return Created($"/api/tesoreria/ingresos/{comprobanteId}", new { id = comprobanteId });
+        var ingresoId = await sender.Send(command, cancellationToken);
+        return Created($"/api/tesoreria/ingresos/{ingresoId}", new { id = ingresoId });
     }
 }

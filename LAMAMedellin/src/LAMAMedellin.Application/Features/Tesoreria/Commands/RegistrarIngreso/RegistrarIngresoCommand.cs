@@ -3,7 +3,6 @@ using MediatR;
 namespace LAMAMedellin.Application.Features.Tesoreria.Commands.RegistrarIngreso;
 
 public sealed record RegistrarIngresoCommand(
-    DateTime Fecha,
     decimal Monto,
     string Concepto,
     Guid? TerceroId,
