@@ -5,6 +5,9 @@ namespace LAMAMedellin.Application.Features.Miembros.Commands.UpdateMiembro;
 
 public sealed record UpdateMiembroCommand(
     Guid Id,
+    GrupoSanguineo TipoSangre,
+    string NombreContactoEmergencia,
+    string TelefonoContactoEmergencia,
     string MarcaMoto,
     string ModeloMoto,
     int Cilindraje,

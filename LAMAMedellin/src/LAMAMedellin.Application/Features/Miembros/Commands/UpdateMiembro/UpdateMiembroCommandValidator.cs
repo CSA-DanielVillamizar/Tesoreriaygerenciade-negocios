@@ -9,6 +9,17 @@ public sealed class UpdateMiembroCommandValidator : AbstractValidator<UpdateMiem
         RuleFor(x => x.Id)
             .NotEmpty();
 
+        RuleFor(x => x.TipoSangre)
+            .IsInEnum();
+
+        RuleFor(x => x.NombreContactoEmergencia)
+            .NotEmpty()
+            .MaximumLength(150);
+
+        RuleFor(x => x.TelefonoContactoEmergencia)
+            .NotEmpty()
+            .MaximumLength(30);
+
         RuleFor(x => x.MarcaMoto)
             .NotEmpty()
             .MaximumLength(100);

@@ -68,6 +68,9 @@ public sealed class MiembrosController(ISender sender) : ControllerBase
         await sender.Send(
             new UpdateMiembroCommand(
                 id,
+                request.TipoSangre,
+                request.NombreContactoEmergencia,
+                request.TelefonoContactoEmergencia,
                 request.MarcaMoto,
                 request.ModeloMoto,
                 request.Cilindraje,

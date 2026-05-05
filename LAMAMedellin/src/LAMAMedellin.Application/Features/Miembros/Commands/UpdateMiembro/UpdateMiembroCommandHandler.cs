@@ -26,6 +26,10 @@ public sealed class UpdateMiembroCommandHandler(IMiembroRepository miembroReposi
         }
 
         miembro.PromoverRango(request.Rango);
+        miembro.ActualizarDatosEmergencia(
+            request.TipoSangre,
+            request.NombreContactoEmergencia,
+            request.TelefonoContactoEmergencia);
         miembro.ActualizarMotocicleta(
             request.MarcaMoto,
             request.ModeloMoto,

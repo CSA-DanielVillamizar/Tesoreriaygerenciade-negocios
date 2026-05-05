@@ -100,6 +100,13 @@ public sealed class Miembro : BaseEntity
         Placa = ValidarPlaca(placa, nameof(placa));
     }
 
+    public void ActualizarDatosEmergencia(GrupoSanguineo tipoSangre, string nombreContactoEmergencia, string telefonoContactoEmergencia)
+    {
+        TipoSangre = tipoSangre;
+        NombreContactoEmergencia = ValidarTextoRequerido(nombreContactoEmergencia, nameof(nombreContactoEmergencia), 150);
+        TelefonoContactoEmergencia = ValidarTelefono(telefonoContactoEmergencia, nameof(telefonoContactoEmergencia));
+    }
+
     public void DarDeBaja()
     {
         EsActivo = false;

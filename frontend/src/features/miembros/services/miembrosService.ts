@@ -35,6 +35,18 @@ export type CrearMiembroPayload = {
     esActivo?: boolean;
 };
 
+export type ActualizarMiembroPayload = {
+    tipoSangre: number;
+    nombreContactoEmergencia: string;
+    telefonoContactoEmergencia: string;
+    marcaMoto: string;
+    modeloMoto: string;
+    cilindraje: number;
+    placa: string;
+    rango: number;
+    esActivo: boolean;
+};
+
 type IdResponseDto = {
     id?: string;
     Id?: string;
@@ -82,4 +94,8 @@ export async function getMiembros(): Promise<Miembro[]> {
 export async function crearMiembro(payload: CrearMiembroPayload): Promise<{ id: string }> {
     const response = await apiClient.post<IdResponseDto>('/api/miembros', payload);
     return { id: toStringValue(response.data?.id ?? response.data?.Id) };
+}
+
+export async function actualizarMiembro(id: string, payload: ActualizarMiembroPayload): Promise<void> {
+    await apiClient.put(`/api/miembros/${id}`, payload);
 }

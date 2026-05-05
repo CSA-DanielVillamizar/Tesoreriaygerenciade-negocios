@@ -1,7 +1,9 @@
 'use client';
 
+import ModalEditarMiembro from '@/features/miembros/components/ModalEditarMiembro';
 import ModalNuevoMiembro from '@/features/miembros/components/ModalNuevoMiembro';
 import { useGetMiembros } from '@/features/miembros/hooks/useGetMiembros';
+import type { Miembro } from '@/features/miembros/services/miembrosService';
 import { useState } from 'react';
 
 function estadoBadgeClass(esActivo: boolean): string {
@@ -13,6 +15,18 @@ function estadoBadgeClass(esActivo: boolean): string {
 export default function ListaMiembros() {
     const { data, isLoading, isError, error } = useGetMiembros();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [miembroEnEdicion, setMiembroEnEdicion] = useState<Miembro | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const abrirEdicion = (miembro: Miembro) => {
+        setMiembroEnEdicion(miembro);
+        setIsEditModalOpen(true);
+    };
+
+    const cerrarEdicion = () => {
+        setIsEditModalOpen(false);
+        setMiembroEnEdicion(null);
+    };
 
     if (isLoading) {
         return <p className="text-sm text-slate-600">Cargando directorio de miembros...</p>;
@@ -42,8 +56,16 @@ export default function ListaMiembros() {
                 {data.map((miembro) => (
                     <article
                         key={miembro.id}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
+                        <button
+                            type="button"
+                            onClick={() => abrirEdicion(miembro)}
+                            className="absolute right-4 top-4 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Editar
+                        </button>
+
                         <header className="mb-4 border-b border-slate-100 pb-3">
                             <div className="flex flex-wrap items-start justify-between gap-2">
                                 <div>
@@ -83,6 +105,7 @@ export default function ListaMiembros() {
             </div>
 
             <ModalNuevoMiembro isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <ModalEditarMiembro isOpen={isEditModalOpen} miembro={miembroEnEdicion} onClose={cerrarEdicion} />
         </>
     );
 }
