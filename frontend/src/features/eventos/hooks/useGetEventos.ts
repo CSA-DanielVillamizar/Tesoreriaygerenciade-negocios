@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { getEventos, type EventoDto } from '@/features/eventos/services/eventosService';
+import { useQuery } from '@tanstack/react-query';
 
 export function useGetEventos() {
     return useQuery<EventoDto[]>({

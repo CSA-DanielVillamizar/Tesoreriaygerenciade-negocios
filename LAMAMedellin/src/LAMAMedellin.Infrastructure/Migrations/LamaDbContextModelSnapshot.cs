@@ -937,6 +937,49 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.ToTable("Transacciones", (string)null);
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("EntraObjectId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EsActivo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("MiembroId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Rol")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(4);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("EntraObjectId")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.AsientoContable", b =>
                 {
                     b.HasOne("LAMAMedellin.Domain.Entities.CentroCosto", "CentroCosto")
