@@ -3,6 +3,7 @@
 import ModalNuevoEvento from '@/features/eventos/components/ModalNuevoEvento';
 import { useGetEventos } from '@/features/eventos/hooks/useGetEventos';
 import type { EventoDto } from '@/features/eventos/services/eventosService';
+import Link from 'next/link';
 import { useState } from 'react';
 
 function estadoBadgeClass(estado: string): string {
@@ -124,6 +125,15 @@ export default function ListaEventos() {
                                 <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha Programada</h4>
                                 <p className="text-sm text-slate-800">{formatFecha(evento.fechaProgramada)}</p>
                             </section>
+
+                            <div className="mt-4 flex justify-end">
+                                <Link
+                                    href={`/eventos/${evento.id}`}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                    Ver / Asistencia
+                                </Link>
+                            </div>
                         </article>
                     ))}
                 </div>
