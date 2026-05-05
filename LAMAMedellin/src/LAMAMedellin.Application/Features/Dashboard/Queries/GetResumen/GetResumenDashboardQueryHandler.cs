@@ -13,18 +13,20 @@ public sealed class GetResumenDashboardQueryHandler(
         GetResumenDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        var totalMiembrosActivosTask = miembroRepository.CountActivosAsync(cancellationToken);
-        var totalDineroCajasTask = cajaRepository.GetTotalSaldoActualAsync(cancellationToken);
-        var proximoEventoTask = eventoRepository.GetProximoProgramadoAsync(cancellationToken);
+        var totalMiembrosActivos = await miembroRepository.CountActivosAsync(cancellationToken);
+        var totalDineroCajas = await cajaRepository.GetTotalSaldoActualAsync(cancellationToken);
+        var proximoEvento = await eventoRepository.GetProximoProgramadoAsync(cancellationToken);
 
-        await Task.WhenAll(totalMiembrosActivosTask, totalDineroCajasTask, proximoEventoTask);
-
-        var proximoEvento = await proximoEventoTask;
+        // Defensa ante repositorios vacios o valores no inicializados.
+        var totalMiembrosActivosSeguro = totalMiembrosActivos < 0 ? 0 : totalMiembrosActivos;
+        var totalDineroCajasSeguro = totalDineroCajas;
+        var proximoEventoNombre = proximoEvento?.Nombre;
+        var proximaFechaEvento = proximoEvento?.FechaProgramada;
 
         return new DashboardResumenDto(
-            await totalMiembrosActivosTask,
-            await totalDineroCajasTask,
-            proximoEvento?.Nombre,
-            proximoEvento?.FechaProgramada);
+            totalMiembrosActivosSeguro,
+            totalDineroCajasSeguro,
+            proximoEventoNombre,
+            proximaFechaEvento);
     }
 }

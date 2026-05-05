@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { getResumenDashboard, type DashboardResumenDto } from '@/features/dashboard/services/dashboardService';
+import { useQuery } from '@tanstack/react-query';
 
 export function useGetResumenDashboard() {
     return useQuery<DashboardResumenDto>({

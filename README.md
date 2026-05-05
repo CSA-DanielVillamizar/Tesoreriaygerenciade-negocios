@@ -5,23 +5,29 @@ L.A.M.A. ERP es una plataforma integral para la gestion operativa, financiera y 
 ## Modulos Principales
 
 1. Cartera
+
 - Gestion de conceptos de cobro, cuentas por cobrar, cuotas y seguimiento de recaudos pendientes.
 
-2. Tesoreria
+1. Tesoreria
+
 - Control de cajas, ingresos, egresos y saldos disponibles para operacion diaria.
 
-3. Merchandising
+1. Merchandising
+
 - Administracion de inventario, ventas y movimiento de productos del club.
 
-4. Miembros
+1. Miembros
+
 - Directorio de miembros, perfil ampliado, datos de emergencia y estado activo del capitulo.
 
-5. Eventos
+1. Eventos
+
 - Agenda de eventos y rodadas, detalle por evento y control de asistencia.
 
 ## Arquitectura
 
 ### Backend
+
 - .NET 8 Web API
 - Clean Architecture
 - CQRS con MediatR
@@ -29,6 +35,7 @@ L.A.M.A. ERP es una plataforma integral para la gestion operativa, financiera y 
 - Azure SQL
 
 ### Frontend
+
 - Next.js (App Router)
 - TypeScript
 - React Query (TanStack Query)
