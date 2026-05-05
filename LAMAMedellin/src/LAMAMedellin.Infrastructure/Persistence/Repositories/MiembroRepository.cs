@@ -21,6 +21,11 @@ public sealed class MiembroRepository(LamaDbContext dbContext) : IMiembroReposit
             .ToListAsync(cancellationToken);
     }
 
+    public Task<int> CountActivosAsync(CancellationToken cancellationToken = default)
+    {
+        return dbContext.Miembros.CountAsync(m => m.EsActivo, cancellationToken);
+    }
+
     public Task<Miembro?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return dbContext.Miembros.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);

@@ -1,6 +1,7 @@
 'use client';
 
 import apiClient from '@/lib/apiClient';
+import ResumenKpis from '@/features/dashboard/components/ResumenKpis';
 import { getUserRolesFromToken, hasAnyAllowedRole, TRIBUTARIO_ALLOWED_ROLES } from '@/lib/authRoles';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -173,6 +174,8 @@ export default function Home() {
                         </p>
                     </article>
                 </section>
+
+                <ResumenKpis />
 
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Link

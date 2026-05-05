@@ -1,4 +1,5 @@
 using LAMAMedellin.Application.Features.Dashboard.Queries.GetResumenCartera;
+using LAMAMedellin.Application.Features.Dashboard.Queries.GetResumen;
 using LAMAMedellin.Application.Features.Dashboard.Queries.GetSaldosBancos;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +25,14 @@ public sealed class DashboardController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetResumenCartera(CancellationToken cancellationToken)
     {
         var resumen = await sender.Send(new GetResumenCarteraQuery(), cancellationToken);
+        return Ok(resumen);
+    }
+
+    [HttpGet("resumen")]
+    [ProducesResponseType(typeof(DashboardResumenDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetResumenDashboard(CancellationToken cancellationToken)
+    {
+        var resumen = await sender.Send(new GetResumenDashboardQuery(), cancellationToken);
         return Ok(resumen);
     }
 }

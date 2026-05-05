@@ -21,6 +21,13 @@ public sealed class CajaRepository(LamaDbContext context) : ICajaRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<decimal> GetTotalSaldoActualAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.Cajas
+            .Select(x => (decimal?)x.SaldoActual)
+            .SumAsync(cancellationToken) ?? 0m;
+    }
+
     public async Task AddAsync(Caja caja, CancellationToken cancellationToken = default)
     {
         await context.Cajas.AddAsync(caja, cancellationToken);
