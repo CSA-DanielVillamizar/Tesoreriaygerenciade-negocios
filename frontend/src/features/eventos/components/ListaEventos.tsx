@@ -1,0 +1,135 @@
+'use client';
+
+import ModalNuevoEvento from '@/features/eventos/components/ModalNuevoEvento';
+import { useGetEventos } from '@/features/eventos/hooks/useGetEventos';
+import type { EventoDto } from '@/features/eventos/services/eventosService';
+import { useState } from 'react';
+
+function estadoBadgeClass(estado: string): string {
+    const normalized = estado.toLowerCase();
+
+    if (normalized === 'programado') {
+        return 'border-amber-300 bg-amber-50 text-amber-800';
+    }
+
+    if (normalized === 'enprogreso' || normalized === 'en progreso') {
+        return 'border-blue-300 bg-blue-50 text-blue-800';
+    }
+
+    if (normalized === 'finalizado') {
+        return 'border-emerald-300 bg-emerald-50 text-emerald-800';
+    }
+
+    if (normalized === 'cancelado') {
+        return 'border-red-300 bg-red-50 text-red-800';
+    }
+
+    return 'border-slate-300 bg-slate-100 text-slate-700';
+}
+
+function tipoBadgeClass(tipo: string): string {
+    const normalized = tipo.toLowerCase();
+
+    if (normalized === 'rodada') {
+        return 'border-indigo-300 bg-indigo-50 text-indigo-800';
+    }
+
+    if (normalized === 'social') {
+        return 'border-fuchsia-300 bg-fuchsia-50 text-fuchsia-800';
+    }
+
+    if (normalized === 'reunion' || normalized === 'reunión') {
+        return 'border-cyan-300 bg-cyan-50 text-cyan-800';
+    }
+
+    if (normalized === 'benefico' || normalized === 'benéfico') {
+        return 'border-emerald-300 bg-emerald-50 text-emerald-800';
+    }
+
+    return 'border-slate-300 bg-slate-100 text-slate-700';
+}
+
+function formatFecha(value: string): string {
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return 'Fecha inválida';
+    }
+
+    return parsed.toLocaleString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function sortByFechaDesc(a: EventoDto, b: EventoDto): number {
+    return new Date(b.fechaProgramada).getTime() - new Date(a.fechaProgramada).getTime();
+}
+
+export default function ListaEventos() {
+    const { data, isLoading, isError, error } = useGetEventos();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    if (isLoading) {
+        return <p className="text-sm text-slate-600">Cargando agenda de eventos...</p>;
+    }
+
+    if (isError) {
+        return <p className="text-sm text-red-600">{(error as Error).message}</p>;
+    }
+
+    const eventosOrdenados = [...(data ?? [])].sort(sortByFechaDesc);
+
+    return (
+        <>
+            <div className="mb-6 flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+                >
+                    + Nuevo Evento
+                </button>
+            </div>
+
+            {eventosOrdenados.length === 0 ? (
+                <p className="text-sm text-slate-600">No hay eventos registrados.</p>
+            ) : (
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {eventosOrdenados.map((evento) => (
+                        <article
+                            key={evento.id}
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <header className="mb-4 border-b border-slate-100 pb-3">
+                                <div className="mb-2 flex flex-wrap gap-2">
+                                    <span
+                                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${tipoBadgeClass(evento.tipoEvento)}`}
+                                    >
+                                        {evento.tipoEvento}
+                                    </span>
+                                    <span
+                                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${estadoBadgeClass(evento.estado)}`}
+                                    >
+                                        {evento.estado}
+                                    </span>
+                                </div>
+                                <h3 className="text-base font-semibold text-slate-900">{evento.nombre}</h3>
+                            </header>
+
+                            <section>
+                                <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Fecha Programada</h4>
+                                <p className="text-sm text-slate-800">{formatFecha(evento.fechaProgramada)}</p>
+                            </section>
+                        </article>
+                    ))}
+                </div>
+            )}
+
+            <ModalNuevoEvento isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        </>
+    );
+}

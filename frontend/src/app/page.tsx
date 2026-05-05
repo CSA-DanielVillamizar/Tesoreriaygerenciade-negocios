@@ -232,6 +232,13 @@ export default function Home() {
                     </Link>
 
                     <Link
+                        href="/eventos"
+                        className="rounded-xl border border-orange-300 bg-orange-50 px-6 py-8 text-center text-lg font-semibold text-orange-700"
+                    >
+                        Eventos y Rodadas
+                    </Link>
+
+                    <Link
                         href="/donaciones"
                         className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
                     >
