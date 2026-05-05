@@ -1,6 +1,7 @@
 using LAMAMedellin.Application.Common.Exceptions;
 using LAMAMedellin.Application.Common.Interfaces.Repositories;
 using LAMAMedellin.Domain.Entities;
+using LAMAMedellin.Domain.Enums;
 using MediatR;
 
 namespace LAMAMedellin.Application.Features.Cartera.Commands.GenerarObligacionesMensuales;
@@ -29,9 +30,11 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
 
         foreach (var miembro in miembrosActivos)
         {
-            if (!tarifasPorTipo.TryGetValue(miembro.TipoAfiliacion, out var valorMensual))
+            var tipoAfiliacion = MapearTipoAfiliacionDesdeRango(miembro.Rango);
+
+            if (!tarifasPorTipo.TryGetValue(tipoAfiliacion, out var valorMensual))
             {
-                throw new ExcepcionNegocio($"No existe tarifa configurada para el tipo de afiliación {miembro.TipoAfiliacion}.");
+                throw new ExcepcionNegocio($"No existe tarifa configurada para el rango {miembro.Rango}.");
             }
 
             if (valorMensual == 0)
@@ -84,5 +87,17 @@ public sealed class GenerarObligacionesMensualesCommandHandler(
         var inicio = ParsearFechaPeriodoInicio(periodo);
         var fin = inicio.AddMonths(1).AddDays(-1);
         return fin;
+    }
+
+    private static TipoAfiliacion MapearTipoAfiliacionDesdeRango(RangoClub rango)
+    {
+        return rango switch
+        {
+            RangoClub.Aspirante => TipoAfiliacion.Prospect,
+            RangoClub.Prospecto => TipoAfiliacion.Prospect,
+            RangoClub.MiembroActivo => TipoAfiliacion.FullColor,
+            RangoClub.Directivo => TipoAfiliacion.Asociado,
+            _ => TipoAfiliacion.Prospect
+        };
     }
 }

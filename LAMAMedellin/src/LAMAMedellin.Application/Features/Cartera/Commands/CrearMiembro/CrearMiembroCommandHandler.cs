@@ -16,7 +16,14 @@ public sealed class CrearMiembroCommandHandler(
             request.Apellidos,
             request.Apodo,
             request.FechaIngreso,
-            request.TipoMiembro);
+            request.TipoSangre,
+            request.NombreContactoEmergencia,
+            request.TelefonoContactoEmergencia,
+            request.MarcaMoto,
+            request.ModeloMoto,
+            request.Cilindraje,
+            request.Placa,
+            request.Rango);
 
         await miembroRepository.AddAsync(miembro, cancellationToken);
         await miembroRepository.SaveChangesAsync(cancellationToken);

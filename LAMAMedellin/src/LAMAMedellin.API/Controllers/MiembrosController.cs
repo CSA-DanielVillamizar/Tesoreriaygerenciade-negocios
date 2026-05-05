@@ -43,13 +43,19 @@ public sealed class MiembrosController(ISender sender) : ControllerBase
     {
         var id = await sender.Send(
             new CreateMiembroCommand(
-                request.Nombre,
+                request.DocumentoIdentidad,
+                request.Nombres,
                 request.Apellidos,
-                request.Documento,
-                request.Email,
-                request.Telefono,
-                request.TipoAfiliacion,
-                request.Estado),
+                request.Apodo,
+                request.FechaIngreso,
+                request.TipoSangre,
+                request.NombreContactoEmergencia,
+                request.TelefonoContactoEmergencia,
+                request.MarcaMoto,
+                request.ModeloMoto,
+                request.Cilindraje,
+                request.Placa,
+                request.Rango),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id }, new { id });
@@ -62,13 +68,12 @@ public sealed class MiembrosController(ISender sender) : ControllerBase
         await sender.Send(
             new UpdateMiembroCommand(
                 id,
-                request.Nombre,
-                request.Apellidos,
-                request.Documento,
-                request.Email,
-                request.Telefono,
-                request.TipoAfiliacion,
-                request.Estado),
+                request.MarcaMoto,
+                request.ModeloMoto,
+                request.Cilindraje,
+                request.Placa,
+                request.Rango,
+                request.EsActivo),
             cancellationToken);
 
         return NoContent();
@@ -83,11 +88,18 @@ public sealed class MiembrosController(ISender sender) : ControllerBase
     }
 
     public sealed record UpsertMiembroRequest(
-        string Nombre,
+        string DocumentoIdentidad,
+        string Nombres,
         string Apellidos,
-        string Documento,
-        string Email,
-        string Telefono,
-        TipoAfiliacion TipoAfiliacion,
-        EstadoMiembro Estado);
+        string Apodo,
+        DateOnly FechaIngreso,
+        GrupoSanguineo TipoSangre,
+        string NombreContactoEmergencia,
+        string TelefonoContactoEmergencia,
+        string MarcaMoto,
+        string ModeloMoto,
+        int Cilindraje,
+        string Placa,
+        RangoClub Rango,
+        bool EsActivo = true);
 }

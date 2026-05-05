@@ -2,9 +2,17 @@ namespace LAMAMedellin.Application.Features.Miembros.Queries.GetMiembroById;
 
 public sealed record MiembroDto(
     Guid Id,
-    string NombreCompleto,
-    string Documento,
-    string Email,
-    string Telefono,
-    string TipoAfiliacion,
-    string Estado);
+    string DocumentoIdentidad,
+    string Nombres,
+    string Apellidos,
+    string Apodo,
+    DateOnly FechaIngreso,
+    string Rango,
+    bool EsActivo,
+    string TipoSangre,
+    string NombreContactoEmergencia,
+    string TelefonoContactoEmergencia,
+    string MarcaMoto,
+    string ModeloMoto,
+    int Cilindraje,
+    string Placa);

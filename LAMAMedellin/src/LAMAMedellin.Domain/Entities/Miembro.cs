@@ -5,41 +5,24 @@ namespace LAMAMedellin.Domain.Entities;
 
 public sealed class Miembro : BaseEntity
 {
-    #region Propiedades Cartera (Modelo Novo)
     public string DocumentoIdentidad { get; private set; }
     public string Nombres { get; private set; }
     public string Apellidos { get; private set; }
     public string Apodo { get; private set; }
+
     public DateOnly FechaIngreso { get; private set; }
-    public TipoMiembro TipoMiembro { get; private set; }
-    #endregion
+    public RangoClub Rango { get; private set; }
+    public bool EsActivo { get; private set; } = true;
 
-    #region Propiedades Legacy (Deprecadas - Para Refactorización Futura)
-    // TODO: Refactorizar todos los módulos que usan estas propiedades
-    //  - Miembros module (queries, commands)
-    // - Migracion module (ImportarHistoricoCommandHandler)
-    // - Cartera module (GenerarCarteraMensual, GenerarObligacionesMensuales)
+    public GrupoSanguineo TipoSangre { get; private set; }
+    public string NombreContactoEmergencia { get; private set; }
+    public string TelefonoContactoEmergencia { get; private set; }
 
-    [Obsolete("Usar Nombres en su lugar. TODO: Refactorizar módulos dependientes")]
-    public string Nombre { get; private set; }
+    public string MarcaMoto { get; private set; }
+    public string ModeloMoto { get; private set; }
+    public int Cilindraje { get; private set; }
+    public string Placa { get; private set; }
 
-    [Obsolete("Usar DocumentoIdentidad en su lugar. TODO: Refactorizar módulos dependientes")]
-    public string Documento { get; private set; }
-
-    [Obsolete("Propiedad legacy sin mapeo en modelo novo. TODO: Definir estrategia")]
-    public string Email { get; private set; }
-
-    [Obsolete("Propiedad legacy sin mapeo en modelo novo. TODO: Definir estrategia")]
-    public string Telefono { get; private set; }
-
-    [Obsolete("Usar TipoMiembro en su lugar. TODO: Refactorizar módulos dependientes")]
-    public TipoAfiliacion TipoAfiliacion { get; private set; }
-
-    [Obsolete("Propiedad legacy sin mapeo directo. TODO: Refactorizar módulos dependientes")]
-    public EstadoMiembro Estado { get; private set; }
-    #endregion
-
-    // Constructor privado para EF Core
 #pragma warning disable CS8618
     private Miembro() { }
 #pragma warning restore CS8618
@@ -50,12 +33,19 @@ public sealed class Miembro : BaseEntity
         string apellidos,
         string apodo,
         DateOnly fechaIngreso,
-        TipoMiembro tipoMiembro)
+        GrupoSanguineo tipoSangre,
+        string nombreContactoEmergencia,
+        string telefonoContactoEmergencia,
+        string marcaMoto,
+        string modeloMoto,
+        int cilindraje,
+        string placa,
+        RangoClub rango = RangoClub.Aspirante)
     {
-        DocumentoIdentidad = ValidarTextoRequerido(documentoIdentidad, nameof(documentoIdentidad));
-        Nombres = ValidarTextoRequerido(nombres, nameof(nombres));
-        Apellidos = ValidarTextoRequerido(apellidos, nameof(apellidos));
-        Apodo = (apodo ?? string.Empty).Trim();
+        DocumentoIdentidad = ValidarTextoRequerido(documentoIdentidad, nameof(documentoIdentidad), 50);
+        Nombres = ValidarTextoRequerido(nombres, nameof(nombres), 150);
+        Apellidos = ValidarTextoRequerido(apellidos, nameof(apellidos), 150);
+        Apodo = ValidarTextoOpcional(apodo, 100);
 
         if (fechaIngreso == default)
         {
@@ -63,109 +53,101 @@ public sealed class Miembro : BaseEntity
         }
 
         FechaIngreso = fechaIngreso;
-        TipoMiembro = tipoMiembro;
+        EsActivo = true;
+        Rango = rango;
 
-        // Compatibilidad temporal para módulos dependientes
-#pragma warning disable CS0618
-        Nombre = Nombres;
-        Documento = DocumentoIdentidad;
-        Email = "sin-correo@lama.local";
-        Telefono = "N/A";
-        TipoAfiliacion = TipoAfiliacion.Prospect;
-        Estado = MapearEstadoDesdeTipoMiembro(tipoMiembro);
-#pragma warning restore CS0618
+        TipoSangre = tipoSangre;
+        NombreContactoEmergencia = ValidarTextoRequerido(nombreContactoEmergencia, nameof(nombreContactoEmergencia), 150);
+        TelefonoContactoEmergencia = ValidarTelefono(telefonoContactoEmergencia, nameof(telefonoContactoEmergencia));
+
+        MarcaMoto = ValidarTextoRequerido(marcaMoto, nameof(marcaMoto), 100);
+        ModeloMoto = ValidarTextoRequerido(modeloMoto, nameof(modeloMoto), 100);
+        if (cilindraje <= 0)
+        {
+            throw new ArgumentException("Cilindraje debe ser mayor que cero.", nameof(cilindraje));
+        }
+
+        Cilindraje = cilindraje;
+        Placa = ValidarPlaca(placa, nameof(placa));
     }
 
-    public Miembro(
-        string nombre,
-        string apellidos,
-        string documento,
-        string email,
-        string telefono,
-        TipoAfiliacion tipoAfiliacion,
-        EstadoMiembro estado)
+    public void PromoverRango(RangoClub nuevoRango)
     {
-#pragma warning disable CS0618
-        Nombre = ValidarTextoRequerido(nombre, nameof(nombre));
-        Nombres = Nombre;
+        if (!EsActivo)
+        {
+            throw new InvalidOperationException("No se puede promover un miembro inactivo.");
+        }
 
-        Apellidos = ValidarTextoRequerido(apellidos, nameof(apellidos));
+        if ((int)nuevoRango < (int)Rango)
+        {
+            throw new InvalidOperationException("No se permite degradar rango con PromoverRango.");
+        }
 
-        Documento = ValidarTextoRequerido(documento, nameof(documento));
-        DocumentoIdentidad = Documento;
-
-        Apodo = string.Empty;
-        FechaIngreso = DateOnly.FromDateTime(DateTime.UtcNow);
-
-        Email = ValidarTextoRequerido(email, nameof(email));
-        Telefono = ValidarTextoRequerido(telefono, nameof(telefono));
-        TipoAfiliacion = tipoAfiliacion;
-        Estado = estado;
-        TipoMiembro = MapearTipoMiembroDesdeEstado(estado);
-#pragma warning restore CS0618
+        Rango = nuevoRango;
     }
 
-#pragma warning disable CS0618
-    public void ActualizarDatos(
-        string nombre,
-        string apellidos,
-        string documento,
-        string email,
-        string telefono,
-        TipoAfiliacion tipoAfiliacion,
-        EstadoMiembro estado)
+    public void ActualizarMotocicleta(string marcaMoto, string modeloMoto, int cilindraje, string placa)
     {
-        Nombre = ValidarTextoRequerido(nombre, nameof(nombre));
-        Nombres = Nombre;
+        MarcaMoto = ValidarTextoRequerido(marcaMoto, nameof(marcaMoto), 100);
+        ModeloMoto = ValidarTextoRequerido(modeloMoto, nameof(modeloMoto), 100);
 
-        Apellidos = ValidarTextoRequerido(apellidos, nameof(apellidos));
+        if (cilindraje <= 0)
+        {
+            throw new ArgumentException("Cilindraje debe ser mayor que cero.", nameof(cilindraje));
+        }
 
-        Documento = ValidarTextoRequerido(documento, nameof(documento));
-        DocumentoIdentidad = Documento;
-
-        Email = ValidarTextoRequerido(email, nameof(email));
-        Telefono = ValidarTextoRequerido(telefono, nameof(telefono));
-        TipoAfiliacion = tipoAfiliacion;
-        Estado = estado;
-        TipoMiembro = MapearTipoMiembroDesdeEstado(estado);
+        Cilindraje = cilindraje;
+        Placa = ValidarPlaca(placa, nameof(placa));
     }
 
-    public void Desactivar()
+    public void DarDeBaja()
     {
-        Estado = EstadoMiembro.Inactivo;
-        TipoMiembro = TipoMiembro.Retirado;
+        EsActivo = false;
     }
-#pragma warning restore CS0618
 
-    private static string ValidarTextoRequerido(string valor, string nombreParametro)
+    private static string ValidarTextoRequerido(string valor, string nombreParametro, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(valor))
         {
             throw new ArgumentException($"{nombreParametro} es obligatorio.", nombreParametro);
         }
 
-        return valor.Trim();
+        var limpio = valor.Trim();
+        if (limpio.Length > maxLength)
+        {
+            throw new ArgumentException($"{nombreParametro} no puede exceder {maxLength} caracteres.", nombreParametro);
+        }
+
+        return limpio;
     }
 
-    private static EstadoMiembro MapearEstadoDesdeTipoMiembro(TipoMiembro tipoMiembro)
+    private static string ValidarTextoOpcional(string valor, int maxLength)
     {
-        return tipoMiembro switch
+        var limpio = (valor ?? string.Empty).Trim();
+        if (limpio.Length > maxLength)
         {
-            TipoMiembro.Activo => EstadoMiembro.Activo,
-            TipoMiembro.Rodando => EstadoMiembro.Suspendido,
-            TipoMiembro.Retirado => EstadoMiembro.Inactivo,
-            _ => EstadoMiembro.Inactivo
-        };
+            throw new ArgumentException($"El valor no puede exceder {maxLength} caracteres.");
+        }
+
+        return limpio;
     }
 
-    private static TipoMiembro MapearTipoMiembroDesdeEstado(EstadoMiembro estado)
+    private static string ValidarTelefono(string valor, string nombreParametro)
     {
-        return estado switch
+        var limpio = ValidarTextoRequerido(valor, nombreParametro, 30);
+
+        var digitos = new string(limpio.Where(char.IsDigit).ToArray());
+        if (digitos.Length < 7)
         {
-            EstadoMiembro.Activo => TipoMiembro.Activo,
-            EstadoMiembro.Suspendido => TipoMiembro.Rodando,
-            EstadoMiembro.Inactivo => TipoMiembro.Retirado,
-            _ => TipoMiembro.Prospecto
-        };
+            throw new ArgumentException($"{nombreParametro} no tiene un formato valido.", nombreParametro);
+        }
+
+        return limpio;
+    }
+
+    private static string ValidarPlaca(string valor, string nombreParametro)
+    {
+        var limpio = ValidarTextoRequerido(valor, nombreParametro, 20).ToUpperInvariant();
+        return limpio;
     }
 }

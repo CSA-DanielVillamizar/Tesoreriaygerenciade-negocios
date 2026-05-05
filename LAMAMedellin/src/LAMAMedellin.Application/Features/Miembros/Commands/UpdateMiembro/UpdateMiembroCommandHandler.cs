@@ -15,26 +15,22 @@ public sealed class UpdateMiembroCommandHandler(IMiembroRepository miembroReposi
             throw new ExcepcionNegocio("El miembro indicado no existe.");
         }
 
-        var miembroConDocumento = await miembroRepository.GetByDocumentoAsync(request.Documento, cancellationToken);
-        if (miembroConDocumento is not null && miembroConDocumento.Id != request.Id)
+        if (!request.EsActivo && miembro.EsActivo)
         {
-            throw new ExcepcionNegocio("Ya existe otro miembro con el mismo documento.");
+            miembro.DarDeBaja();
         }
 
-        var miembroConEmail = await miembroRepository.GetByEmailAsync(request.Email, cancellationToken);
-        if (miembroConEmail is not null && miembroConEmail.Id != request.Id)
+        if (request.EsActivo && !miembro.EsActivo)
         {
-            throw new ExcepcionNegocio("Ya existe otro miembro con el mismo correo.");
+            throw new ExcepcionNegocio("No existe un flujo de reactivacion en el dominio actual de Miembro.");
         }
 
-        miembro.ActualizarDatos(
-            request.Nombre,
-            request.Apellidos,
-            request.Documento,
-            request.Email,
-            request.Telefono,
-            request.TipoAfiliacion,
-            request.Estado);
+        miembro.PromoverRango(request.Rango);
+        miembro.ActualizarMotocicleta(
+            request.MarcaMoto,
+            request.ModeloMoto,
+            request.Cilindraje,
+            request.Placa);
 
         await miembroRepository.SaveChangesAsync(cancellationToken);
 

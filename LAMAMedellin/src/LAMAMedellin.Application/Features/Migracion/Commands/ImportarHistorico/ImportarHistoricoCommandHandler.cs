@@ -211,12 +211,12 @@ public sealed class ImportarHistoricoCommandHandler
 
         foreach (var miembro in miembros)
         {
-            var nombreCompleto = $"{miembro.Nombre} {miembro.Apellidos}".Trim();
-            var nombreInvertido = $"{miembro.Apellidos} {miembro.Nombre}".Trim();
+            var nombreCompleto = $"{miembro.Nombres} {miembro.Apellidos}".Trim();
+            var nombreInvertido = $"{miembro.Apellidos} {miembro.Nombres}".Trim();
 
             diccionario[nombreCompleto] = miembro.Id;
             diccionario[nombreInvertido] = miembro.Id;
-            diccionario[miembro.Nombre] = miembro.Id;
+            diccionario[miembro.Nombres] = miembro.Id;
             diccionario[miembro.Apellidos] = miembro.Id;
         }
 

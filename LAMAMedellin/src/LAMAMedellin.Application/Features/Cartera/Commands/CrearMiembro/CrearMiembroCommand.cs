@@ -9,4 +9,11 @@ public sealed record CrearMiembroCommand(
     string Apellidos,
     string Apodo,
     DateOnly FechaIngreso,
-    TipoMiembro TipoMiembro) : IRequest<Guid>;
+    GrupoSanguineo TipoSangre,
+    string NombreContactoEmergencia,
+    string TelefonoContactoEmergencia,
+    string MarcaMoto,
+    string ModeloMoto,
+    int Cilindraje,
+    string Placa,
+    RangoClub Rango) : IRequest<Guid>;

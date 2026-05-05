@@ -32,7 +32,14 @@ public sealed class CarteraController(ISender sender) : ControllerBase
             request.Apellidos,
             request.Apodo,
             request.FechaIngreso,
-            request.TipoMiembro), cancellationToken);
+            request.TipoSangre,
+            request.NombreContactoEmergencia,
+            request.TelefonoContactoEmergencia,
+            request.MarcaMoto,
+            request.ModeloMoto,
+            request.Cilindraje,
+            request.Placa,
+            request.Rango), cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, new { id });
     }
@@ -149,7 +156,14 @@ public sealed record CrearMiembroRequest(
     string Apellidos,
     string Apodo,
     DateOnly FechaIngreso,
-    TipoMiembro TipoMiembro);
+    GrupoSanguineo TipoSangre,
+    string NombreContactoEmergencia,
+    string TelefonoContactoEmergencia,
+    string MarcaMoto,
+    string ModeloMoto,
+    int Cilindraje,
+    string Placa,
+    RangoClub Rango);
 
 public sealed record CrearConceptoCobroRequest(
     string Nombre,

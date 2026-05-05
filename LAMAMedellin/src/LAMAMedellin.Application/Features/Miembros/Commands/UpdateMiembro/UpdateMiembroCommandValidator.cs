@@ -9,31 +9,22 @@ public sealed class UpdateMiembroCommandValidator : AbstractValidator<UpdateMiem
         RuleFor(x => x.Id)
             .NotEmpty();
 
-        RuleFor(x => x.Nombre)
+        RuleFor(x => x.MarcaMoto)
             .NotEmpty()
             .MaximumLength(100);
 
-        RuleFor(x => x.Apellidos)
+        RuleFor(x => x.ModeloMoto)
             .NotEmpty()
-            .MaximumLength(120);
+            .MaximumLength(100);
 
-        RuleFor(x => x.Documento)
+        RuleFor(x => x.Cilindraje)
+            .GreaterThan(0);
+
+        RuleFor(x => x.Placa)
             .NotEmpty()
-            .MaximumLength(30);
+            .MaximumLength(20);
 
-        RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress()
-            .MaximumLength(200);
-
-        RuleFor(x => x.Telefono)
-            .NotEmpty()
-            .MaximumLength(30);
-
-        RuleFor(x => x.TipoAfiliacion)
-            .IsInEnum();
-
-        RuleFor(x => x.Estado)
+        RuleFor(x => x.Rango)
             .IsInEnum();
     }
 }

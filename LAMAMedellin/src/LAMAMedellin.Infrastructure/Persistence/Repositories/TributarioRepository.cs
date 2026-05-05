@@ -16,10 +16,10 @@ public sealed class TributarioRepository(LamaDbContext context) : ITributarioRep
         var inconsistenciasMiembros = await _context.Miembros
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
-            .Where(x => string.IsNullOrWhiteSpace(x.Documento))
+            .Where(x => string.IsNullOrWhiteSpace(x.DocumentoIdentidad))
             .Select(x => new InconsistenciaTributariaDto(
                 x.Id.ToString(),
-                $"{x.Nombre} {x.Apellidos}".Trim(),
+                $"{x.Nombres} {x.Apellidos}".Trim(),
                 "Miembro",
                 "Falta Número de Documento"))
             .ToListAsync(cancellationToken);
@@ -60,16 +60,16 @@ public sealed class TributarioRepository(LamaDbContext context) : ITributarioRep
         return await _context.Miembros
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
-            .Where(x => x.Estado == EstadoMiembro.Activo)
+            .Where(x => x.EsActivo)
             .OrderBy(x => x.Apellidos)
-            .ThenBy(x => x.Nombre)
+            .ThenBy(x => x.Nombres)
             .Select(x => new BeneficiarioFinalDto(
                 "NO_DEFINIDO",
-                x.Documento,
-                x.Nombre,
+                x.DocumentoIdentidad,
+                x.Nombres,
                 x.Apellidos,
                 "CO",
-                x.TipoAfiliacion.ToString()))
+                x.Rango.ToString()))
             .ToListAsync(cancellationToken);
     }
 
@@ -113,7 +113,7 @@ public sealed class TributarioRepository(LamaDbContext context) : ITributarioRep
         var miembros = await _context.Miembros
             .AsNoTracking()
             .Where(x => tercerosIds.Contains(x.Id))
-            .Select(x => new { x.Id, x.Documento, x.Nombre, x.Apellidos })
+            .Select(x => new { x.Id, x.DocumentoIdentidad, x.Nombres, x.Apellidos })
             .ToListAsync(cancellationToken);
 
         var donantes = await _context.Donantes
@@ -124,7 +124,7 @@ public sealed class TributarioRepository(LamaDbContext context) : ITributarioRep
 
         var miembrosPorId = miembros.ToDictionary(
             x => x.Id,
-            x => new TerceroInfo(x.Documento, $"{x.Nombre} {x.Apellidos}".Trim()));
+            x => new TerceroInfo(x.DocumentoIdentidad, $"{x.Nombres} {x.Apellidos}".Trim()));
 
         var donantesPorId = donantes.ToDictionary(
             x => x.Id,

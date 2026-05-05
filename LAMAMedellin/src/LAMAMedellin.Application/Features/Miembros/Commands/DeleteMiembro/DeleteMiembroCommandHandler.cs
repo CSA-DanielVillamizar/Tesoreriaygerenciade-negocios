@@ -15,7 +15,7 @@ public sealed class DeleteMiembroCommandHandler(IMiembroRepository miembroReposi
             throw new ExcepcionNegocio("El miembro indicado no existe.");
         }
 
-        miembro.Desactivar();
+        miembro.DarDeBaja();
         await miembroRepository.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;

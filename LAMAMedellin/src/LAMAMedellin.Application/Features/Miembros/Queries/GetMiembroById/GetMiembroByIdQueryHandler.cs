@@ -16,11 +16,19 @@ public sealed class GetMiembroByIdQueryHandler(IMiembroRepository miembroReposit
 
         return new MiembroDto(
             miembro.Id,
-            $"{miembro.Nombre} {miembro.Apellidos}".Trim(),
-            miembro.Documento,
-            miembro.Email,
-            miembro.Telefono,
-            miembro.TipoAfiliacion.ToString(),
-            miembro.Estado.ToString());
+            miembro.DocumentoIdentidad,
+            miembro.Nombres,
+            miembro.Apellidos,
+            miembro.Apodo,
+            miembro.FechaIngreso,
+            miembro.Rango.ToString(),
+            miembro.EsActivo,
+            miembro.TipoSangre.ToString(),
+            miembro.NombreContactoEmergencia,
+            miembro.TelefonoContactoEmergencia,
+            miembro.MarcaMoto,
+            miembro.ModeloMoto,
+            miembro.Cilindraje,
+            miembro.Placa);
     }
 }

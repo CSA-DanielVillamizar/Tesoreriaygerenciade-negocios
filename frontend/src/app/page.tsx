@@ -228,7 +228,7 @@ export default function Home() {
                         href="/miembros"
                         className="rounded-xl border border-slate-300 bg-white px-6 py-8 text-center text-lg font-semibold text-slate-800"
                     >
-                        Directorio de Miembros
+                        Directorio L.A.M.A.
                     </Link>
 
                     <Link

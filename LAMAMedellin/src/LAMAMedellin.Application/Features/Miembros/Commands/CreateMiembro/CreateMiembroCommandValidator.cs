@@ -6,31 +6,52 @@ public sealed class CreateMiembroCommandValidator : AbstractValidator<CreateMiem
 {
     public CreateMiembroCommandValidator()
     {
-        RuleFor(x => x.Nombre)
+        RuleFor(x => x.DocumentoIdentidad)
             .NotEmpty()
-            .MaximumLength(100);
+            .MaximumLength(50);
+
+        RuleFor(x => x.Nombres)
+            .NotEmpty()
+            .MaximumLength(150);
 
         RuleFor(x => x.Apellidos)
             .NotEmpty()
-            .MaximumLength(120);
+            .MaximumLength(150);
 
-        RuleFor(x => x.Documento)
+        RuleFor(x => x.Apodo)
+            .MaximumLength(100);
+
+        RuleFor(x => x.FechaIngreso)
             .NotEmpty()
-            .MaximumLength(30);
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow));
 
-        RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress()
-            .MaximumLength(200);
-
-        RuleFor(x => x.Telefono)
-            .NotEmpty()
-            .MaximumLength(30);
-
-        RuleFor(x => x.TipoAfiliacion)
+        RuleFor(x => x.TipoSangre)
             .IsInEnum();
 
-        RuleFor(x => x.Estado)
+        RuleFor(x => x.NombreContactoEmergencia)
+            .NotEmpty()
+            .MaximumLength(150);
+
+        RuleFor(x => x.TelefonoContactoEmergencia)
+            .NotEmpty()
+            .MaximumLength(30);
+
+        RuleFor(x => x.MarcaMoto)
+            .NotEmpty()
+            .MaximumLength(100);
+
+        RuleFor(x => x.ModeloMoto)
+            .NotEmpty()
+            .MaximumLength(100);
+
+        RuleFor(x => x.Cilindraje)
+            .GreaterThan(0);
+
+        RuleFor(x => x.Placa)
+            .NotEmpty()
+            .MaximumLength(20);
+
+        RuleFor(x => x.Rango)
             .IsInEnum();
     }
 }

@@ -13,12 +13,20 @@ public sealed class GetMiembrosQueryHandler(IMiembroRepository miembroRepository
         return miembros
             .Select(miembro => new MiembroDto(
                 miembro.Id,
-                $"{miembro.Nombre} {miembro.Apellidos}".Trim(),
-                miembro.Documento,
-                miembro.Email,
-                miembro.Telefono,
-                miembro.TipoAfiliacion.ToString(),
-                miembro.Estado.ToString()))
+                miembro.DocumentoIdentidad,
+                miembro.Nombres,
+                miembro.Apellidos,
+                miembro.Apodo,
+                miembro.FechaIngreso,
+                miembro.Rango.ToString(),
+                miembro.EsActivo,
+                miembro.TipoSangre.ToString(),
+                miembro.NombreContactoEmergencia,
+                miembro.TelefonoContactoEmergencia,
+                miembro.MarcaMoto,
+                miembro.ModeloMoto,
+                miembro.Placa,
+                miembro.Cilindraje))
             .ToList();
     }
 }

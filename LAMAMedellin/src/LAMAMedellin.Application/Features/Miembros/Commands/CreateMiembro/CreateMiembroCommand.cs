@@ -4,10 +4,16 @@ using MediatR;
 namespace LAMAMedellin.Application.Features.Miembros.Commands.CreateMiembro;
 
 public sealed record CreateMiembroCommand(
-    string Nombre,
+    string DocumentoIdentidad,
+    string Nombres,
     string Apellidos,
-    string Documento,
-    string Email,
-    string Telefono,
-    TipoAfiliacion TipoAfiliacion,
-    EstadoMiembro Estado) : IRequest<Guid>;
+    string Apodo,
+    DateOnly FechaIngreso,
+    GrupoSanguineo TipoSangre,
+    string NombreContactoEmergencia,
+    string TelefonoContactoEmergencia,
+    string MarcaMoto,
+    string ModeloMoto,
+    int Cilindraje,
+    string Placa,
+    RangoClub Rango) : IRequest<Guid>;

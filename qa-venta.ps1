@@ -147,10 +147,10 @@ try {
     Write-Host '[QA-VENTA] Consultando productos...' -ForegroundColor Cyan
     $productos = Invoke-RestMethod -Method GET -Uri "$BaseUrl/api/merchandising/productos" -Headers $headers
     $producto = @($productos) |
-        Where-Object {
-            (Get-ProductoPrecio -Producto $_) -gt 0
-        } |
-        Select-Object -First 1
+    Where-Object {
+        (Get-ProductoPrecio -Producto $_) -gt 0
+    } |
+    Select-Object -First 1
 
     if ($null -eq $producto) {
         throw 'No hay un producto existente con precio de venta valido para la prueba.'
@@ -167,7 +167,7 @@ try {
         Write-Host '[QA-VENTA] Registrando entrada previa para habilitar stock de prueba...' -ForegroundColor Cyan
         $entradaPayload = @{
             Cantidad = $faltante
-            Fecha = (Get-Date).ToUniversalTime().ToString('o')
+            Fecha    = (Get-Date).ToUniversalTime().ToString('o')
             Concepto = 'QA prep stock para venta'
         } | ConvertTo-Json
 
@@ -178,7 +178,7 @@ try {
 
     $ventaPayload = @{
         Cantidad = $CantidadVenta
-        CajaId = $cajaId
+        CajaId   = $cajaId
         Concepto = 'QA conciliacion automatica merchandising'
     } | ConvertTo-Json
 

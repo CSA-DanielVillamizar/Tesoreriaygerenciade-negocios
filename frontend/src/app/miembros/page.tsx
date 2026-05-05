@@ -1,5 +1,5 @@
+import ListaMiembros from '@/features/miembros/components/ListaMiembros';
 import Link from 'next/link';
-import TablaMiembros from '@/features/miembros/components/TablaMiembros';
 
 export default function MiembrosPage() {
     return (
@@ -19,7 +19,7 @@ export default function MiembrosPage() {
                 </Link>
             </header>
 
-            <TablaMiembros />
+            <ListaMiembros />
         </main>
     );
 }
