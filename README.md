@@ -1,14 +1,40 @@
-# Sistema Contable L.A.M.A. Medellin
+# L.A.M.A. ERP - Sistema de Gestion de Moto Clubs
 
-Plataforma contable integral para la Fundacion / Capitulo L.A.M.A. Medellin, con tesoreria, cartera y control de movimientos financieros.
+L.A.M.A. ERP es una plataforma integral para la gestion operativa, financiera y administrativa del Capitulo L.A.M.A. Medellin. Centraliza procesos criticos del club en una sola solucion, con enfoque en trazabilidad, control y escalabilidad empresarial.
 
-## Tecnologias
+## Modulos Principales
 
-- Backend: .NET 8, CQRS (MediatR), Clean Architecture
-- Frontend: Next.js (App Router), React Query, Tailwind CSS
-- Base de datos: Azure SQL (EF Core)
+1. Cartera
+- Gestion de conceptos de cobro, cuentas por cobrar, cuotas y seguimiento de recaudos pendientes.
 
-## Ejecucion local
+2. Tesoreria
+- Control de cajas, ingresos, egresos y saldos disponibles para operacion diaria.
+
+3. Merchandising
+- Administracion de inventario, ventas y movimiento de productos del club.
+
+4. Miembros
+- Directorio de miembros, perfil ampliado, datos de emergencia y estado activo del capitulo.
+
+5. Eventos
+- Agenda de eventos y rodadas, detalle por evento y control de asistencia.
+
+## Arquitectura
+
+### Backend
+- .NET 8 Web API
+- Clean Architecture
+- CQRS con MediatR
+- Entity Framework Core
+- Azure SQL
+
+### Frontend
+- Next.js (App Router)
+- TypeScript
+- React Query (TanStack Query)
+- TailwindCSS
+
+## Ejecucion Local
 
 ### Backend (.NET 8)
 
@@ -18,8 +44,6 @@ dotnet build
 dotnet run --project src/LAMAMedellin.API
 ```
 
-La API queda disponible en `http://localhost:5006` (segun tu configuracion local).
-
 ### Frontend (Next.js)
 
 ```bash
@@ -28,24 +52,6 @@ npm install
 npm run dev
 ```
 
-El frontend queda disponible en `http://localhost:3000`.
+## Construido con orgullo
 
-## Documentacion
-
-- Manual de usuario: docs/MANUAL_USUARIO.md
-- Arquitectura: docs/docs_ARCHITECTURE-AZURE.md
-- Backlog: docs/docs_BACKLOG.md
-
-## Modulos funcionales recientes
-
-### 1) Modulo de Donaciones
-
-Gestiona donantes y donaciones, incluyendo soporte para dinero y especie, y permite la emision de certificados de donacion con informacion legal, trazabilidad y codigo de verificacion.
-
-### 2) Modulo de Proyectos Sociales y Beneficiarios
-
-Gestiona proyectos sociales y beneficiarios con formularios y listados dedicados, aplicando validacion obligatoria de consentimiento de Habeas Data para el registro de beneficiarios.
-
-### 3) Modulo de Merchandising y POS (con integracion contable automatica)
-
-Gestiona inventario de articulos, registro de ventas POS e historial de ventas. Cada venta reduce stock y genera automaticamente el comprobante contable de partida doble (debito y credito por el total de la venta), garantizando trazabilidad financiera entre los modulos de Merchandising y Contabilidad.
+Construido con orgullo para fortalecer la gestion institucional de L.A.M.A. Medellin.
