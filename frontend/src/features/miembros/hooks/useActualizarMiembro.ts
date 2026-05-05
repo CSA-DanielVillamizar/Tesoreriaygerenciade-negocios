@@ -1,8 +1,8 @@
 'use client';
 
-import axios from 'axios';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { actualizarMiembro, type ActualizarMiembroPayload } from '@/features/miembros/services/miembrosService';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 
 type ProblemDetails = {
     title?: string;

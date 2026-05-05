@@ -68,6 +68,40 @@ namespace LAMAMedellin.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.AsistenciaEvento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Asistio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MiembroId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MiembroId");
+
+                    b.HasIndex("EventoId", "MiembroId")
+                        .IsUnique();
+
+                    b.ToTable("AsistenciasEvento", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Banco", b =>
                 {
                     b.Property<Guid>("Id")
@@ -527,6 +561,50 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.ToTable("Egresos", (string)null);
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Evento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Destino")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Estado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("FechaProgramada")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LugarEncuentro")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("TipoEvento")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Eventos", (string)null);
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Ingreso", b =>
                 {
                     b.Property<Guid>("Id")
@@ -886,6 +964,25 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("CuentaContable");
                 });
 
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.AsistenciaEvento", b =>
+                {
+                    b.HasOne("LAMAMedellin.Domain.Entities.Evento", "Evento")
+                        .WithMany("Asistencias")
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LAMAMedellin.Domain.Entities.Miembro", "Miembro")
+                        .WithMany()
+                        .HasForeignKey("MiembroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Evento");
+
+                    b.Navigation("Miembro");
+                });
+
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Beneficiario", b =>
                 {
                     b.HasOne("LAMAMedellin.Domain.Entities.ProyectoSocial", "ProyectoSocial")
@@ -1141,6 +1238,11 @@ namespace LAMAMedellin.Infrastructure.Migrations
                     b.Navigation("AsientosContables");
 
                     b.Navigation("CuentasHijas");
+                });
+
+            modelBuilder.Entity("LAMAMedellin.Domain.Entities.Evento", b =>
+                {
+                    b.Navigation("Asistencias");
                 });
 
             modelBuilder.Entity("LAMAMedellin.Domain.Entities.Producto", b =>

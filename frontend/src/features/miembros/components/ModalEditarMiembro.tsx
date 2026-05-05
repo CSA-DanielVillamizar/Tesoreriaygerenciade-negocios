@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { useActualizarMiembro } from '@/features/miembros/hooks/useActualizarMiembro';
 import type { ActualizarMiembroPayload, Miembro } from '@/features/miembros/services/miembrosService';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
 type ModalEditarMiembroProps = {
     isOpen: boolean;

@@ -140,6 +140,7 @@ public static class DependencyInjection
         services.AddScoped<ITributarioRepository, TributarioRepository>();
         services.AddScoped<IProductoRepository, ProductoRepository>();
         services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
+        services.AddScoped<IEventoRepository, EventoRepository>();
         services.AddSingleton<IFileStorageService, AzureBlobStorageService>();
 
         return services;

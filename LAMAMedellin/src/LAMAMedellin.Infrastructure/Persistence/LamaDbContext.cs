@@ -23,6 +23,8 @@ public sealed class LamaDbContext(DbContextOptions<LamaDbContext> options) : DbC
     public DbSet<ProyectoSocial> ProyectosSociales => Set<ProyectoSocial>();
     public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
     public DbSet<Miembro> Miembros => Set<Miembro>();
+    public DbSet<Evento> Eventos => Set<Evento>();
+    public DbSet<AsistenciaEvento> AsistenciasEvento => Set<AsistenciaEvento>();
     public DbSet<Transaccion> Transacciones => Set<Transaccion>();
     public DbSet<Producto> Productos => Set<Producto>();
     public DbSet<MovimientoInventario> MovimientosInventario => Set<MovimientoInventario>();
